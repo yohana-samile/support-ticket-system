@@ -35,7 +35,7 @@ class TicketCommentedNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject('New Comment on Ticket: ' . $this->ticket->title)
             ->line($this->commenter->name . ' added a comment to your assigned ticket')
-            ->action('View Ticket', route('tickets.show', $this->ticket->id))
+            ->action('View Ticket', route('frontend.ticket.show', $this->ticket->id))
             ->line('Comment:')
             ->line($this->comment->content);
     }
@@ -48,7 +48,7 @@ class TicketCommentedNotification extends Notification implements ShouldQueue
             'comment_id' => $this->comment->id,
             'commenter_name' => $this->commenter->name,
             'message' => 'added a comment to your assigned ticket',
-            'url' => route('tickets.show', $this->ticket->id),
+            'url' => route('frontend.ticket.show', $this->ticket->id),
         ];
     }
 }

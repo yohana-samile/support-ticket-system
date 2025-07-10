@@ -1,16 +1,19 @@
-@extends('layouts.backend.app')
+@extends('layouts.frontend.app')
 @section('title', 'Ticket Details - ' . $ticket->ticket_number)
 @section('content')
-
     <div class="container-fluid">
-        <!-- Page Header -->
         <div class="d-sm-flex align-items-center justify-content-end mb-4">
             <div class="d-flex">
-                @if($ticket->status === 'open')
-                    <a href="{{ route('backend.ticket.edit', $ticket->uid) }}" class="btn btn-sm btn-primary mr-2">
-                        <i class="fas fa-edit fa-sm mr-1"></i> Edit
+                @if($ticket->status === 'resolved')
+                    <a href="{{ route('frontend.ticket.feedback', $ticket->uid) }}" class="btn btn-sm btn-success mr-2">
+                        <i class="fas fa-clipboard-check mr-1"></i> Submit Feedback
                     </a>
-                    <form id="delete-ticket-form-{{ $ticket->uid }}" action="{{ route('backend.ticket.destroy', $ticket->uid) }}" method="POST" class="d-inline">
+                @endif
+                @if($ticket->status === 'open')
+                    <a href="{{ route('frontend.ticket.edit', $ticket->uid) }}" class="btn btn-sm btn-primary mr-2">
+                        <i class="fas fa-edit fa-sm mr-1"></i> Edit Ticket
+                    </a>
+                    <form id="delete-ticket-form-{{ $ticket->uid }}" action="{{ route('frontend.ticket.destroy', $ticket->uid) }}" method="POST" class="d-inline">
                         @csrf
                         @method('DELETE')
                         <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete('{{ $ticket->uid }}')">
@@ -26,12 +29,7 @@
                 <!-- Ticket Details Card -->
                 <div class="card shadow mb-4">
                     <div class="card-header py-3 d-flex align-items-center justify-content-between bg-primary text-white">
-                        <h6 class="m-0 font-weight-bold">
-                            <i class="fas fa-info-circle mr-2"></i> Ticket Details
-                            @if($ticket->escalated_at)
-                                <span class="badge badge-danger ml-2">Escalated</span>
-                            @endif
-                        </h6>
+                        <h6 class="m-0 font-weight-bold">Ticket Details</h6>
                         <div class="d-flex">
                             <span class="badge badge-light mr-2">{{ ucfirst($ticket->status) }}</span>
                             <span class="badge badge-light">{{ ucfirst($ticket->priority) }}</span>
@@ -237,35 +235,6 @@
                                         <span>{{ $ticket->response_time }} minutes</span>
                                     </li>
                                 @endif
-
-                                @if($ticket->reopened_at)
-                                    <li class="list-group-item px-0 py-2 d-flex justify-content-between">
-                                        <span class="font-weight-bold">Last Reopened:</span>
-                                        <span>
-                                            {{ $ticket->reopened_at->format('M d, Y h:i A') }}
-                                            <small class="text-muted">({{ $ticket->reopened_at->diffForHumans() }})</small>
-                                        </span>
-                                    </li>
-                                @endif
-
-                                @if($ticket->escalated_at)
-                                    <li class="list-group-item px-0 py-2 d-flex justify-content-between">
-                                        <span class="font-weight-bold">Escalated:</span>
-                                        <span>
-                                            {{ $ticket->escalated_at->format('M d, Y h:i A') }}
-                                            <small class="text-muted">({{ $ticket->escalated_at->diffForHumans() }})</small>
-                                        </span>
-                                    </li>
-                                    @if($ticket->escalation_reason)
-                                        <li class="list-group-item px-0 py-2">
-                                            <span class="font-weight-bold">Escalation Reason:</span>
-                                            <div class="mt-1 p-2 bg-light rounded">
-                                                {{ $ticket->escalation_reason }}
-                                            </div>
-                                        </li>
-                                    @endif
-                                @endif
-
                                 <li class="list-group-item px-0 py-2 d-flex justify-content-between">
                                     <span class="font-weight-bold">Times Reopened:</span>
                                     <span class="badge badge-{{ $ticket->reopen_history_count > 0 ? 'warning' : 'secondary' }}">
@@ -299,162 +268,33 @@
                     </div>
                 </div>
 
-                <!-- Status Management Card -->
+                <!-- Status Card -->
                 <div class="card shadow mb-4">
                     <div class="card-header py-3 bg-primary text-white">
                         <h6 class="m-0 font-weight-bold">
-                            <i class="fas fa-tasks mr-2"></i>Ticket Management
+                            <i class="fas fa-tasks mr-2"></i>Ticket Status
                         </h6>
                     </div>
                     <div class="card-body">
-                        @if($ticket->escalated_at)
-                            <div class="alert alert-warning mb-4">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                This ticket was escalated on {{ $ticket->escalated_at->format('M d, Y') }}.
-                                @if($ticket->escalation_reason)
-                                    <div class="mt-2">
-                                        <strong>Reason:</strong> {{ $ticket->escalation_reason }}
-                                    </div>
-                                @endif
-                            </div>
-                        @endif
-
-                        @if(!in_array($ticket->status, ['closed', 'resolved']))
-                            <form action="{{ route('backend.ticket.update-status', $ticket->uid) }}" method="POST" class="mb-4">
-                                @csrf
-                                <div class="form-group">
-                                    <label class="font-weight-bold">Update Status</label>
-                                    <select name="status" class="form-control" onchange="this.form.submit()">
-                                        <option value="open" {{ $ticket->status == 'open' ? 'selected' : '' }}>Open</option>
-                                        <option value="in_progress" {{ $ticket->status == 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                        <option value="resolved" {{ $ticket->status == 'resolved' ? 'selected' : '' }}>Resolved</option>
-                                        <option value="closed" {{ $ticket->status == 'closed' ? 'selected' : '' }}>Closed</option>
-                                    </select>
-                                </div>
-                            </form>
-                        @else
-                            <div class="alert alert-info mb-4">
+                        @if(in_array($ticket->status, ['closed']))
+                            <div class="alert alert-info">
                                 <i class="fas fa-info-circle mr-2"></i>
                                 This ticket is <strong>{{ ucfirst($ticket->status) }}</strong> and cannot be updated.
                             </div>
                         @endif
 
-                        <!-- Reassign Section -->
-                        @if(!in_array($ticket->status, ['closed', 'resolved']) && (isAdmin() || auth()->user()->is_staff))
-                            <form action="{{ route('backend.ticket.reassign', $ticket->uid) }}" method="POST">
-                                @csrf
-                                <div class="form-group">
-                                    <label for="assigned_to" class="font-weight-bold">Reassign Ticket</label>
-                                    <select name="assigned_to" id="assigned_to" class="form-control">
-                                        <option value="">Unassigned</option>
-                                        @foreach($users as $user)
-                                            <option value="{{ $user->id }}" {{ $ticket->assigned_to == $user->id ? 'selected' : '' }}>
-                                                {{ $user->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <button type="submit" class="btn btn-primary btn-block">
-                                    <i class="fas fa-user-edit mr-2"></i> Reassign
-                                </button>
-                            </form>
-                        @endif
-                    </div>
-                </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="font-weight-bold">Current Status:</span>
+                            <span class="badge badge-{{ $ticket->status_badge }}">
+                                {{ ucfirst($ticket->status) }}
+                            </span>
+                        </div>
 
-                <!-- Activity Log Card -->
-                <div class="card shadow">
-                    <div class="card-header py-3 bg-primary text-white">
-                        <h6 class="m-0 font-weight-bold">
-                            <i class="fas fa-history mr-2"></i>Activity Log
-                        </h6>
-                    </div>
-                    <div class="card-body scrollable-activity-log">
-                        @if($ticket->activities->isEmpty())
-                            <div class="text-center py-4">
-                                <i class="fas fa-history fa-3x text-gray-300 mb-3"></i>
-                                <p class="text-muted">No activity logged yet</p>
-                            </div>
-                        @else
-                            <div class="timeline">
-                                @php
-                                    $lastDate = null;
-                                    $groupedActivities = $ticket->activities->groupBy(function($item) {
-                                        return $item->created_at->format('Y-m-d');
-                                    });
-                                @endphp
-
-                                @foreach($groupedActivities as $date => $activities)
-                                    <div class="timeline-date mb-3">
-                                        <span class="badge badge-secondary">{{ $date }}</span>
-                                    </div>
-
-                                    @foreach($activities as $activity)
-                                        <div class="timeline-item mb-3 {{ $activity->description === 'updated' && $activity->getExtraProperty('attributes.escalated_at') ? 'escalated' : '' }}
-                                            {{ $activity->description === 'updated' && $activity->getExtraProperty('attributes.reopened_at') ? 'reopened' : '' }}">
-                                            <div class="timeline-marker"></div>
-                                            <div class="timeline-content">
-                                                <div class="d-flex justify-content-between">
-                                                <span class="font-weight-bold">
-                                                    @if($activity->description === 'created')
-                                                        <i class="fas fa-plus-circle mr-1"></i> Ticket created
-                                                    @elseif($activity->description === 'updated')
-                                                        @if($activity->getExtraProperty('attributes.status'))
-                                                            <i class="fas fa-exchange-alt mr-1"></i> Status changed to
-                                                            <span class="badge badge-{{ $activity->getExtraProperty('attributes.status') }}">
-                                                                {{ ucfirst($activity->getExtraProperty('attributes.status')) }}
-                                                            </span>
-                                                        @elseif($activity->getExtraProperty('attributes.escalated_at'))
-                                                            <i class="fas fa-level-up-alt mr-1"></i> Ticket escalated
-                                                        @elseif($activity->getExtraProperty('attributes.reopened_at'))
-                                                            <i class="fas fa-redo mr-1"></i> Ticket reopened
-                                                        @else
-                                                            <i class="fas fa-edit mr-1"></i> Ticket updated
-                                                        @endif
-                                                    @else
-                                                        <i class="fas fa-info-circle mr-1"></i> {{ ucfirst($activity->description) }}
-                                                    @endif
-                                                </span>
-                                                    <small class="text-muted">{{ $activity->created_at->format('h:i A') }}</small>
-                                                </div>
-                                                <small class="text-muted">
-                                                    <i class="fas fa-user mr-1"></i> {{ $activity->causer->name ?? 'System' }}
-                                                </small>
-
-                                                @if($activity->description === 'updated' && $activity->getExtraProperty('attributes'))
-                                                    @php
-                                                        $ignoreFields = ['updated_at', 'created_at', 'id', 'escalated_at', 'reopened_at'];
-                                                        $changedFields = array_diff_key(
-                                                            $activity->getExtraProperty('attributes'),
-                                                            array_flip($ignoreFields)
-                                                        );
-                                                    @endphp
-
-                                                    @if(count($changedFields) > 0)
-                                                        <div class="mt-2 p-2 bg-light rounded">
-                                                            <small>
-                                                                @foreach($changedFields as $key => $value)
-                                                                    @if(!in_array($key, $ignoreFields))
-                                                                        <div>
-                                                                            <strong>{{ str_replace('_', ' ', ucfirst($key)) }}:</strong>
-                                                                            @if(is_array($value))
-                                                                                {{ json_encode($value) }}
-                                                                            @elseif($key === 'assigned_to' && is_numeric($value))
-                                                                                {{ \App\Models\Access\User::find($value)->name ?? 'User #'.$value }}
-                                                                            @else
-                                                                                {{ $value }}
-                                                                            @endif
-                                                                        </div>
-                                                                    @endif
-                                                                @endforeach
-                                                            </small>
-                                                        </div>
-                                                    @endif
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                @endforeach
+                        @if($ticket->updated_at)
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    Last updated {{ $ticket->updated_at->diffForHumans() }}
+                                </small>
                             </div>
                         @endif
                     </div>
@@ -462,7 +302,6 @@
             </div>
         </div>
     </div>
-
 @endsection
 
 @push('styles')
@@ -481,7 +320,7 @@
         }
 
         .scrollable-activity-log {
-            max-height: 300px;
+            max-height: 250px;
             overflow-y: auto;
             padding-right: 10px;
         }
@@ -491,24 +330,10 @@
             position: relative;
             padding-left: 20px;
         }
-        .timeline-date {
-            position: relative;
-            padding-left: 20px;
-            margin-bottom: 15px;
-        }
 
-        .timeline-date:before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            width: 10px;
-            height: 2px;
-            background: #ddd;
-        }
         .timeline-item {
             position: relative;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
         }
 
         .timeline-marker {
@@ -521,31 +346,9 @@
             background-color: #4e73df;
             border: 2px solid white;
         }
-        .timeline-item.escalated .timeline-marker {
-            background-color: #e74a3b;
-        }
 
-        .timeline-item.reopened .timeline-marker {
-            background-color: #f6c23e;
-        }
         .timeline-content {
             margin-left: 10px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-        }
-        .timeline-content:hover {
-            background: #e9ecef;
-        }
-        .timeline-content i {
-            width: 18px;
-            text-align: center;
-        }
-        /* Escalation alert styling */
-        .alert-warning {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
         }
 
         /* Badge Colors */
@@ -597,6 +400,7 @@
 
 @push('scripts')
     <script>
+        // Delete confirmation
         function confirmDelete(ticketId) {
             Swal.fire({
                 title: 'Are you sure?',

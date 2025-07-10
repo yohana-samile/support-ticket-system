@@ -75,8 +75,7 @@
          */
         public function inProgressAssignedTickets(): HasMany
         {
-            return $this->assignedTickets()
-                ->where('status', 'in_progress');
+            return $this->assignedTickets()->where('status', 'in_progress');
         }
 
         /**

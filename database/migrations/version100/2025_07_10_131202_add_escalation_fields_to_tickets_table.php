@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tickets', function (Blueprint $table) {
-            $table->unsignedInteger('reopen_history_count')->default(0);
-            $table->boolean('satisfaction')->nullable();
-            $table->timestamp('feedback_submitted_at')->nullable();
+            $table->timestamp('escalated_at')->nullable();
+            $table->text('escalation_reason')->nullable();
+            $table->timestamp('reopened_at')->nullable();
         });
     }
 
@@ -24,9 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('tickets', function (Blueprint $table) {
-            $table->dropColumn('reopen_history_count');
-            $table->dropColumn('satisfaction');
-            $table->dropColumn('feedback_submitted_at');
+            $table->dropColumn(['escalated_at', 'escalation_reason', 'reopened_at']);
         });
     }
 };

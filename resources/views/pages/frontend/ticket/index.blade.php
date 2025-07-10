@@ -1,24 +1,18 @@
-@extends('layouts.backend.app')
+@extends('layouts.frontend.app')
 @section('title', 'Tickets')
 @section('content')
     <div id="content">
         <div class="container-fluid">
             <div class="d-sm-flex align-items-center justify-content-end mb-4">
-                @unless(auth()->user()->is_reporter)
-                    <a href="{{ route('backend.ticket.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                        <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
-                    </a>
-                @endunless
+                <a href="{{ route('frontend.ticket.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                    <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
+                </a>
             </div>
 
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        @if(auth()->user()->is_reporter)
-                            My Tickets
-                        @else
-                            All Tickets
-                        @endif
+                        @yield('title')
                     </h6>
                     <div class="dropdown no-arrow">
                         <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
@@ -31,10 +25,6 @@
                             <a class="dropdown-item" href="{{ request()->fullUrlWithQuery(['status' => 'open']) }}">Open Tickets</a>
                             <a class="dropdown-item" href="{{ request()->fullUrlWithQuery(['status' => 'resolved']) }}">Resolved Tickets</a>
                             <a class="dropdown-item" href="{{ route('backend.ticket.index') }}">All Tickets</a>
-                            @unless(auth()->user()->is_reporter)
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{{ route('backend.ticket.assigned') }}">My Assigned Tickets</a>
-                            @endunless
                         </div>
                     </div>
                 </div>
@@ -49,19 +39,15 @@
                                 <th>Status</th>
                                 <th>Priority</th>
                                 <th>Created</th>
-                                @unless(auth()->user()->is_reporter)
-                                    <th>Requester</th>
-                                    <th>Assignee</th>
-                                @endunless
                                 <th>Actions</th>
                             </tr>
                             </thead>
                             <tbody>
                             @foreach($tickets as $ticket)
                                 <tr>
-                                    <td>{{ $ticket->uid }}</td>
+                                    <td>{{ $ticket->ticket_number }}</td>
                                     <td>
-                                        <a href="{{ route('tickets.show', $ticket->id) }}">
+                                        <a href="{{ route('frontend.ticket.show', $ticket->id) }}">
                                             {{ Str::limit($ticket->title, 30) }}
                                         </a>
                                     </td>
@@ -77,34 +63,22 @@
                                     </span>
                                     </td>
                                     <td>{{ $ticket->created_at->diffForHumans() }}</td>
-                                    @unless(auth()->user()->is_reporter)
-                                        <td>{{ $ticket->user->name }}</td>
-                                        <td>
-                                            @if($ticket->assignee)
-                                                {{ $ticket->assignee->name }}
-                                            @else
-                                                <span class="text-muted">Unassigned</span>
-                                            @endif
-                                        </td>
-                                    @endunless
                                     <td>
-                                        <a href="{{ route('backend.ticket.show', $ticket->id) }}" class="btn btn-sm btn-info" title="View">
+                                        <a href="{{ route('frontend.ticket.show', $ticket->uid) }}" class="btn btn-sm btn-info" title="View">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        @can('update', $ticket)
-                                            <a href="{{ route('backend.ticket.edit', $ticket->id) }}" class="btn btn-sm btn-primary" title="Edit">
+                                        @if($ticket->status === 'open')
+                                            <a href="{{ route('frontend.ticket.edit', $ticket->uid) }}" class="btn btn-sm btn-primary" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                        @endcan
-                                        @can('delete', $ticket)
-                                            <form action="{{ route('backend.ticket.destroy', $ticket->id) }}" method="POST" style="display: inline;">
+                                            <form id="delete-ticket-form-{{ $ticket->uid }}"  action="{{ route('frontend.ticket.destroy', $ticket->uid) }}" method="POST" style="display: inline;">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Are you sure?')">
+                                                <button type="button" class="btn btn-sm btn-danger" title="Delete" onclick="confirmDelete('{{ $ticket->uid }}')">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
-                                        @endcan
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -135,6 +109,22 @@
 
 @push('scripts')
     <script>
+        function confirmDelete(ticketId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(`delete-ticket-form-${ticketId}`).submit();
+                }
+            });
+        }
+
         $(document).ready(function() {
             $('#dataTable').DataTable({
                 "paging": false,

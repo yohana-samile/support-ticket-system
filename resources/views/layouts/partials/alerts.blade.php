@@ -30,6 +30,6 @@
         //     $('body').toggleClass('sidebar-toggled');
         // });
 
-        $('.alert').delay(5000).fadeOut(300);
+        $('.alert-dismissible').delay(5000).fadeOut(300);
     });
 </script>

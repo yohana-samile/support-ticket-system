@@ -10,9 +10,14 @@ class Ticket extends BaseModel
 {
     use LogsActivity;
     protected $casts = [
+        'feedback_submitted_at' => 'datetime',
         'due_date' => 'datetime',
-        'time_reported' => 'datetime',
         'time_solved' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'time_reported' => 'datetime',
+        'escalated_at' => 'datetime',
+        'reopened_at' => 'datetime',
     ];
 
     public function category()
@@ -81,6 +86,10 @@ class Ticket extends BaseModel
 
     public function getActivitylogOptions(): LogOptions
     {
-        return LogOptions::defaults()->logAll()->useLogName('ticket');
+        return LogOptions::defaults()
+            ->logOnly(['title', 'description', 'status', 'priority', 'assigned_to', 'due_date'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('ticket');
     }
 }

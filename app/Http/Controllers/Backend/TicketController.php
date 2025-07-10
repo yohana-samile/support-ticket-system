@@ -8,6 +8,7 @@ use App\Models\Access\User;
 use App\Models\Category;
 use App\Models\System\Code;
 use App\Models\System\CodeValue;
+use App\Models\Ticket;
 use App\Repositories\Backend\TicketRepository;
 use Illuminate\Http\Request;
 
@@ -48,8 +49,18 @@ class TicketController extends Controller
 
     public function show($ticketUid)
     {
-        $data['ticket'] = $this->ticketRepository->find($ticketUid);
-        $data['ticket']->setRelation('activities', $data['ticket']->activities ?? collect());
+        $data['ticket'] = Ticket::with([
+            'attachments',
+            'comments.user',
+            'category',
+            'assignedTo',
+            'activities' => function($query) {
+                $query->with('causer')
+                    ->latest()
+                    ->limit(15);
+            }
+        ])->where('uid', $ticketUid)->firstOrFail();
+
         $data['users'] = User::where('is_reporter', false)->get();
 
         return view('pages.backend.ticket.show', $data);
@@ -64,7 +75,9 @@ class TicketController extends Controller
 
         $data['categories'] = Category::all();
         $data['users'] = User::query()->where('is_reporter', false)->get();
+
         $data['customers'] = User::where('is_reporter', true)->get();
+
         $data['statuses'] = CodeValue::getCodeValueByCodeId($codeStatusId);
         $data['priorities'] = CodeValue::getCodeValueByCodeId($codePriorityId);
 

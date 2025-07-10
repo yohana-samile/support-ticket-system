@@ -6,8 +6,6 @@ use App\Models\Ticket;
 use App\Notifications\SatisfactionSurvey;
 use App\Notifications\TicketReopened;
 use App\Services\TicketEscalationService;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class TicketObserver
 {
@@ -16,37 +14,54 @@ class TicketObserver
      */
     public function updated(Ticket $ticket)
     {
+        if ($ticket->getOriginal('status') === $ticket->status) {
+            return;
+        }
+
+
         $originalStatus = $ticket->getOriginal('status');
         $newStatus = $ticket->status;
 
         if ($originalStatus !== 'resolved' && $newStatus === 'resolved') {
             $ticket->user->notify(new SatisfactionSurvey($ticket));
+            $ticket->updateQuietly(['time_solved' => now()]);
             return;
         }
 
         if ($originalStatus === 'resolved' && $newStatus !== 'resolved') {
             $latestComment = $ticket->comments()->latest()->first();
             if ($latestComment && $this->isNegativeReply($latestComment->body)) {
-                $ticket->withoutEvents(function () use ($ticket) {
-                    $ticket->update(['status' => 'reopened']);
+                \Illuminate\Database\Eloquent\Model::withoutEvents(function () use ($ticket) {
+                    $ticket->updateQuietly([
+                        'status' => 'reopened',
+                        'reopened_at' => now()
+                    ]);
                 });
 
+                $ticket->refresh();
                 if ($ticket->assignedTo) {
                     $ticket->assignedTo->notify(new TicketReopened($ticket));
                 }
 
                 app(TicketEscalationService::class)->handleReopen($ticket);
-                return;
             }
         }
     }
 
-    /**
-     * Check for negative keywords in replies
-     */
     private function isNegativeReply(string $message): bool
     {
-        $keywords = ['not fixed', 'still an issue', 'reopen', 'unsolved'];
-        return Str::contains(strtolower($message), $keywords);
+        $keywords = [
+            'not fixed', 'still an issue', 'reopen', 'unsolved',
+            'not resolved', 'still broken', 'does not work',
+            'issue persists', 'problem remains'
+        ];
+        $message = strtolower(trim($message));
+        foreach ($keywords as $keyword) {
+            if (str_contains($message, $keyword)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
