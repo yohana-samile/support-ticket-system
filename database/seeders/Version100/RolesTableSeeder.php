@@ -20,7 +20,7 @@ class RolesTableSeeder extends Seeder
             $roles = [
                 ['name' => 'administration', 'display_name' => 'Administration', 'description' => 'Administrative access', 'isadmin' => 1],
                 ['name' => 'customer_supporter', 'display_name' => 'Customer Supporter', 'description' => 'customer supporter', 'isadmin' => 1],
-                ['name' => 'reporter', 'display_name' => 'Reporter', 'description' => 'report any issue', 'isadmin' => 0],
+                ['name' => 'client', 'display_name' => 'Client', 'description' => 'report any issue', 'isadmin' => 0],
             ];
 
             foreach ($roles as $role) {

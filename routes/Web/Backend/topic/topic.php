@@ -1,0 +1,20 @@
+<?php
+Route::group([
+    'namespace' => 'Backend',
+    'prefix' => 'backend',
+    'as' => 'backend.'
+], function () {
+    Route::group(['prefix' => 'topic', 'as' => 'topic.'], function () {
+        Route::get('/index', 'TopicController@index')->name('index');
+        Route::get('/topic', 'TopicController@getAll')->name('topic');
+        Route::get('/topic/{serviceUid}', 'TopicController@getByService')->name('get_by_service');
+
+        Route::get('/create', 'TopicController@create')->name('create');
+        Route::post('/', 'TopicController@store')->name('store');
+        Route::get('/{topic}', 'TopicController@show')->name('show');
+        Route::get('/edit/{topic}', 'TopicController@edit')->name('edit');
+        Route::put('/{topic}', 'TopicController@update')->name('update');
+        Route::delete('/{topic}', 'TopicController@destroy')->name('destroy');
+        Route::get('/topic_by_services/{topic}', 'TopicController@getByService')->name('topic_by_services');
+    });
+})->middleware('access.routeNeedsPermission:manage_topic');

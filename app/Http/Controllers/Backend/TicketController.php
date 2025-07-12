@@ -5,20 +5,20 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Backend\TicketRequest;
 use App\Models\Access\User;
-use App\Models\Category;
 use App\Models\System\Code;
 use App\Models\System\CodeValue;
-use App\Models\Ticket;
+use App\Models\Ticket\Ticket;
 use App\Repositories\Backend\TicketRepository;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class TicketController extends Controller
 {
     protected $ticketRepository;
 
-    public function __construct(TicketRepository $ticketRepository)
+    public function __construct()
     {
-        $this->ticketRepository = $ticketRepository;
+        $this->ticketRepository = app(TicketRepository::class);
     }
 
     public function index()
@@ -31,20 +31,20 @@ class TicketController extends Controller
     {
         $codeStatusId = Code::query()->where('name', 'Ticket Status')->value('id');
         $codePriorityId = Code::query()->where('name', 'Ticket Priority')->value('id');
-        $data['categories'] = Category::all();
-        $data['users'] = User::query()->where('is_reporter', false)->get();
-        $data['customers'] = User::where('is_reporter', true)->get();
+
         $data['statuses'] = CodeValue::getCodeValueByCodeId($codeStatusId);
         $data['priorities'] = CodeValue::getCodeValueByCodeId($codePriorityId);
 
         return view('pages.backend.ticket.create', $data);
     }
 
-
     public function store(TicketRequest $request)
     {
         $ticket = $this->ticketRepository->store($request->validated());
-        return redirect()->route('backend.ticket.show', $ticket->uid)->with('success', 'Ticket created successfully!');
+        return response()->json([
+            'message' => 'Ticket created successfully',
+            'data' => $ticket
+        ], Response::HTTP_CREATED);
     }
 
     public function show($ticketUid)
@@ -52,7 +52,9 @@ class TicketController extends Controller
         $data['ticket'] = Ticket::with([
             'attachments',
             'comments.user',
-            'category',
+            'topic',
+            'subtopic',
+            'tertiaryTopic',
             'assignedTo',
             'activities' => function($query) {
                 $query->with('causer')
@@ -60,8 +62,6 @@ class TicketController extends Controller
                     ->limit(15);
             }
         ])->where('uid', $ticketUid)->firstOrFail();
-
-        $data['users'] = User::where('is_reporter', false)->get();
 
         return view('pages.backend.ticket.show', $data);
     }
@@ -72,11 +72,6 @@ class TicketController extends Controller
         $codePriorityId = Code::query()->where('name', 'Ticket Priority')->value('id');
 
         $data['ticket'] = $this->ticketRepository->find($ticketUid);
-
-        $data['categories'] = Category::all();
-        $data['users'] = User::query()->where('is_reporter', false)->get();
-
-        $data['customers'] = User::where('is_reporter', true)->get();
 
         $data['statuses'] = CodeValue::getCodeValueByCodeId($codeStatusId);
         $data['priorities'] = CodeValue::getCodeValueByCodeId($codePriorityId);
@@ -130,5 +125,10 @@ class TicketController extends Controller
 
         return redirect()->back()
             ->with('success', 'Ticket has been reassigned successfully');
+    }
+
+    public function getClientHistory($clientId)
+    {
+        return Ticket::where('client_id', $clientId)->with(['service', 'topic', 'subtopic', 'tertiaryTopic', 'user'])->latest()->get();
     }
 }

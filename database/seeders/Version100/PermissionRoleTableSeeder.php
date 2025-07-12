@@ -21,7 +21,7 @@ class PermissionRoleTableSeeder extends Seeder
         $this->delete('permission_role');
 
         $this->assignPermissionsToRole('administration', Permission::query()->pluck('id')->toArray());
-        $this->assignPermissionsToRole('reporter', ['reporter']);
+        $this->assignPermissionsToRole('client', ['client']);
         $this->assignPermissionsToRole('customer_supporter', ['customer_supporter']);
         $this->enableForeignKeys('permission_role');
     }

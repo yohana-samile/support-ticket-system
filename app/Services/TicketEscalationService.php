@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Access\User;
-use App\Models\Ticket;
+use App\Models\Ticket\Ticket;
 
 class TicketEscalationService
 {

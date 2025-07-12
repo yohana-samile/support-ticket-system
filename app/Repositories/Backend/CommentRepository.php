@@ -3,7 +3,7 @@
 namespace App\Repositories\Backend;
 use App\Models\Access\User;
 use App\Models\Comment;
-use App\Models\Ticket;
+use App\Models\Ticket\Ticket;
 use App\Notifications\TicketCommentedNotification;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;

@@ -23,7 +23,7 @@ class PermissionGroupTableSeeder extends Seeder
 
         $permissionGroups = [
             ['id' => 1, 'name' => 'Administration', 'description' => 'admin only permissions'],
-            ['id' => 3, 'name' => 'Reporter', 'description' => 'Can report any issue'],
+            ['id' => 3, 'name' => 'Client', 'description' => 'Can report any issue'],
             ['id' => 3, 'name' => 'Customer Supporter', 'description' => 'Customer Supporter'],
         ];
 

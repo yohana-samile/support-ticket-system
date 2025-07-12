@@ -24,6 +24,7 @@ class CodesTableSeeder extends Seeder
             ['name' => 'Gender', 'lang' => 'gender', 'is_system_defined' => 0],
             ['name' => 'Ticket Status', 'lang' => 'ticket_status', 'is_system_defined' => 1],
             ['name' => 'Ticket Priority', 'lang' => 'ticket_priority', 'is_system_defined' => 1],
+            ['name' => 'Mobile Operator', 'lang' => 'mobile_operator', 'is_system_defined' => 1],
         ];
 
         foreach ($codes as $code) {

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
-use App\Models\Ticket;
+use App\Models\Ticket\Ticket;
 use App\Repositories\Backend\CommentRepository;
 use Illuminate\Http\Request;
 

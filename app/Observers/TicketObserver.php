@@ -2,7 +2,7 @@
 
 namespace App\Observers;
 
-use App\Models\Ticket;
+use App\Models\Ticket\Ticket;
 use App\Notifications\SatisfactionSurvey;
 use App\Notifications\TicketReopened;
 use App\Services\TicketEscalationService;

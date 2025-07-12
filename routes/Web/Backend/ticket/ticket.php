@@ -7,7 +7,7 @@ Route::group([
     Route::group(['prefix' => 'ticket', 'as' => 'ticket.'], function () {
         Route::get('/index', 'TicketController@index')->name('index');
         Route::get('/create', 'TicketController@create')->name('create');
-        Route::post('/', 'TicketController@store')->name('store');
+        Route::post('/store', 'TicketController@store')->name('store');
         Route::get('/{ticket}', 'TicketController@show')->name('show');
         Route::get('/edit/{ticket}', 'TicketController@edit')->name('edit');
         Route::put('/{ticket}', 'TicketController@update')->name('update');
@@ -21,5 +21,7 @@ Route::group([
         Route::post('/update-status/{ticket}', 'TicketController@updateStatus')->name('update-status');
         Route::post('/attach-services/{ticket}', 'TicketController@attachServices')->name('attach-services');
         Route::get('/reports', 'TicketController@reports')->name('reports');
+
+        Route::get('/client_ticket_history/{clientId}', 'TicketController@getClientHistory')->name('client_ticket_history');
     });
 })->middleware('access.routeNeedsPermission:case_worker');

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Ticket;
+use App\Models\Ticket\Ticket;
 use Illuminate\Console\Command;
 
 class AutoCloseResolvedTickets extends Command

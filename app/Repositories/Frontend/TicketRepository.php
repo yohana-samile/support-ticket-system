@@ -3,15 +3,12 @@
 namespace App\Repositories\Frontend;
 use App\Models\Access\User;
 use App\Models\System\CodeValue;
-use App\Models\Ticket;
+use App\Models\Ticket\Ticket;
 use App\Notifications\TicketAssignedNotification;
 use App\Notifications\TicketCreatedNotification;
-use App\Notifications\TicketReassignedNotification;
-use App\Notifications\TicketUnassignedNotification;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Spatie\Activitylog\Models\Activity;
 
 class TicketRepository extends  BaseRepository {
     const MODEL = Ticket::class;

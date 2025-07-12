@@ -3,20 +3,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use OwenIt\Auditing\Auditable;
-use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class BaseModel extends Model implements AuditableContract
+class BaseModel extends Model
 {
-    use SoftDeletes, HasFactory, Auditable;
+    use SoftDeletes, HasFactory;
     protected $guarded = [];
-
-    protected $auditableEvents = [
-        'deleted',
-        'updated',
-        'restored',
-        'created'
-    ];
 
     protected static function booted()
     {

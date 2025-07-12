@@ -2,7 +2,7 @@
     namespace App\Models\Access;
     use App\Models\Access\Attribute\UserAttribute;
     use App\Models\Access\Relationship\UserRelationship;
-    use App\Models\Ticket;
+    use App\Models\Ticket\Ticket;
     use App\Traits\HasProfilePhoto;
     use Illuminate\Contracts\Auth\MustVerifyEmail;
     use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -45,47 +45,9 @@
             return [
                 'email_verified_at' => 'datetime',
                 'password' => 'hashed',
+                'is_active' => 'boolean',
+                'specializations' => 'array'
             ];
-        }
-
-
-        public static function getUserIdByEmail($email)
-        {
-            return self::where('email', $email)->first();
-        }
-        /**
-         * Get all tickets assigned to this user
-         */
-        public function assignedTickets(): HasMany
-        {
-            return $this->hasMany(Ticket::class, 'assigned_to');
-        }
-
-        /**
-         * Get only open assigned tickets
-         */
-        public function openAssignedTickets(): HasMany
-        {
-            return $this->assignedTickets()
-                ->where('status', 'open');
-        }
-
-        /**
-         * Get only in-progress assigned tickets
-         */
-        public function inProgressAssignedTickets(): HasMany
-        {
-            return $this->assignedTickets()->where('status', 'in_progress');
-        }
-
-        /**
-         * Get overdue assigned tickets
-         */
-        public function overdueAssignedTickets(): HasMany
-        {
-            return $this->assignedTickets()
-                ->where('due_date', '<', now())
-                ->whereIn('status', ['open', 'in_progress']);
         }
     }
 

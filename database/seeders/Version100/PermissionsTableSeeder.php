@@ -24,7 +24,7 @@ class PermissionsTableSeeder extends Seeder
 
         $permissions = [
             ['name' => 'all_functions', 'display_name' => 'All Functions', 'permission_group_id' => 1, 'isadmin' => 1],
-            ['name' => 'reporter', 'display_name' => 'Reporter', 'permission_group_id' => 2, 'isadmin' => 1],
+            ['name' => 'client', 'display_name' => 'Client', 'permission_group_id' => 2, 'isadmin' => 1],
             ['name' => 'customer_supporter', 'display_name' => 'Customer Supporter', 'permission_group_id' => 2, 'isadmin' => 1],
         ];
 

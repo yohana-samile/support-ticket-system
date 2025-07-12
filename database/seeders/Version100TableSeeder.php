@@ -21,8 +21,14 @@ class Version100TableSeeder extends Seeder
 
         $this->call(CodesTableSeeder::class);
         $this->call(CodeValuesTableSeeder::class);
-        $this->call(CategoriesTableSeeder::class);
+        $this->call(SaasAppTableSeeder::class);
         $this->call(ChannelSeeder::class);
+        $this->call(StatusesTableSeeder::class);
+        $this->call(TopicsTableSeeder::class);
+        $this->call(SubTopicSeeder::class);
+        $this->call(TertiaryTopicSeeder::class);
+        $this->call(PaymentChannelSeeder::class);
+        $this->call(SenderIdsSeeder::class);
 
         $this->call(PermissionGroupTableSeeder::class);
         $this->call(PermissionsTableSeeder::class);

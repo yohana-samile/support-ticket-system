@@ -4,9 +4,9 @@
     <div class="container-fluid">
         <div id="content">
                 <div class="d-sm-flex align-items-center justify-content-end mb-4">
-                        <a href="{{ route('backend.ticket.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                            <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
-                        </a>
+                    <a href="{{ route('backend.ticket.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                        <i class="fas fa-plus fa-sm text-white-50"></i> Create New Ticket
+                    </a>
                 </div>
 
                 <div class="card shadow mb-4">

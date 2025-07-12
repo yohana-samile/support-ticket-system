@@ -68,4 +68,9 @@ trait UserAttribute
             return '<span class="tag tag-danger">'. trans('label.none') . '</span>';
         }
     }
+
+    public static function getUserIdByEmail($email)
+    {
+        return self::where('email', $email)->first();
+    }
 }
