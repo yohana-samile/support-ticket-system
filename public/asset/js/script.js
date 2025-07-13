@@ -122,45 +122,118 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedClientId = clientSelect.value;
         if (!selectedClientId) return;
 
-        // Show loading states
         showLoading(clientSelect);
         showSection('topicSection');
         topicSelect.innerHTML = '<option value="" selected disabled>Loading topics...</option>';
 
-        // Load ticket history
+        const ticketHistoryDiv = document.getElementById('ticketHistory');
+        ticketHistoryDiv.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 mb-0">Loading ticket history...</p>
+            </div>
+        `;
+
         fetch(`/backend/ticket/client_ticket_history/${selectedClientId}`)
-            .then(response => response.json())
-            .then(data => {
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(responseData => {
                 showSection('ticketHistorySection');
 
-                if (data.data.length === 0) {
-                    ticketHistoryDiv.innerHTML = '<p class="text-muted">No previous tickets found for this client.</p>';
-                    document.getElementById('clientHistoryText').textContent = 'This client has no previous tickets.';
-                } else {
-                    ticketHistoryDiv.innerHTML = '';
-                    const list = document.createElement('ul');
-                    list.className = 'list-group list-group-flush';
+                if (!responseData || !responseData.data || !responseData.data.data || !Array.isArray(responseData.data.data)) {
+                    throw new Error('Invalid data format received from server');
+                }
 
-                    data.data.slice(0, 5).forEach(ticket => {
-                        const item = document.createElement('li');
-                        item.className = 'list-group-item';
+                const tickets = responseData.data.data;
+                const paginationInfo = responseData.data;
+                const clientName = tickets[0]?.client?.name || 'Client';
+
+                if (tickets.length === 0) {
+                    ticketHistoryDiv.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-inbox empty-state-icon"></i>
+                        <p class="empty-state-text">No previous tickets found for this client.</p>
+                    </div>
+                `;
+                } else {
+                    ticketHistoryDiv.innerHTML = `
+                    <div class="ticket-history-header">
+                        <h3 class="ticket-history-title">
+                            <span class="badge bg-primary client-badge">${clientName}</span>
+                            Recent Tickets
+                        </h3>
+                        <span class="ticket-history-count">${Math.min(tickets.length, 5)} of ${paginationInfo.total}</span>
+                    </div>
+                    <div id="ticketHistoryList"></div>
+                `;
+
+                    const list = document.getElementById('ticketHistoryList');
+                    const ticketsToShow = tickets.slice(0, 5);
+
+                    ticketsToShow.forEach(ticket => {
+                        const priorityClass = ticket.priority?.toLowerCase() || 'low';
+                        const statusClass = ticket.status?.toLowerCase() || 'open';
+
+                        let categoryPath = ticket.topic?.name || 'No topic';
+                        if (ticket.subtopic?.name) categoryPath += ` › ${ticket.subtopic.name}`;
+                        if (ticket.tertiary_topic?.name) categoryPath += ` › ${ticket.tertiary_topic.name}`;
+
+                        const item = document.createElement('div');
+                        item.className = 'ticket-item';
                         item.innerHTML = `
-                            <strong>${ticket.subject}</strong> (${ticket.priority})
-                            <br><small class="text-muted">${new Date(ticket.created_at).toLocaleDateString()} - ${ticket.status}</small>
-                        `;
+                        <div class="ticket-main-info">
+                            <h4 class="ticket-title">${ticket.title || 'No title'}</h4>
+                            <span class="ticket-status ${statusClass}">${ticket.status || 'Unknown'}</span>
+                        </div>
+                        <div class="ticket-meta">
+                            <span class="ticket-category">${categoryPath}</span>
+                            <span class="ticket-assignee">
+                                <i class="bi bi-person"></i> ${ticket.assigned_to?.name || 'Unassigned'}
+                            </span>
+                            <span class="ticket-date">
+                                <i class="bi bi-calendar"></i> ${ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'Unknown date'}
+                            </span>
+                            <span class="ticket-number">
+                                <i class="bi bi-tag"></i> ${ticket.ticket_number || ''}
+                            </span>
+                        </div>
+                        ${ticket.description ? `
+                        <div class="ticket-description">
+                            ${ticket.description}
+                        </div>
+                        ` : ''}
+                        <div class="ticket-footer">
+                            <span class="ticket-priority ${priorityClass}">${ticket.priority || 'Unknown'}</span>
+                            <span class="ticket-time">
+                                <i class="bi bi-clock"></i> ${ticket.created_at ? timeAgo(ticket.created_at) : ''}
+                            </span>
+                        </div>
+                    `;
                         list.appendChild(item);
                     });
 
-                    ticketHistoryDiv.appendChild(list);
-                    document.getElementById('clientHistoryText').textContent = `Showing ${Math.min(data.data.length, 5)} of ${data.data.length} previous tickets.`;
+                    if (tickets.length > 5) {
+                        const viewAll = document.createElement('a');
+                        viewAll.href = `/backend/ticket/show/${ticket.uid}`;
+                        viewAll.className = 'view-all-tickets';
+                        viewAll.innerHTML = 'View all tickets <i class="bi bi-chevron-right"></i>';
+                        list.appendChild(viewAll);
+                    }
                 }
             })
             .catch(error => {
-                console.error('Error loading ticket history:', error);
+                ticketHistoryDiv.innerHTML = `
+                <div class="alert alert-danger m-3">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Failed to load ticket history: ${error.message}
+                </div>
+            `;
                 hideSection('ticketHistorySection');
             });
 
-        // Load topics for the selected service
         fetch(`/backend/topic/topic_by_services/${selectedServiceId}`)
             .then(response => response.json())
             .then(data => {
@@ -174,10 +247,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 hideLoading(clientSelect);
             })
             .catch(error => {
-                console.error('Error loading topics:', error);
                 topicSelect.innerHTML = '<option value="" selected disabled>Error loading topics</option>';
                 hideLoading(clientSelect);
             });
+    }
+
+    function timeAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+
+        let interval = Math.floor(seconds / 31536000);
+        if (interval >= 1) return interval + "y";
+
+        interval = Math.floor(seconds / 2592000);
+        if (interval >= 1) return interval + "mo";
+
+        interval = Math.floor(seconds / 86400);
+        if (interval >= 1) return interval + "d";
+
+        interval = Math.floor(seconds / 3600);
+        if (interval >= 1) return interval + "h";
+
+        interval = Math.floor(seconds / 60);
+        if (interval >= 1) return interval + "m";
+
+        return Math.floor(seconds) + "s";
     }
 
     // When topic is selected, load subtopics or special fields
@@ -189,7 +284,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const isPaymentTopic = selectedTopicText.includes('payment') || selectedTopicText.includes('billing') || selectedTopicText.includes('invoice');
         const isSmsTopic = selectedTopicText.includes('sms') || selectedTopicText.includes('message') || selectedTopicText.includes('delivery');
 
-        // Hide all dependent sections first
         hideSection('subtopicSection');
         hideSection('tertiaryTopicSection');
         hideSection('managerSection');
@@ -203,11 +297,9 @@ document.addEventListener('DOMContentLoaded', function() {
         hideSection('submitSection');
 
         if (isSmsTopic) {
-            // Show sender ID selection first
             showSection('senderIdSection');
             senderIdSelect.innerHTML = '<option value="" selected disabled>Loading sender IDs...</option>';
 
-            // Load all available sender IDs
             fetch('/backend/sender_id/active_sender_ids')
                 .then(response => response.json())
                 .then(data => {
@@ -224,11 +316,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     senderIdSelect.innerHTML = '<option value="" selected disabled>Error loading sender IDs</option>';
                 });
 
-            // Set up sender ID change handler
             senderIdSelect.addEventListener('change', handleSenderIdChange);
         }
         else if (isPaymentTopic) {
-            // Show payment channel section first
             showSection('paymentChannelSection');
             paymentChannelSelect.innerHTML = '<option value="" selected disabled>Loading payment channels...</option>';
 
@@ -244,11 +334,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 })
                 .catch(error => {
-                    console.error('Error loading payment channels:', error);
                     paymentChannelSelect.innerHTML = '<option value="" selected disabled>Error loading channels</option>';
                 });
 
-            // Set up payment channel change handler
             paymentChannelSelect.addEventListener('change', function() {
                 if (this.value) {
                     loadSubtopics();
@@ -256,7 +344,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         else {
-            // For regular topics, load subtopics directly
             loadSubtopics();
         }
     }
@@ -439,49 +526,119 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Handle file selection for attachments
-    function handleFileSelect(event) {
-        attachmentPreviews.innerHTML = '';
-        const files = event.target.files;
+    const addMoreFilesBtn = document.getElementById('addMoreFiles');
+    const fileCountDisplay = document.getElementById('fileCount');
 
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+    let currentFiles = [];
+    attachmentsInput.addEventListener('change', handleFileSelect);
+
+    function handleFileSelect(event) {
+        const newFiles = Array.from(event.target.files);
+
+        newFiles.forEach(newFile => {
+            const isDuplicate = currentFiles.some(
+                file => file.name === newFile.name &&
+                    file.size === newFile.size &&
+                    file.lastModified === newFile.lastModified
+            );
+            if (!isDuplicate) {
+                currentFiles.push(newFile);
+            }
+        });
+
+        updateFileInput();
+        updateFileDisplay();
+    }
+
+    function updateFileInput() {
+        const dataTransfer = new DataTransfer();
+        currentFiles.forEach(file => dataTransfer.items.add(file));
+        attachmentsInput.files = dataTransfer.files;
+    }
+
+    function updateFileDisplay() {
+        updateFileCount();
+        renderFilePreviews();
+    }
+
+    function updateFileCount() {
+        fileCountDisplay.textContent = currentFiles.length;
+    }
+
+    function renderFilePreviews() {
+        attachmentPreviews.innerHTML = '';
+
+        if (currentFiles.length === 0) {
+            attachmentPreviews.innerHTML = '<p class="text-muted">No files selected</p>';
+            return;
+        }
+
+        currentFiles.forEach((file, index) => {
             const previewDiv = document.createElement('div');
-            previewDiv.className = 'd-inline-block position-relative me-2 mb-2';
+            previewDiv.className = 'd-inline-block position-relative me-2 mb-2 border p-2 rounded';
+            previewDiv.dataset.fileIndex = index;
 
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const img = document.createElement('img');
                     img.src = e.target.result;
-                    img.className = 'attachment-preview img-thumbnail';
-                    img.alt = file.name;
+                    img.className = 'img-thumbnail';
+                    img.style.maxWidth = '100px';
+                    img.style.maxHeight = '100px';
                     previewDiv.appendChild(img);
-                    addRemoveButton(previewDiv, file.name);
+
+                    addFileInfo(previewDiv, file);
+                    addRemoveButton(previewDiv, index);
                 };
                 reader.readAsDataURL(file);
             } else {
                 const icon = document.createElement('i');
-                icon.className = 'bi bi-file-earmark attachment-preview';
-
-                const ext = file.name.split('.').pop().toLowerCase();
-                if (ext === 'pdf') icon.className += '-pdf text-danger';
-                else if (['doc', 'docx'].includes(ext)) icon.className += '-word text-primary';
-                else icon.className += '-text';
-
+                icon.className = 'bi ' + getFileIconClass(file);
+                icon.style.fontSize = '2rem';
                 previewDiv.appendChild(icon);
-                const nameSpan = document.createElement('span');
-                nameSpan.className = 'd-block small text-center';
-                nameSpan.textContent = file.name.length > 15 ? file.name.substring(0, 12) + '...' : file.name;
-                previewDiv.appendChild(nameSpan);
-                addRemoveButton(previewDiv, file.name);
+
+                addFileInfo(previewDiv, file);
+                addRemoveButton(previewDiv, index);
             }
 
             attachmentPreviews.appendChild(previewDiv);
+        });
+    }
+
+    function addFileInfo(container, file) {
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'small mt-1';
+        fileInfo.innerHTML = `
+        <strong class="d-block text-truncate" style="max-width: 120px">${file.name}</strong>
+        <small>${formatFileSize(file.size)}</small>
+    `;
+        container.appendChild(fileInfo);
+    }
+
+    function getFileIconClass(file) {
+        if (file.type.startsWith('image/')) return 'bi-file-image text-primary';
+
+        const ext = file.name.split('.').pop().toLowerCase();
+        switch (ext) {
+            case 'pdf': return 'bi-file-earmark-pdf text-danger';
+            case 'doc':
+            case 'docx': return 'bi-file-earmark-word text-primary';
+            case 'xls':
+            case 'xlsx': return 'bi-file-earmark-excel text-success';
+            default: return 'bi-file-earmark';
         }
     }
 
-    function addRemoveButton(container, fileName) {
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function addRemoveButton(container, fileIndex) {
         const removeBtn = document.createElement('button');
         removeBtn.className = 'btn btn-sm btn-danger position-absolute top-0 end-0 p-0 rounded-circle';
         removeBtn.style.width = '20px';
@@ -490,19 +647,36 @@ document.addEventListener('DOMContentLoaded', function() {
         removeBtn.innerHTML = '<i class="bi bi-x" style="font-size: 0.75rem;"></i>';
         removeBtn.onclick = (e) => {
             e.preventDefault();
-            container.remove();
-            // Remove the file from the input
-            const dataTransfer = new DataTransfer();
-            const files = attachmentsInput.files;
-            for (let i = 0; i < files.length; i++) {
-                if (files[i].name !== fileName) {
-                    dataTransfer.items.add(files[i]);
-                }
-            }
-            attachmentsInput.files = dataTransfer.files;
+            e.stopPropagation();
+
+            // Remove the file from currentFiles
+            currentFiles.splice(fileIndex, 1);
+
+            // Update the UI and file input
+            updateFileInput();
+            updateFileDisplay();
         };
         container.appendChild(removeBtn);
     }
+    addMoreFilesBtn.addEventListener('click', function() {
+        const tempInput = document.createElement('input');
+        tempInput.type = 'file';
+        tempInput.multiple = true;
+        tempInput.accept = '.jpg,.jpeg,.png,.pdf,.doc,.docx';
+
+        tempInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const event = new Event('change');
+                Object.defineProperty(event, 'target', {
+                    value: { files: e.target.files },
+                    enumerable: true
+                });
+                attachmentsInput.dispatchEvent(event);
+            }
+        });
+
+        tempInput.click();
+    });
 
     function handleFormSubmit(event) {
         event.preventDefault();
@@ -615,7 +789,9 @@ document.addEventListener('DOMContentLoaded', function() {
         hideSection('submitSection');
 
         // Clear previews
-        attachmentPreviews.innerHTML = '';
+        currentFiles = [];
+        updateFileInput();
+        updateFileDisplay();
     }
 
     function validateForm() {

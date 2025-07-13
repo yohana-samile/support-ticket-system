@@ -129,6 +129,9 @@ class TicketController extends Controller
 
     public function getClientHistory($clientId)
     {
-        return Ticket::where('client_id', $clientId)->with(['service', 'topic', 'subtopic', 'tertiaryTopic', 'user'])->latest()->get();
+        $history = $this->ticketRepository->getUserTickets($clientId);
+        return response()->json([
+            'data' => $history
+        ]);
     }
 }
