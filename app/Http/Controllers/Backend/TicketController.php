@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Backend\TicketRequest;
 use App\Models\Access\User;
+use App\Models\Channel;
 use App\Models\System\Code;
 use App\Models\System\CodeValue;
 use App\Models\Ticket\Ticket;
@@ -34,6 +35,7 @@ class TicketController extends Controller
 
         $data['statuses'] = CodeValue::getCodeValueByCodeId($codeStatusId);
         $data['priorities'] = CodeValue::getCodeValueByCodeId($codePriorityId);
+        $data['channels'] = Channel::query()->where('is_active', true)->get();
 
         return view('pages.backend.ticket.create', $data);
     }

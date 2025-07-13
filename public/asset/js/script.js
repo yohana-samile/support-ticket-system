@@ -25,6 +25,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize the form
     loadServices();
 
+    managerSelect.addEventListener('change', function() {
+        if (this.value) {
+            resetChannelSelections();
+            showChannelModal();
+        } else {
+            resetChannelSelections();
+        }
+    });
+
     // Event listeners
     serviceSelect.addEventListener('change', handleServiceChange);
     clientSelect.addEventListener('change', handleClientChange);
@@ -36,6 +45,63 @@ document.addEventListener('DOMContentLoaded', function() {
     subjectField.addEventListener('input', handleSubjectInput);
     descriptionField.addEventListener('input', handleDescriptionInput);
     priorityField.addEventListener('change', handlePriorityChange);
+
+    function showChannelModal() {
+        $('#channelModal').modal('show');
+    }
+    function resetChannelSelections() {
+        selectedChannels = [];
+        $('.channel-card').removeClass('border border-primary');
+        $('#notification_channels_wrapper').html('');
+        updateChannelSelectionSummary();
+    }
+    function updateChannelSelectionSummary() {
+        const summaryContainer = document.getElementById('channelSelectionSummary');
+        if (!summaryContainer) {
+            const managerSection = document.getElementById('managerSection');
+            const summaryDiv = document.createElement('div');
+            summaryDiv.id = 'channelSelectionSummary';
+            summaryDiv.className = 'mt-2 channel-summary';
+            managerSection.appendChild(summaryDiv);
+        }
+
+        const summaryElement = document.getElementById('channelSelectionSummary');
+        if (selectedChannels.length > 0) {
+            const channelBadges = selectedChannels.map(channel =>
+                `<span class="badge bg-primary me-1">${channel}</span>`
+            ).join('');
+            summaryElement.innerHTML = `
+                <small class="text-muted">Notification channels:</small>
+                <div>${channelBadges}</div>
+            `;
+        } else {
+            summaryElement.innerHTML = `
+                <small class="text-muted">No notification channels selected</small>
+            `;
+        }
+    }
+    $('.channel-card').on('click', function() {
+        const channel = $(this).data('channel');
+        $(this).toggleClass('border border-primary');
+
+        if (selectedChannels.includes(channel)) {
+            selectedChannels = selectedChannels.filter(c => c !== channel);
+        } else {
+            selectedChannels.push(channel);
+        }
+
+        // Update hidden inputs and summary
+        $('#notification_channels_wrapper').html('');
+        selectedChannels.forEach(channel => {
+            $('#notification_channels_wrapper').append(
+                `<input type="hidden" name="notification_channels[]" value="${channel}">`
+            );
+        });
+    });
+    $('#channelModal .btn-primary').on('click', function() {
+        updateChannelSelectionSummary();
+        $('#channelModal').modal('hide');
+    });
 
     // Helper functions for section visibility
     function showSection(sectionId) {
@@ -112,7 +178,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             })
             .catch(error => {
-                console.error('Error loading clients:', error);
                 clientSelect.innerHTML = '<option value="" selected disabled>Error loading clients</option>';
             });
     }
@@ -227,10 +292,10 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 ticketHistoryDiv.innerHTML = `
-                <div class="alert alert-danger m-3">
-                    <i class="bi bi-exclamation-triangle-fill"></i> Failed to load ticket history: ${error.message}
-                </div>
-            `;
+                    <div class="alert alert-danger m-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Failed to load ticket history: ${error.message}
+                    </div>
+                `;
                 hideSection('ticketHistorySection');
             });
 
@@ -521,7 +586,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error loading managers:', error);
                 managerSelect.innerHTML = '<option value="" selected disabled>Error loading managers</option>';
             });
     }
@@ -610,9 +674,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const fileInfo = document.createElement('div');
         fileInfo.className = 'small mt-1';
         fileInfo.innerHTML = `
-        <strong class="d-block text-truncate" style="max-width: 120px">${file.name}</strong>
-        <small>${formatFileSize(file.size)}</small>
-    `;
+            <strong class="d-block text-truncate" style="max-width: 120px">${file.name}</strong>
+            <small>${formatFileSize(file.size)}</small>
+        `;
         container.appendChild(fileInfo);
     }
 
@@ -697,7 +761,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData();
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
 
-        // Add all required fields
+        // required fields
         formData.append('saas_app_id', serviceSelect.value);
         formData.append('client_id', clientSelect.value);
         formData.append('topic_id', topicSelect.value);
@@ -717,6 +781,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!document.getElementById('paymentChannelSection').classList.contains('hidden-section')) {
             formData.append('payment_channel_id', paymentChannelSelect.value);
         }
+        selectedChannels.forEach((channel, index) => {
+            formData.append(`notification_channels[${index}]`, channel);
+        });
 
         const files = attachmentsInput.files;
         for (let i = 0; i < files.length; i++) {
@@ -732,7 +799,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
             .then(response => {
-                console.log('Raw response:', response);
                 if (!response.ok) {
                     return response.json().then(err => {
                         throw new Error(err.message || 'Network response was not ok');
