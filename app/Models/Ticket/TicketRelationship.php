@@ -7,8 +7,12 @@ use App\Models\Access\Client;
 use App\Models\Access\User;
 use App\Models\Attachment;
 use App\Models\Comment;
+use App\Models\PaymentChannel;
+use App\Models\SaasApp;
+use App\Models\SenderId;
 use App\Models\SubTopic;
 use App\Models\TertiaryTopic;
+use App\Models\TicketStatusHistory;
 use App\Models\Topic;
 
 trait TicketRelationship
@@ -16,6 +20,25 @@ trait TicketRelationship
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function paymentChannel()
+    {
+        return $this->belongsTo(PaymentChannel::class, 'payment_channel_id');
+    }
+    public function sender()
+    {
+        return $this->belongsTo(SenderId::class, 'sender_id');
+    }
+
+    public function saasApp()
+    {
+        return $this->belongsTo(SaasApp::class, 'saas_app_id');
+    }
+
+    public function statusHistory()
+    {
+        return $this->hasMany(TicketStatusHistory::class)->with('changedByUser')->latest('changed_at');
     }
 
     public function assignedTo()
@@ -30,7 +53,7 @@ trait TicketRelationship
 
     public function subtopic()
     {
-        return $this->belongsTo(SubTopic::class);
+        return $this->belongsTo(SubTopic::class, 'sub_topic_id');
     }
 
     public function tertiaryTopic()

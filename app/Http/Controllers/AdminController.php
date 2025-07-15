@@ -1,12 +1,13 @@
 <?php
 namespace App\Http\Controllers;
-use App\Models\Category;
+
+use App\Models\Status;
 use App\Models\Ticket\Ticket;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
-
     public function dashboard()
     {
         if (!Auth::check()) {
@@ -21,77 +22,97 @@ class AdminController extends Controller
                 'resolvedTickets' => Ticket::where('user_id', $user->id)->where('status', 'resolved')->count(),
                 'reOpenTickets' => Ticket::where('user_id', $user->id)->whereIn('status', ['reopen', 'reopened'])->count(),
             ]);
-        } else {
-            return view('dashboard.backend.dashboard');
-//
-//            return view('dashboard.backend.dashboard', [
-//                'totalTickets' => Ticket::count(),
-//                'openTickets' => Ticket::where('status', 'open')->count(),
-//                'resolvedTickets' => Ticket::where('status', 'resolved')->count(),
-//                'reopenPercentage' => Ticket::where('status', 'reopened')->count(),
-//                'reopenStats' => [
-//                    'total_tickets' => Ticket::count(),
-//                    'never_reopened' => Ticket::where('reopen_history_count', 0)->count(),
-//                    'reopened_once' => Ticket::where('reopen_history_count', 1)->count(),
-//                    'reopened_twice' => Ticket::where('reopen_history_count', 2)->count(),
-//                    'frequent_reopens' => Ticket::where('reopen_history_count', '>=', 3)->count(),
-//                    'problem_tickets' => Ticket::where('reopen_history_count', '>=', 3)
-//                        ->orderBy('reopen_history_count', 'desc')
-//                        ->take(5)
-//                        ->get()
-//                ],
-//                'statusCounts' => [
-//                    'open' => Ticket::where('status', 'open')->count(),
-//                    'in_progress' => Ticket::where('status', 'in_progress')->count(),
-//                    'resolved' => Ticket::where('status', 'resolved')->count(),
-//                    'closed' => Ticket::where('status', 'closed')->count(),
-//                    'reopened' => Ticket::where('status', 'reopened')->count(),
-//                ],
-//                'categories' => Category::withCount('tickets')
-//                    ->get()
-//                    ->map(function($category) {
-//                        return [
-//                            'name' => $category->name,
-//                            'count' => $category->tickets_count,
-//                            'color' => $category->color ?? $this->generateRandomColor(),
-//                            'hover_color' => $category->hover_color ?? $this->generateRandomColor(0.7)
-//                        ];
-//                    }),
-//                'reopenCategories' => Category::withCount(['tickets' => function($query) {
-//                    $query->where('reopen_history_count', '>', 0);
-//                }])
-//                    ->get()
-//                    ->map(function($category) {
-//                        return [
-//                            'name' => $category->name,
-//                            'reopen_count' => $category->tickets_count,
-//                            'color' => $category->color ?? $this->generateRandomColor(),
-//                            'hover_color' => $category->hover_color ?? $this->generateRandomColor(0.7)
-//                        ];
-//                    }),
-//                'recentTickets' => Ticket::with(['user', 'assignedTo'])
-//                    ->latest()
-//                    ->take(10)
-//                    ->get(),
-//                'frequentlyReopenedTickets' => Ticket::where('reopen_history_count', '>', 2)
-//                    ->orderBy('reopen_history_count', 'desc')
-//                    ->take(5)
-//                    ->get(),
-//                'assignedTickets' => $user->assignedTickets()->count(),
-//                'overdueTickets' => $user->assignedTickets()
-//                    ->where('due_date', '<', now())
-//                    ->whereIn('status', ['open', 'in_progress'])
-//                    ->count()
-//            ]);
         }
+
+        $totalTickets = Ticket::count();
+        $reopenedCount = Ticket::where('status', 'reopened')->count();
+
+        // Get all statuses with their colors
+        $statuses = Status::all()->mapWithKeys(function ($status) {
+            return [$status->slug => [
+                'color_class' => $status->color_class,
+                'text_color_class' => $status->text_color_class,
+                'name' => $status->name
+            ]];
+        })->toArray();
+
+        // Get status counts including all possible statuses
+        $statusCounts = [];
+        foreach ($statuses as $slug => $status) {
+            $statusCounts[$slug] = Ticket::where('status', $slug)->count();
+        }
+
+        return view('dashboard.backend.dashboard', [
+            // Ticket counts
+            'totalTickets' => $totalTickets,
+            'openTickets' => $statusCounts['open'] ?? 0,
+            'resolvedTickets' => $statusCounts['resolved'] ?? 0,
+            'reopenPercentage' => $totalTickets > 0 ? round(($reopenedCount / $totalTickets) * 100, 2) : 0,
+
+            // Reopen statistics
+            'reopenStats' => [
+                'total_tickets' => $totalTickets,
+                'never_reopened' => Ticket::where('reopen_history_count', 0)->count(),
+                'reopened_once' => Ticket::where('reopen_history_count', 1)->count(),
+                'reopened_twice' => Ticket::where('reopen_history_count', 2)->count(),
+                'frequent_reopens' => Ticket::where('reopen_history_count', '>=', 3)->count(),
+                'problem_tickets' => Ticket::where('reopen_history_count', '>=', 3)
+                    ->orderBy('reopen_history_count', 'desc')
+                    ->take(5)
+                    ->get()
+            ],
+
+            // Status breakdown - now includes all statuses from the database
+            'statusCounts' => $statusCounts,
+
+            // Ticket categorization
+            'topics' => Ticket::with('topic')
+                ->selectRaw('topic_id, count(*) as count')
+                ->groupBy('topic_id')
+                ->orderBy('count', 'desc')
+                ->take(5)
+                ->get(),
+
+            'subtopics' => Ticket::with('subtopic')
+                ->selectRaw('sub_topic_id, count(*) as count')
+                ->groupBy('sub_topic_id')
+                ->orderBy('count', 'desc')
+                ->take(5)
+                ->get()
+                ->filter(fn($t) => $t->subtopic),
+
+            'tertiaryTopics' => Ticket::with('tertiaryTopic')
+                ->selectRaw('tertiary_topic_id, count(*) as count')
+                ->groupBy('tertiary_topic_id')
+                ->orderBy('count', 'desc')
+                ->take(5)
+                ->get(),
+
+            // Recent activity
+            'recentTickets' => Ticket::with(['user', 'assignedTo'])
+                ->latest()
+                ->take(10)
+                ->get(),
+
+            'frequentlyReopenedTickets' => Ticket::where('reopen_history_count', '>', 2)
+                ->orderBy('reopen_history_count', 'desc')
+                ->take(5)
+                ->get(),
+
+            // User-specific stats
+            'assignedTickets' => $user->assignedTickets()->count(),
+            'overdueTickets' => $user->assignedTickets()
+                ->where('created_at', '<', now()->subDays(2))
+                ->whereIn('status', ['open', 'in_progress'])
+                ->count(),
+
+            // Status colors from database
+            'statusColors' => $statuses
+        ]);
     }
 
-    private function generateRandomColor($opacity = 1)
+    public function landing()
     {
-        return 'rgba(' . rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255) . ',' . $opacity . ')';
-    }
-
-    public function landing(){
         return view('auth.login');
     }
 }

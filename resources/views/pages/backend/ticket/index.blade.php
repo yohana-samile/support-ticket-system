@@ -35,12 +35,12 @@
                                     <tr>
                                         <th>Ticket ID</th>
                                         <th>Title</th>
-                                        <th>Category</th>
+                                        <th>Topic</th>
                                         <th>Status</th>
                                         <th>Priority</th>
                                         <th>Reported</th>
                                         <th>Requester</th>
-                                        <th>Assignee</th>
+                                        <th>Assigned_to</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -53,7 +53,7 @@
                                                     {{ Str::limit($ticket->title, 30) }}
                                                 </a>
                                             </td>
-                                            <td>{{ $ticket->category->name }}</td>
+                                            <td>{{ $ticket->topic->name }}</td>
                                             <td>
                                             <span class="badge badge-{{ $ticket->status_badge }}">
                                                 {{ ucfirst(str_replace('_', ' ', $ticket->status)) }}
@@ -81,7 +81,7 @@
                                                 </a>
 
                                                 @if($ticket->status !== 'closed')
-                                                    <a href="{{ route('backend.ticket.edit', $ticket->uid) }}" class="text-primary mr-2 text-decoration-none" title="Edit">
+                                                    <a href="{{ route('backend.ticket.edit', $ticket->uid) }}" class="text-primary mr-2 text-decoration-none" title="Edit" hidden="">
                                                         <i class="fas fa-edit fa-sm"></i>
                                                     </a>
 
@@ -102,12 +102,12 @@
                                     <tr>
                                         <th>Ticket ID</th>
                                         <th>Title</th>
-                                        <th>Category</th>
+                                        <th>Topic</th>
                                         <th>Status</th>
                                         <th>Priority</th>
                                         <th>Reported</th>
                                         <th>Requester</th>
-                                        <th>Assignee</th>
+                                        <th>Assigned_to</th>
                                         <th>Actions</th>
                                     </tr>
                                 </tfoot>

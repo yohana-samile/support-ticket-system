@@ -28,7 +28,7 @@ class TicketCreatedNotification extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('Ticket Created: ' . $this->ticket->title)
-            ->line('Your ticket has been successfully created.')
+            ->line('Thanks for reaching out! Your ticket has been created. We will let you know as soon as it’s resolved.')
             ->action('View Ticket', route('backend.ticket.show', $this->ticket->uid))
             ->line('Ticket ID: ' . $this->ticket->ticket_number)
             ->line('We will notify you when there are updates.');

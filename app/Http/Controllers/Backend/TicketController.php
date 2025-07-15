@@ -54,7 +54,9 @@ class TicketController extends Controller
         $data['ticket'] = Ticket::with([
             'attachments',
             'comments.user',
+            'saasApp',
             'topic',
+            'statusHistory',
             'subtopic',
             'tertiaryTopic',
             'assignedTo',

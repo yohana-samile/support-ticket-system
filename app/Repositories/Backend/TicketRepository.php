@@ -4,6 +4,7 @@ namespace App\Repositories\Backend;
 use App\Models\Access\User;
 use App\Models\System\CodeValue;
 use App\Models\Ticket\Ticket;
+use App\Models\TicketStatusHistory;
 use App\Notifications\TicketAssignedNotification;
 use App\Notifications\TicketCreatedNotification;
 use App\Notifications\TicketReassignedNotification;
@@ -54,6 +55,12 @@ class TicketRepository extends  BaseRepository {
                 'assigned_to' => $data['assigned_to'] ?? null,
             ]);
 
+            $this->updateTicketStatusHistory(
+                $ticket,
+                $status,
+                auth()->user()
+            );
+
             $this->notifyTicketCreated(auth()->user(), $ticket);
 
             if (!empty($data['assigned_to'])) {
@@ -77,15 +84,24 @@ class TicketRepository extends  BaseRepository {
     {
         return DB::transaction(function () use ($uid, $data) {
             $ticket = $this->find($uid);
+            $originalStatus = $ticket->status;
 
             $ticket->update([
                 'title' => $data['title'],
                 'description' => $data['description'],
                 'category_id' => $data['category_id'],
                 'priority' => $data['priority'],
-                'status' => $data['status'] ?? $ticket->status,
+                'status' => $data['status'] ?? $originalStatus,
                 'assigned_to' => $data['assigned_to'] ?? $ticket->assigned_to,
             ]);
+
+            if (isset($data['status'])) {
+                $this->updateTicketStatusHistory(
+                    $ticket,
+                    $data['status'],
+                    auth()->user()
+                );
+            }
 
             if (isset($data['attachments'])) {
                 $this->storeAttachments($ticket, $data['attachments']);
@@ -93,6 +109,19 @@ class TicketRepository extends  BaseRepository {
 
             return $ticket;
         });
+    }
+
+    protected function updateTicketStatusHistory(Ticket $ticket, string $newStatus, User $changedBy)
+    {
+        if ($ticket->status !== $newStatus) {
+            TicketStatusHistory::create([
+                'ticket_id' => $ticket->id,
+                'from_status' => $ticket->status,
+                'to_status' => $newStatus,
+                'changed_by' => $changedBy->id,
+                'changed_at' => now(),
+            ]);
+        }
     }
 
     public function delete($ticketUid) {
@@ -116,6 +145,12 @@ class TicketRepository extends  BaseRepository {
                 'response_time' => $this->calculateResponseTime($ticket),
             ]);
         }
+
+        $this->updateTicketStatusHistory(
+            $ticket,
+            $status,
+            auth()->user()
+        );
 
         /**
          * Reset time_solved if ticket is reopened
@@ -168,8 +203,7 @@ class TicketRepository extends  BaseRepository {
             ->withProperties([
                 'previous_assignee' => $previousAssignee ? $previousAssignee->name : 'Unassigned',
                 'new_assignee' => $newAssignee ? $newAssignee->name : 'Unassigned'
-            ])
-            ->log('reassigned ticket');
+            ])->log('reassigned ticket');
     }
 
     protected function handleReassignmentNotifications(Ticket $ticket, ?User $previousAssignee, ?User $newAssignee): void
@@ -233,7 +267,6 @@ class TicketRepository extends  BaseRepository {
 
     public function getAssignedTickets($userId, $perPage = 15)
     {
-        return $this->query()->where('assigned_to', $userId)
-            ->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user'])->latest()->paginate($perPage);
+        return $this->query()->where('assigned_to', $userId)->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user'])->latest()->paginate($perPage);
     }
 }

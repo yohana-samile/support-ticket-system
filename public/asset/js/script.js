@@ -226,17 +226,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 } else {
                     ticketHistoryDiv.innerHTML = `
-                    <div class="ticket-history-header">
-                        <h3 class="ticket-history-title">
-                            <span class="badge bg-primary client-badge">${clientName}</span>
-                            Recent Tickets
-                        </h3>
-                        <span class="ticket-history-count">${Math.min(tickets.length, 5)} of ${paginationInfo.total}</span>
-                    </div>
-                    <div id="ticketHistoryList"></div>
-                `;
+                        <div class="ticket-history-header">
+                            <h3 class="ticket-history-title">
+                                <span class="badge bg-primary client-badge">${clientName}</span>
+                                Recent Tickets
+                            </h3>
+                            <span class="ticket-history-count">${Math.min(tickets.length, 5)} of ${paginationInfo.total}</span>
+                        </div>
+                        <div id="ticketHistoryList"></div>
+                    `;
 
                     const list = document.getElementById('ticketHistoryList');
+                    if (!list) {
+                        console.error('ticketHistoryList not found in DOM');
+                        return;
+                    }
                     const ticketsToShow = tickets.slice(0, 5);
 
                     ticketsToShow.forEach(ticket => {
@@ -282,8 +286,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
 
                     if (tickets.length > 5) {
+                        const firstTicketUid = tickets[0]?.uid || '';
                         const viewAll = document.createElement('a');
-                        viewAll.href = `/backend/ticket/show/${ticket.uid}`;
+                        viewAll.href = `/backend/ticket/client_ticket_history/${selectedClientId}`;
                         viewAll.className = 'view-all-tickets';
                         viewAll.innerHTML = 'View all tickets <i class="bi bi-chevron-right"></i>';
                         list.appendChild(viewAll);

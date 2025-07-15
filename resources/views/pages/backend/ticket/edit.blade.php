@@ -19,7 +19,7 @@
 
                             @include('pages.backend.ticket._form', [
                                 'ticket' => $ticket,
-                                'categories' => $categories,
+                                'topic' => $topics,
                                 'users' => $users,
                                 'customers' => $customers,
                                 'buttonText' => 'Update Ticket'

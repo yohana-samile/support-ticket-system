@@ -324,7 +324,7 @@
 
                     <!-- Service Selection -->
                     <div class="mb-3 form-section visible-section" id="serviceSection">
-                        <label for="service" class="form-label">SaaS Service <span class="text-danger">*</span></label>
+                        <label for="service" class="form-label">SaaS App <span class="text-danger">*</span></label>
                         <select class="form-select form-control select2" id="service" name="saas_app_id" required>
                             <option value="" >Select a service</option>
                         </select>
