@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\URL;
 
 class TicketAssignedNotification  extends Notification implements ShouldQueue
 {
@@ -31,7 +32,7 @@ class TicketAssignedNotification  extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject('New Ticket Assigned: ' . $this->ticket->title)
             ->line('You have been assigned a new ticket.')
-            ->action('View Ticket', route('backend.ticket.show', $this->ticket->uid))
+            ->action('Resolve Ticket', URL::signedRoute('backend.ticket.resolve.via.email', $this->ticket->uid))
             ->line('Ticket ID: ' . $this->ticket->ticket_number)
             ->line('Priority: ' . ucfirst($this->ticket->priority));
     }

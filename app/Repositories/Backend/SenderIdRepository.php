@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Repositories\Backend;
+use App\Models\Access\Client;
 use App\Models\SenderId;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
@@ -14,9 +15,15 @@ class SenderIdRepository extends BaseRepository
         return $this->query()->with('user')->latest()->get();
     }
 
-    public function getActiveSenderIds()
+    public function getActiveSenderIdsForClient($clientId)
     {
-        return $this->query()->where('is_active', true)->orderBy('created_at')->get();
+        return $this->query()
+            ->whereHas('clients', function($query) use ($clientId) {
+                $query->where('clients.id', $clientId);
+            })
+            ->where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     public function store(array $data)

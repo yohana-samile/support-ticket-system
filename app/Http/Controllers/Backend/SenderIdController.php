@@ -24,9 +24,9 @@ class SenderIdController extends Controller
         return response()->json(['data' => $senderIds]);
     }
 
-    public function activeSenderIds(): JsonResponse
+    public function activeSenderIds($clientId): JsonResponse
     {
-        $senderIds = $this->senderIdRepo->getActiveSenderIds();
+        $senderIds = $this->senderIdRepo->getActiveSenderIdsForClient($clientId);
         return response()->json(['data' => $senderIds]);
     }
 

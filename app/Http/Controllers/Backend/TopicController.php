@@ -21,7 +21,8 @@ class TopicController extends Controller
 
     public function index()
     {
-        return view('pages.backend.topic.index');
+        $topics = $this->topicRepo->getAll();
+        return view('pages.backend.topics.main.index', compact('topics'));
     }
 
     public function create()

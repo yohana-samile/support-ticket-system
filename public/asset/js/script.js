@@ -397,7 +397,14 @@ document.addEventListener('DOMContentLoaded', function() {
             showSection('senderIdSection');
             senderIdSelect.innerHTML = '<option value="" selected disabled>Loading sender IDs...</option>';
 
-            fetch('/backend/sender_id/active_sender_ids')
+            const selectedClientId = clientSelect.value;
+
+            if (!selectedClientId) {
+                senderIdSelect.innerHTML = '<option value="" selected disabled>Please select a client first</option>';
+                return;
+            }
+
+            fetch(`/backend/sender_id/active_sender_ids/${selectedClientId}`)
                 .then(response => response.json())
                 .then(data => {
                     resetSelect(senderIdSelect, 'Select a sender ID');
@@ -405,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const option = document.createElement('option');
                         option.value = sender.id;
                         option.textContent = `${sender.sender_id}`;
-                        option.dataset.operators = JSON.stringify(sender.operators);
+                        option.dataset.operators = JSON.stringify(sender.operators || []);
                         senderIdSelect.appendChild(option);
                     });
                 })

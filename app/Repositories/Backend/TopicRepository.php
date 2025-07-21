@@ -10,7 +10,7 @@ class TopicRepository extends  BaseRepository {
     const MODEL = Topic::class;
     public function getAll()
     {
-        return $this->query()::with('saas_app')->get();
+        return $this->query()->with('saasApp')->get();
     }
 
     public function store(array $data)
@@ -37,7 +37,7 @@ class TopicRepository extends  BaseRepository {
 
     public function findByUid($topicUid)
     {
-        return $this->query()->where('uid', $topicUid)->with('saas_app')->first();
+        return $this->query()->where('uid', $topicUid)->with('saasApp')->first();
     }
     public function delete(Topic $topic): bool
     {

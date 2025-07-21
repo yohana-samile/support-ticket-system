@@ -46,11 +46,11 @@
             Tickets
         </div>
         <li class="nav-item {{ request()->routeIs('backend.ticket.*') ? 'active' : '' }}">
-            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseLoan" aria-expanded="true" aria-controls="collapseLoan">
+            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseTicket" aria-expanded="true" aria-controls="collapseTicket">
                 <i class="fas fa-fw fa-ticket-alt"></i>
                 <span>Tickets management</span>
             </a>
-            <div id="collapseLoan" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
+            <div id="collapseTicket" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
                     <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('All Tickets')}}</a>
                     <h6 class="collapse-header">Create New Ticket:</h6>
@@ -59,6 +59,26 @@
                             {{ $app->abbreviation }}
                         </a>
                     @endforeach
+                </div>
+            </div>
+        </li>
+
+        <div class="sidebar-heading">
+            Topics
+        </div>
+        <li class="nav-item {{ request()->routeIs('backend.topic.*') ? 'active' : '' }}">
+            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseTopic" aria-expanded="true" aria-controls="collapseTopic">
+                <i class="fas fa-fw fa-ticket-alt"></i>
+                <span>Topics management</span>
+            </a>
+            <div id="collapseTopic" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <h6 class="collapse-header">Main:</h6>
+                    <a class="collapse-item" href="{{ route('backend.topic.index') }}">{{__('Topics')}}</a>
+                    <h6 class="collapse-header">Sub:</h6>
+                    <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('Sub Topics')}}</a>
+                    <h6 class="collapse-header">Tertiary:</h6>
+                    <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('Tertiary Topics')}}</a>
                 </div>
             </div>
         </li>

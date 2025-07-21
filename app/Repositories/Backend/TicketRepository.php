@@ -29,7 +29,7 @@ class TicketRepository extends  BaseRepository {
 
     public function all($perPage = 10)
     {
-        return $this->query()->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user', 'assignedTo'])->latest()->paginate($perPage);
+        return $this->query()->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user', 'assignedTo'])->orderBy('created_at', 'DESC')->latest()->paginate($perPage);
     }
 
     public function find($ticketUid)

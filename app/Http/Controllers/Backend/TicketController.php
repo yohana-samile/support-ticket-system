@@ -103,6 +103,14 @@ class TicketController extends Controller
         return back()->with('success', 'Ticket status updated!');
     }
 
+    public function resolveViaEmail($uid)
+    {
+        $status = 'resolved';
+        $this->ticketRepository->updateStatus($uid, $status);
+        return redirect()->route('backend.ticket.show', $uid)->with('success', 'Ticket marked as resolved.');
+    }
+
+
     public function assigned()
     {
         if (auth()->user()->is_reporter) {

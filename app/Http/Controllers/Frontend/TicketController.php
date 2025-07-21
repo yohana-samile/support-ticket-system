@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\TicketRequest as StoreRequest;
-use App\Models\Category;
+use App\Models\Topic;
 use App\Models\System\Code;
 use App\Models\System\CodeValue;
 use App\Notifications\TicketReopened;
@@ -33,7 +33,7 @@ class TicketController extends Controller
     public function create()
     {
         $codePriorityId = Code::query()->where('name', 'Ticket Priority')->value('id');
-        $data['categories'] = Category::all();
+        $data['topics'] = Topic::all();
         $data['priorities'] = CodeValue::getCodeValueByCodeId($codePriorityId);
 
         return view('pages.frontend.ticket.create', $data);
@@ -49,7 +49,7 @@ class TicketController extends Controller
     {
         $codePriorityId = Code::query()->where('name', 'Ticket Priority')->value('id');
         $data['ticket'] = $this->ticketRepository->find($ticketUid);
-        $data['categories'] = Category::all();
+        $data['topics'] = Topic::all();
         $data['priorities'] = CodeValue::getCodeValueByCodeId($codePriorityId);
 
         return view('pages.frontend.ticket.edit', $data);

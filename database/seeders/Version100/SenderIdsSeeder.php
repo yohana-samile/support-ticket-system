@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Access\Client;
 use App\Models\SenderId;
 use App\Models\SubTopic;
 use App\Models\TertiaryTopic;
@@ -25,6 +26,16 @@ class SenderIdsSeeder extends Seeder
             SenderId::updateOrCreate([
                 'sender_id' => $senderId['sender_id']
             ]);
+        }
+
+        $clients = Client::all();
+        $senderIds = SenderId::all();
+
+        foreach ($clients as $client) {
+            $randomSenderIds = $senderIds->random(rand(1, 3));
+            $client->senderIds()->syncWithoutDetaching(
+                $randomSenderIds->pluck('id')->toArray()
+            );
         }
     }
 }

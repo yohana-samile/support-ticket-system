@@ -23,12 +23,12 @@ class TicketRepository extends  BaseRepository {
 
     public function all($perPage = 10)
     {
-        return $this->query()->with(['category', 'user', 'assignedTo'])->latest()->paginate($perPage);
+        return $this->query()->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user', 'assignedTo'])->latest()->paginate($perPage);
     }
 
     public function find($ticketUid)
     {
-        return $this->query()->with(['category', 'user', 'assignedTo', 'comments.user', 'attachments'])->where('uid', $ticketUid)->first();
+        return $this->query()->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user', 'assignedTo', 'comments.user', 'attachments'])->where('uid', $ticketUid)->first();
     }
 
     public function store(array $data) {
@@ -150,6 +150,6 @@ class TicketRepository extends  BaseRepository {
 
     public function getUserTickets($userId, $perPage = 15)
     {
-        return $this->ticket->where('user_id', $userId)->with(['category', 'assignedTo'])->latest()->paginate($perPage);
+        return $this->ticket->where('client_id', $userId)->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'assignedTo'])->latest()->paginate($perPage);
     }
 }

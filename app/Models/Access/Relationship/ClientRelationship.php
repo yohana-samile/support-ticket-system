@@ -4,10 +4,16 @@ namespace App\Models\Access\Relationship;
 
 
 use App\Models\SaasApp;
+use App\Models\SenderId;
 use App\Models\Ticket\Ticket;
 
 trait ClientRelationship
 {
+    public function senderIds()
+    {
+        return $this->belongsToMany(SenderId::class, 'client_sender_id')->withTimestamps();
+    }
+
     public function tickets()
     {
         return $this->hasMany(Ticket::class);

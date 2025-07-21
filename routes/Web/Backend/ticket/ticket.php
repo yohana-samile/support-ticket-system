@@ -19,6 +19,8 @@ Route::group([
         Route::delete('/attachment/{ticket}', 'TicketController@destroyAttachment')->name('destroy_attachment');
 
         Route::post('/update-status/{ticket}', 'TicketController@updateStatus')->name('update-status');
+        Route::get('/resolve/{ticket}', 'TicketController@resolveViaEmail')->name('resolve.via.email')->middleware('signed');
+
         Route::post('/attach-services/{ticket}', 'TicketController@attachServices')->name('attach-services');
         Route::get('/reports', 'TicketController@reports')->name('reports');
 
