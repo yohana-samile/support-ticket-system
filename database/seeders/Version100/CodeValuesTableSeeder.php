@@ -58,6 +58,7 @@ class CodeValuesTableSeeder extends Seeder
                 ['reference' => 'OPERATOR02', 'name' => 'Airtel', 'is_system_defined' => 1],
                 ['reference' => 'OPERATOR03', 'name' => 'Yas', 'is_system_defined' => 1],
                 ['reference' => 'OPERATOR04', 'name' => 'Halotel', 'is_system_defined' => 1],
+                ['reference' => 'OPERATOR05', 'name' => 'All', 'is_system_defined' => 1],
             ]
         ];
 

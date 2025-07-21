@@ -11,6 +11,16 @@ class PaymentChannel extends BaseModel
         'config' => 'array'
     ];
 
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('name');
+    }
+
     public function ticket()
     {
         return $this->hasMany(Ticket::class);

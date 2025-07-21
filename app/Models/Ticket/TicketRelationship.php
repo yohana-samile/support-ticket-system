@@ -7,11 +7,13 @@ use App\Models\Access\Client;
 use App\Models\Access\User;
 use App\Models\Attachment;
 use App\Models\Comment;
+use App\Models\Operator;
 use App\Models\PaymentChannel;
 use App\Models\SaasApp;
 use App\Models\SenderId;
 use App\Models\SubTopic;
 use App\Models\TertiaryTopic;
+use App\Models\TicketOperator;
 use App\Models\TicketStatusHistory;
 use App\Models\Topic;
 
@@ -58,7 +60,7 @@ trait TicketRelationship
 
     public function tertiaryTopic()
     {
-        return $this->belongsTo(TertiaryTopic::class);
+        return $this->belongsTo(TertiaryTopic::class, 'tertiary_topic_id');
     }
 
     public function user()
@@ -73,5 +75,10 @@ trait TicketRelationship
     public function attachments()
     {
         return $this->hasMany(Attachment::class);
+    }
+
+    public function operators()
+    {
+        return $this->belongsToMany(Operator::class, 'ticket_operators', 'ticket_id', 'operator_id');
     }
 }

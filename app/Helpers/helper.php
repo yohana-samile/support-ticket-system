@@ -276,3 +276,13 @@ if (! function_exists("remove_all_special_chars")) {
         return $value;
     }
 }
+
+if (! function_exists("remove_filter_url")) {
+    function remove_filter_url($filterName): string
+    {
+        $query = request()->query();
+        unset($query[$filterName]);
+        return url()->current() . (count($query) ? '?' . http_build_query($query) : '');
+    }
+}
+

@@ -1,4 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const operatorChoices = new Choices('#operator', {
+        removeItemButton: true,
+        placeholder: true,
+        searchEnabled: true,
+        shouldSort: false,
+        duplicateItemsAllowed: false
+    });
     const form = document.getElementById('ticketForm');
     const serviceSelect = document.getElementById('service');
     const clientSelect = document.getElementById('client');
@@ -22,8 +29,17 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedTopicId = null;
     let selectedSubtopicId = null;
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const preSelectedServiceId = urlParams.get('saas_app_id');
+    if (preSelectedServiceId) {
+        // Trigger the service change handler immediately
+        serviceSelect.value = preSelectedServiceId;
+        handleServiceChange();
+        $(serviceSelect).trigger('change');
+    }
+
     // Initialize the form
-    loadServices();
+    loadServices(preSelectedServiceId);
 
     managerSelect.addEventListener('change', function() {
         if (this.value) {
@@ -121,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Load services
-    function loadServices() {
+    function loadServices(preSelectedId = null) {
         showLoading(serviceSelect);
 
         fetch('/backend/saas_app/saas_app')
@@ -132,12 +148,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     const option = document.createElement('option');
                     option.value = service.id;
                     option.textContent = service.name;
+
+                    // Mark as selected if it matches the pre-selected ID
+                    if (preSelectedId && service.id == preSelectedId) {
+                        option.selected = true;
+                        selectedServiceId = service.id; // Update the state
+                    }
+
                     serviceSelect.appendChild(option);
                 });
                 hideLoading(serviceSelect);
+
+                if (preSelectedId && selectedServiceId) {
+                    handleServiceChange();
+                    $(serviceSelect).trigger('change');
+                }
             })
             .catch(error => {
-                console.error('Error loading Saas App:', error);
                 hideLoading(serviceSelect);
             });
     }
@@ -425,32 +452,43 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Show operator section
         showSection('operatorSection');
-        operatorSelect.innerHTML = '<option value="" selected disabled>Loading operators...</option>';
 
-        // Load all operators
+        // Clear existing choices
+        operatorChoices.clearStore();
+        operatorChoices.setChoices([{value: '', label: 'Loading operators...', disabled: true}], 'value', 'label', true);
+
         fetch('/backend/operator/get_all_operator')
             .then(response => response.json())
             .then(data => {
-                resetSelect(operatorSelect, 'Select mobile operator');
-                data.data.forEach(operator => {
-                    const option = document.createElement('option');
-                    option.value = operator.id;
-                    option.textContent = operator.name;
-                    operatorSelect.appendChild(option);
-                });
+                if (data.data && data.data.length > 0) {
+                    operatorChoices.setChoices(
+                        data.data.map(operator => ({
+                            value: operator.id,
+                            label: operator.name
+                        })),
+                        'value',
+                        'label',
+                        true
+                    );
+
+                    // Add event listener for operator selection changes
+                    operatorChoices.passedElement.element.addEventListener('change', function() {
+                        // Check if at least one operator is selected
+                        const selectedOperators = operatorChoices.getValue(true);
+                        if (selectedOperators && selectedOperators.length > 0) {
+                            loadSubtopics();
+                        } else {
+                            hideSection('subtopicSection');
+                        }
+                    }, false);
+                } else {
+                    operatorChoices.setChoices([{value: '', label: 'No operators available', disabled: true}], 'value', 'label', true);
+                }
             })
             .catch(error => {
-                operatorSelect.innerHTML = '<option value="" selected disabled>Error loading operators</option>';
+                operatorChoices.setChoices([{value: '', label: 'Error loading operators', disabled: true}], 'value', 'label', true);
             });
-
-        // Set up operator change handler
-        operatorSelect.addEventListener('change', function() {
-            if (this.value) {
-                loadSubtopics();
-            }
-        });
     }
 
     function loadSubtopics() {
@@ -781,7 +819,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (!document.getElementById('senderIdSection').classList.contains('hidden-section')) {
             formData.append('sender_id', senderIdSelect.value);
-            formData.append('operator', operatorSelect.value); // Changed to match backend
+
+            const selectedOperators = Array.from(operatorSelect.selectedOptions)
+                .map(option => option.value)
+                .filter(value => value);
+
+            selectedOperators.forEach(operatorId => {
+                formData.append('operator[]', operatorId);
+            });
         }
         if (!document.getElementById('paymentChannelSection').classList.contains('hidden-section')) {
             formData.append('payment_channel_id', paymentChannelSelect.value);

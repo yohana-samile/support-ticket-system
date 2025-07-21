@@ -1,3 +1,6 @@
+@php
+    $saasApps = App\Models\SaasApp::all();
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,14 +42,25 @@
             </a>
         </li>
 
-        <hr class="sidebar-divider">
         <div class="sidebar-heading">
             Tickets
         </div>
         <li class="nav-item {{ request()->routeIs('backend.ticket.*') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ route('backend.ticket.index') }}">
+            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseLoan" aria-expanded="true" aria-controls="collapseLoan">
                 <i class="fas fa-fw fa-ticket-alt"></i>
-                <span>Tickets</span></a>
+                <span>Tickets management</span>
+            </a>
+            <div id="collapseLoan" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('All Tickets')}}</a>
+                    <h6 class="collapse-header">Create New Ticket:</h6>
+                    @foreach($saasApps as $app)
+                        <a class="collapse-item" href="{{ route('backend.ticket.create', ['saas_app_id' => $app->id]) }}">
+                            {{ $app->abbreviation }}
+                        </a>
+                    @endforeach
+                </div>
+            </div>
         </li>
 
         <hr class="sidebar-divider">

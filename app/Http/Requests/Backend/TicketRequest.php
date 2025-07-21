@@ -29,6 +29,9 @@ class TicketRequest extends FormRequest
             'payment_channel_id' => 'nullable|exists:payment_channels,id',
             'sender_id' => 'nullable|exists:sender_ids,id',
 
+            'operator' => 'nullable|array',
+            'operator.*' => 'exists:operators,id',
+
             'notification_channels' => 'nullable|array',
             'notification_channels.*' => 'in:mail,database,sms,whatsapp',
         ];

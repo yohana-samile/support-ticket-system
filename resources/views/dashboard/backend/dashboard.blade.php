@@ -3,12 +3,137 @@
 @section('content')
     <div class="container-fluid">
         <div class="d-flex justify-content-end gap-2 mb-4">
+            <!-- Filter Dropdown -->
+            <div class="dropdown">
+                <button class="btn btn-sm btn-info shadow-sm dropdown-toggle" type="button" id="filterDropdown"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-right: 10px;">
+                    <i class="fas fa-filter fa-sm text-white-50"></i> Filter Tickets
+                </button>
+                <div class="dropdown-menu dropdown-menu-right p-3" style="width: 300px;" aria-labelledby="filterDropdown">
+                    <form id="filterForm" method="GET" action="{{ route('home') }}">
+                        <!-- Payment Channel Filter -->
+                        <div class="form-group">
+                            <label for="payment_channel">Payment Channel</label>
+                            <select class="form-control select2" id="payment_channel" name="payment_channel">
+                                <option value="">All Payment Channels</option>
+                                @foreach($paymentChannels as $channel)
+                                    <option value="{{ $channel->id }}"
+                                        {{ request('payment_channel') == $channel->id ? 'selected' : '' }}>
+                                        {{ $channel->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Mobile Operator Filter -->
+                        <div class="form-group">
+                            <label for="mobile_operator">Mobile Operator</label>
+                            <select class="form-control select2" id="mobile_operator" name="mobile_operator">
+                                <option value="">All Operators</option>
+                                @foreach($mobileOperators as $operator)
+                                    <option value="{{ $operator->id }}"
+                                        {{ request('mobile_operator') == $operator->id ? 'selected' : '' }}>
+                                        {{ $operator->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- SaaS App Filter -->
+                        <div class="form-group">
+                            <label for="saas_app">SaaS Application</label>
+                            <select class="form-control select2" id="saas_app" name="saas_app">
+                                <option value="">All Applications</option>
+                                @foreach($saasApps as $app)
+                                    <option value="{{ $app->id }}"
+                                        {{ request('saas_app') == $app->id ? 'selected' : '' }}>
+                                        {{ $app->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="form-group">
+                            <label for="status">Ticket Status</label>
+                            <select class="form-control select2" id="status" name="status">
+                                <option value="">All Statuses</option>
+                                @foreach($statuses as $slug => $status)
+                                    <option value="{{ $slug }}"
+                                        {{ request('status') == $slug ? 'selected' : '' }}>
+                                        {{ $status['name'] }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-check"></i> Apply Filters
+                            </button>
+                            @if(request()->hasAny(['payment_channel', 'mobile_operator', 'saas_app', 'status']))
+                                <a href="{{ route('home') }}" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-times"></i> Clear Filters
+                                </a>
+                            @endif
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Active Filters Badges -->
+            @if(request()->hasAny(['payment_channel', 'mobile_operator', 'saas_app', 'status']))
+                <div class="d-flex align-items-center">
+                    <span class="mr-2">Filters:</span>
+                        @if(request('payment_channel'))
+                            @php $channel = $paymentChannels->firstWhere('id', request('payment_channel')); @endphp
+                            <span class="badge badge-info mr-2">
+                            Payment: {{ $channel->name ?? 'Unknown' }}
+                            <a href="{{ remove_filter_url('payment_channel') }}" class="text-white ml-1">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        </span>
+                    @endif
+
+                    @if(request('mobile_operator'))
+                        @php $operator = $mobileOperators->firstWhere('id', request('mobile_operator')); @endphp
+                        <span class="badge badge-info mr-2">
+                            Operator: {{ $operator->name ?? 'Unknown' }}
+                            <a href="{{ remove_filter_url('mobile_operator') }}" class="text-white ml-1">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        </span>
+                    @endif
+
+                    @if(request('saas_app'))
+                        @php $app = $saasApps->firstWhere('id', request('saas_app')); @endphp
+                        <span class="badge badge-info mr-2">
+                            App: {{ $app->name ?? 'Unknown' }}
+                            <a href="{{ remove_filter_url('saas_app') }}" class="text-white ml-1">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        </span>
+                    @endif
+
+                    @if(request('status'))
+                        <span class="badge badge-info mr-2">
+                            Status: {{ $statuses[request('status')]['name'] ?? ucfirst(request('status')) }}
+                            <a href="{{ remove_filter_url('status') }}" class="text-white ml-1">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        </span>
+                    @endif
+                </div>
+            @endif
+
+            <!-- Create Ticket Button -->
             <a href="{{ route('backend.ticket.create') }}" class="btn btn-sm btn-primary shadow-sm" style="margin-right: 10px;">
                 <i class="fas fa-plus-circle fa-sm text-white-50"></i> Create New Ticket
             </a>
 
-            <a href="#" class="btn btn-sm btn-success shadow-sm">
-                <i class="fas fa-download fa-sm text-white-50"></i> Generate Report
+            <!-- Export Button -->
+            <a href="#" class="btn btn-sm btn-success shadow-sm" id="exportReportBtn">
+                <i class="fas fa-download fa-sm text-white-50"></i> Export Report
             </a>
         </div>
 
@@ -408,5 +533,42 @@
                 }
             });
         }
+
+        // Export Report Button
+        document.getElementById('exportReportBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Get current filters
+            const params = new URLSearchParams(window.location.search);
+
+            // Show loading
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Report...';
+            this.disabled = true;
+
+            // Call export endpoint
+            fetch(`/backend/dashboard/export?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Export failed');
+                    return response.blob();
+                })
+                .then(blob => {
+                    // Create download link
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `ticket-report-${new Date().toISOString().split('T')[0]}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    alert('Error generating report: ' + error.message);
+                })
+                .finally(() => {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                });
+        });
     });
 </script>

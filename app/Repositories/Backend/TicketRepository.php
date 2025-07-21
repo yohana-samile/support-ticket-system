@@ -2,8 +2,10 @@
 
 namespace App\Repositories\Backend;
 use App\Models\Access\User;
+use App\Models\Operator;
 use App\Models\System\CodeValue;
 use App\Models\Ticket\Ticket;
+use App\Models\TicketOperator;
 use App\Models\TicketStatusHistory;
 use App\Notifications\TicketAssignedNotification;
 use App\Notifications\TicketCreatedNotification;
@@ -71,6 +73,15 @@ class TicketRepository extends  BaseRepository {
                         ? $data['notification_channels']
                         : explode(',', $data['notification_channels'] ?? 'mail,database')
                 );
+            }
+
+            if (!empty($data['operator'])) {
+                foreach ($data['operator'] as $operatorId) {
+                    TicketOperator::create([
+                        'operator_id' => $operatorId,
+                        'ticket_id' => $ticket->id,
+                    ]);
+                }
             }
 
             if (isset($data['attachments'])) {

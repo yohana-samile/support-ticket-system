@@ -2,11 +2,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Access\Client;
 use App\Models\Access\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\ControllerMiddlewareOptions;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
@@ -83,18 +85,29 @@ class LoginController extends Controller {
 
     protected function sendFailedLoginResponse(Request $request) {
         $credentials = $this->credentials($request);
-        $user = User::where($this->username(), $credentials[$this->username()])->first();
+        $user = User::query()->where($this->username(), $credentials[$this->username()])->first();
 
-        if ($user) {
-            if (!\Hash::check($credentials['password'], $user->password)) {
-                notify()->error('These credentials do not match our records.');
-                return redirect()->back();
-            }
-
+        if ($user && Hash::check($credentials['password'], $user->password)) {
+            Auth::guard('web')->login($user, $request->filled('remember'));
             if (!$user->is_active) {
                 notify()->error('Your account is blocked. Please contact the administrator.');
                 return redirect()->back();
             }
+
+            $request->session()->regenerate();
+            return redirect()->intended(route('dashboard'));
+        }
+
+        $client = Client::query()->where($this->username(), $credentials[$this->username()])->first();
+        if ($client && Hash::check($credentials['password'], $client->password)) {
+            Auth::guard('client')->login($client, $request->filled('remember'));
+            if (!$user->is_active) {
+                notify()->error('Your account is blocked. Please contact the administrator.');
+                return redirect()->back();
+            }
+
+            $request->session()->regenerate();
+            return redirect()->intended(route('client.dashboard'));
         }
         notify()->error('These credentials do not match our records.');
         return redirect()->back();
@@ -109,7 +122,8 @@ class LoginController extends Controller {
     }
 
     public function logout(Request $request) {
-        $this->guard()->logout();
+        Auth::guard('web')->logout();
+        Auth::guard('client')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
@@ -117,9 +131,7 @@ class LoginController extends Controller {
             return $response;
         }
 
-        return $request->wantsJson()
-            ? new JsonResponse([], 204)
-            : redirect('/');
+        return $request->wantsJson() ? new JsonResponse([], 204) : redirect('/');
     }
 
     protected function loggedOut(Request $request) {

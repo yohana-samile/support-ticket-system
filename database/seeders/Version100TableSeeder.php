@@ -29,6 +29,7 @@ class Version100TableSeeder extends Seeder
         $this->call(TertiaryTopicSeeder::class);
         $this->call(PaymentChannelSeeder::class);
         $this->call(SenderIdsSeeder::class);
+        $this->call(MNOSeeder::class);
 
         $this->call(PermissionGroupTableSeeder::class);
         $this->call(PermissionsTableSeeder::class);

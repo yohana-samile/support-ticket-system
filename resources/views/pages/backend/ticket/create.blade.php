@@ -2,11 +2,28 @@
 @section('title', 'Add Ticket')
 
 @push('styles')
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/styles/choices.min.css">
     <style>
+        .hidden-section .select2-container {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            width: 0 !important;
+            overflow: hidden !important;
+            position: absolute !important;
+        }
+        .select2-container {
+            z-index: 1051 !important; /* Higher than Bootstrap modal (1050) */
+        }
+        .select2-selection {
+            height: calc(1.5em + 0.75rem + 2px) !important;
+            padding: 0.375rem 0.75rem !important;
+        }
+
         /* Add to your existing styles */
         #attachmentPreviews {
             display: flex;
@@ -312,6 +329,10 @@
         .channel-card.border-primary {
             background-color: #f0f8ff;
         }
+
+        .select2-container {
+            width: 100% !important;
+        }
     </style>
 @endpush
 
@@ -325,7 +346,7 @@
                     <!-- Service Selection -->
                     <div class="mb-3 form-section visible-section" id="serviceSection">
                         <label for="service" class="form-label">SaaS App <span class="text-danger">*</span></label>
-                        <select class="form-select form-control select2" id="service" name="saas_app_id" required>
+                        <select class="form-select form-control select2" id="service" required>
                             <option value="" >Select a service</option>
                         </select>
                         <div class="form-text">Select the service this ticket is about</div>
@@ -334,7 +355,7 @@
                     <!-- Client Selection -->
                     <div class="mb-3 form-section hidden-section" id="clientSection">
                         <label for="client" class="form-label">Client <span class="text-danger">*</span></label>
-                        <select class="form-select form-control select2" id="client" name="client_id" required >
+                        <select class="form-select form-control select2" id="client" required >
                             <option value="" >Select a client</option>
                         </select>
                         <div class="form-text" id="clientHistoryText"></div>
@@ -344,7 +365,7 @@
                     <!-- Topic Selection -->
                     <div class="mb-3 form-section hidden-section" id="topicSection">
                         <label for="topic" class="form-label">Topic <span class="text-danger">*</span></label>
-                        <select class="form-select select2" id="topic" name="topic_id" required >
+                        <select class="form-select select2" id="topic" required >
                             <option value="" >Select a topic</option>
                         </select>
                     </div>
@@ -352,7 +373,7 @@
                     <!-- SMS Specific Fields -->
                     <div class="mb-3 form-section hidden-section" id="senderIdSection">
                         <label for="senderId" class="form-label">Sender ID <span class="text-danger">*</span></label>
-                        <select class="form-select select2" id="senderId" name="sender_id" required >
+                        <select class="form-select select2" id="senderId" required >
                             <option value="" >Select sender ID</option>
                         </select>
                         <div class="form-text">Select the sender ID for SMS delivery</div>
@@ -360,16 +381,16 @@
 
                     <div class="mb-3 form-section hidden-section" id="operatorSection">
                         <label for="operator" class="form-label">Mobile Operator <span class="text-danger">*</span></label>
-                        <select class="form-select select2" id="operator" name="mobile_operator" required >
-                            <option value="" >Select mobile operator</option>
+                        <select class="form-select select2" id="operator" multiple required>
+                            <option value="">Select mobile operator(s)</option>
                         </select>
-                        <div class="form-text">Select the mobile network operator</div>
+                        <div class="form-text">Select one or more mobile network operators</div>
                     </div>
 
                     <!-- Payment Specific Fields -->
                     <div class="mb-3 form-section hidden-section" id="paymentChannelSection">
                         <label for="paymentChannel" class="form-label">Payment Channel <span class="text-danger">*</span></label>
-                        <select class="form-select select2" id="paymentChannel" name="payment_channel_id" required >
+                        <select class="form-select select2" id="paymentChannel" required >
                             <option value="" >Select a payment channel</option>
                         </select>
                         <div class="form-text">Select the payment method related to this issue</div>
@@ -378,7 +399,7 @@
                     <!-- Subtopic Selection -->
                     <div class="mb-3 form-section hidden-section" id="subtopicSection">
                         <label for="subtopic" class="form-label">Subtopic <span class="text-danger">*</span></label>
-                        <select class="form-select select2" id="subtopic" name="sub_topic_id" required >
+                        <select class="form-select select2" id="subtopic" required >
                             <option value="" >Select a subtopic</option>
                         </select>
                     </div>
@@ -386,7 +407,7 @@
                     <!-- Tertiary Topic Selection -->
                     <div class="mb-3 form-section hidden-section" id="tertiaryTopicSection">
                         <label for="tertiaryTopic" class="form-label">Tertiary Topic</label>
-                        <select class="form-select select2" id="tertiaryTopic" name="tertiary_topic_id" >
+                        <select class="form-select select2" id="tertiaryTopic">
                             <option value="" >Select a tertiary topic (optional)</option>
                         </select>
                     </div>
@@ -394,17 +415,17 @@
                     <!-- Ticket Details -->
                     <div class="mb-3 form-section hidden-section" id="subjectSection">
                         <label for="subject" class="form-label">Subject <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="subject" name="title" required>
+                        <input type="text" class="form-control" id="subject" required>
                     </div>
 
                     <div class="mb-3 form-section hidden-section" id="descriptionSection">
                         <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="description" rows="4" name="description" required></textarea>
+                        <textarea class="form-control" id="description" rows="4" required></textarea>
                     </div>
 
                     <div class="mb-3 form-section hidden-section" id="prioritySection">
                         <label for="priority" class="form-label">Priority <span class="text-danger">*</span></label>
-                        <select class="form-select select2" id="priority" name="priority" required>
+                        <select class="form-select select2" id="priority" required>
                             <option value="" >Select priority</option>
                             @foreach($priorities as $priority)
                                 <option value="{{ $priority->name }}">{{ $priority->name }}</option>
@@ -415,7 +436,7 @@
                     <!-- Manager Selection -->
                     <div class="mb-3 form-section hidden-section" id="managerSection">
                         <label for="manager" class="form-label">Assign To <span class="text-danger">*</span></label>
-                        <select class="form-select select2" id="manager" name="assigned_to" required >
+                        <select class="form-select select2" id="manager" required >
                             <option value="" >Select a manager</option>
                         </select>
                         <div class="form-text">Managers with experience in this topic are shown first</div>
@@ -506,8 +527,9 @@
 @endsection
 
 @push('scripts')
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/scripts/choices.min.js"></script>
     <script src="{{ asset('asset/js/script.js') }}"></script>
 @endpush
-
