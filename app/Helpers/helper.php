@@ -286,3 +286,12 @@ if (! function_exists("remove_filter_url")) {
     }
 }
 
+if (!function_exists('getStatusBadge')) {
+    function getStatusBadge(bool $isActive): string
+    {
+        if ($isActive) {
+            return '<span class="badge bg-primary text-white">'.__('active').'</span>';
+        }
+        return '<span class="badge bg-danger">'.__('inactive').'</span>';
+    }
+}

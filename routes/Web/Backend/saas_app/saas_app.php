@@ -7,6 +7,7 @@ Route::group([
     Route::group(['prefix' => 'saas_app', 'as' => 'saas_app.'], function () {
         Route::get('/index', 'SaasAppController@index')->name('index');
         Route::get('/saas_app', 'SaasAppController@getAll')->name('saas_app');
+        Route::get('/saas_app', 'SaasAppController@search')->name('search');
 
         Route::get('/create', 'SaasAppController@create')->name('create');
         Route::post('/', 'SaasAppController@store')->name('store');

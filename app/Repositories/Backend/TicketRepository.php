@@ -12,11 +12,14 @@ use App\Notifications\TicketCreatedNotification;
 use App\Notifications\TicketReassignedNotification;
 use App\Notifications\TicketUnassignedNotification;
 use App\Repositories\BaseRepository;
+use App\Traits\SendSmsTrait;
+use App\Traits\WhatsAppTrait;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Activity;
 
 class TicketRepository extends  BaseRepository {
+    use SendSmsTrait, WhatsAppTrait;
     const MODEL = Ticket::class;
     protected $ticket;
     protected $user;
@@ -29,7 +32,7 @@ class TicketRepository extends  BaseRepository {
 
     public function all($perPage = 10)
     {
-        return $this->query()->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user', 'assignedTo'])->orderBy('created_at', 'DESC')->latest()->paginate($perPage);
+        return $this->query()->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user', 'assignedTo'])->latest()->paginate($perPage);
     }
 
     public function find($ticketUid)
@@ -244,7 +247,7 @@ class TicketRepository extends  BaseRepository {
 
     protected function notifyAssignedUser($userId, Ticket $ticket, $channels = ['mail', 'database'])
     {
-        $user = User::findOrFail($userId);
+        $user = User::query()->findOrFail($userId);
 
         foreach ($channels as $channel) {
             switch ($channel) {
@@ -257,7 +260,7 @@ class TicketRepository extends  BaseRepository {
                     break;
 
                 case 'sms':
-                    //TODO Implement SMS notification
+                    $this->notifyForNewTicket($user, $ticket);
                     break;
                 case 'whatsapp':
                     //TODO Implement whatsapp notification

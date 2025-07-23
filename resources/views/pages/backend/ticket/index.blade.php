@@ -113,9 +113,6 @@
                                 </tfoot>
                             </table>
                         </div>
-                        <div class="mt-3">
-                            {{ $tickets->links() }}
-                        </div>
                     </div>
                 </div>
 

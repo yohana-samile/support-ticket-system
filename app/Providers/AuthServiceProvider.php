@@ -4,8 +4,6 @@
 
     use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
     use Illuminate\Support\Facades\Gate;
-    use App\Models\Standard\Standard;
-    use App\Policies\StandardPolicy;
 
     class AuthServiceProvider extends ServiceProvider
     {
@@ -15,7 +13,6 @@
          * @var array<class-string, class-string>
          */
         protected $policies = [
-            Standard::class => StandardPolicy::class,
         ];
 
         /**
@@ -24,9 +21,6 @@
         public function boot(): void
         {
             $this->registerPolicies();
-
-            // Optional: Define additional gates if needed
-            Gate::define('create_standard', [StandardPolicy::class, 'create']);
         }
     }
 

@@ -15,6 +15,8 @@
     <link href="{{ asset('asset/vendor/fontawesome-free/css/all.min.css')}}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="{{ asset('asset/css/sb-admin-2.min.css')}}" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+
     <style>
         body {
             zoom: 90%;
@@ -63,20 +65,42 @@
             </div>
         </li>
 
+        <hr class="sidebar-divider">
         <div class="sidebar-heading">
-            Topics
+            {{__('label.topics')}}
+        </div>
+        <li class="nav-item {{ request()->routeIs(['backend.topic.*', 'backend.subtopic.*', 'backend.tertiary.*']) ? 'active' : '' }}">
+            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseTopic" aria-expanded="{{ request()->routeIs(['backend.topic.*', 'backend.subtopic.*', 'backend.tertiary.*']) ? 'true' : 'false' }}">
+                <i class="fas fa-fw fa-file-alt"></i>
+                <span>{{__('label.topics_management')}}</span>
+            </a>
+            <div id="collapseTopic" class="collapse {{ request()->routeIs(['backend.topic.*', 'backend.subtopic.*', 'backend.tertiary.*']) ? 'show' : '' }}" aria-labelledby="headingTwo" data-parent="#sidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <h6 class="collapse-header">{{__('label.main')}}:</h6>
+                    <a class="collapse-item {{ request()->routeIs('backend.topic.*') ? 'active' : '' }}" href="{{ route('backend.topic.index') }}">{{__('label.topics')}}</a>
+                    <h6 class="collapse-header">{{__('label.sub')}}:</h6>
+                    <a class="collapse-item {{ request()->routeIs('backend.subtopic.*') ? 'active' : '' }}" href="{{ route('backend.subtopic.index') }}">{{__('label.sub_topics')}}</a>
+                    <h6 class="collapse-header">{{__('label.tertiary')}}:</h6>
+                    <a class="collapse-item {{ request()->routeIs('backend.tertiary.*') ? 'active' : '' }}" href="{{ route('backend.tertiary.index') }}">{{__('label.tertiary_topics')}}</a>
+                </div>
+            </div>
+        </li>
+
+        <hr class="sidebar-divider">
+        <div class="sidebar-heading">
+            Others
         </div>
         <li class="nav-item {{ request()->routeIs('backend.topic.*') ? 'active' : '' }}">
-            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseTopic" aria-expanded="true" aria-controls="collapseTopic">
-                <i class="fas fa-fw fa-ticket-alt"></i>
-                <span>Topics management</span>
+            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseOther" aria-expanded="true" aria-controls="collapseOther">
+                <i class="fas fa-fw fa-cog"></i>
+                <span>Other Settings</span>
             </a>
-            <div id="collapseTopic" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
+            <div id="collapseOther" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
                     <h6 class="collapse-header">Main:</h6>
                     <a class="collapse-item" href="{{ route('backend.topic.index') }}">{{__('Topics')}}</a>
                     <h6 class="collapse-header">Sub:</h6>
-                    <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('Sub Topics')}}</a>
+                    <a class="collapse-item" href="{{ route('backend.subtopic.index') }}">{{__('Sub Topics')}}</a>
                     <h6 class="collapse-header">Tertiary:</h6>
                     <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('Tertiary Topics')}}</a>
                 </div>
@@ -89,10 +113,19 @@
         </div>
 
         <li class="nav-item {{ request()->routeIs('backend.user.*') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ route('backend.user.index') }}">
-                <i class="fas fa-fw fa-users"></i>
-                <span>Users</span>
+            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseAdministration" aria-expanded="true" aria-controls="collapseAdministration">
+                <i class="fas fa-fw fa-cog"></i>
+                <span>User management</span>
             </a>
+            <div id="collapseAdministration" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <h6 class="collapse-header">User:</h6>
+                    <a class="collapse-item" href="{{ route('backend.user.index') }}">{{__('Staff')}}</a>
+                    <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('Clients')}}</a>
+                    <h6 class="collapse-header">Authorization:</h6>
+                    <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('Roles & Permissions')}}</a>
+                </div>
+            </div>
         </li>
 
         <div class="text-center d-none d-md-inline">
@@ -176,15 +209,9 @@
 
             <main class="main-content">
                 <div class="container-fluid">
-                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                        <h4 class="mb-0 text-dark">@yield('title')</h4>
-                        @yield('breadcrumbs')
-                    </div>
-
-                    <div class="row">
-                        @include('layouts.partials.alerts')
-                        @yield('content')
-                    </div>
+                    {{ \Diglactic\Breadcrumbs\Breadcrumbs::render() }}
+                    @include('layouts.partials.alerts')
+                    @yield('content')
                 </div>
             </main>
 
@@ -210,6 +237,8 @@
     <script src="{{ asset('asset/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('asset/vendor/jquery-easing/jquery.easing.min.js') }}"></script>
     <script src="{{ asset('asset/js/sb-admin-2.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
     @stack('plugins')
     @stack('scripts')
 </body>

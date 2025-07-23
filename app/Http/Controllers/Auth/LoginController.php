@@ -101,7 +101,7 @@ class LoginController extends Controller {
         $client = Client::query()->where($this->username(), $credentials[$this->username()])->first();
         if ($client && Hash::check($credentials['password'], $client->password)) {
             Auth::guard('client')->login($client, $request->filled('remember'));
-            if (!$user->is_active) {
+            if (!$client->is_active) {
                 notify()->error('Your account is blocked. Please contact the administrator.');
                 return redirect()->back();
             }

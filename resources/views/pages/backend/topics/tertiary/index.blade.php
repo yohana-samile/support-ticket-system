@@ -1,39 +1,36 @@
 @extends('layouts.backend.app')
-@section('title', 'Topic')
+@section('title', __('label.tertiary_topic'))
 @section('content')
     <div class="container-fluid">
         <div id="content">
             <div class="d-sm-flex align-items-center justify-content-end mb-4">
-                <a href="{{ route('backend.topic.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                    <i class="fas fa-plus fa-sm text-white-50"></i> Create New Topic
+                <a href="{{ route('backend.tertiary.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                    <i class="fas fa-plus fa-sm text-white-50"></i> {{__('label.create_new_tertiary_topic')}}
                 </a>
             </div>
 
             <div class="card shadow mb-4">
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered" id="topicsTable" width="100%" cellspacing="0">
+                        <table class="table table-bordered" id="tertiaryTopicsTable" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
-                                    <th>Title</th>
-                                    <th>Saas_app</th>
-                                    <th>Descriptions</th>
-                                    <th>Status</th>
-                                    <th>Created_at</th>
-                                    <th>Actions</th>
+                                    <th>{{__('label.topic')}}</th>
+                                    <th>{{__('label.subtopic')}}</th>
+                                    <th>{{__('label.tertiary_topic')}}</th>
+                                    <th>{{__('label.descriptions')}}</th>
+                                    <th>{{__('label.status')}}</th>
+                                    <th>{{__('label.created_at')}}</th>
+                                    <th>{{__('label.actions')}}</th>
                                 </tr>
                             </thead>
                         </table>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 @endsection
-
-@push('styles')
-@endpush
 
 @push('scripts')
     <script>
@@ -54,16 +51,17 @@
         }
 
         $(document).ready(function() {
-            $('#topicsTable').DataTable({
+            $('#tertiaryTopicsTable').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: "{{ route('backend.topic.get_tertiary_topic_for_dt') }}",
+                    url: "{{ route('backend.tertiary.get_tertiary_topic_for_dt') }}",
                     type: 'GET'
                 },
                 columns: [
                     { data: 'topic_name', name: 'topic_name', orderable: false, searchable: false },
-                    { data: 'saas_app_name', name: 'saas_app_name', orderable: false, searchable: false },
+                    { data: 'subtopic_name', name: 'subtopic_name', orderable: false, searchable: false },
+                    { data: 'tertiary_name', name: 'name' },
                     { data: 'description', name: 'description' },
                     { data: 'status_badge', name: 'is_active', orderable: false },
                     { data: 'created_at', name: 'created_at' },

@@ -9,7 +9,7 @@ class SaasAppRepository extends  BaseRepository {
     const MODEL = SaasApp::class;
     public function getAll()
     {
-        return $this->query()->get();
+        return $this->query()->latest()->get();
     }
 
     public function store(array $data)

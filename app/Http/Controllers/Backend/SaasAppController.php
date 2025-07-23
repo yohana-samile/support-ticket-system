@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Backend\SaasAppRequest as storeRequest;
+use App\Models\SaasApp;
 use App\Repositories\Backend\SaasAppRepository;
+use Illuminate\Http\Request;
 
 class SaasAppController extends Controller
 {
@@ -26,6 +28,25 @@ class SaasAppController extends Controller
         $saasApps = $this->saasAppRepository->getAll();
         return response()->json([
             'data' => $saasApps
+        ]);
+    }
+
+    public function search(Request $request)
+    {
+        $search = $request->input('search');
+
+        $results = SaasApp::query()
+            ->when($search, function($query) use ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'ilike', "%{$search}%")
+                        ->orWhere('abbreviation', 'ilike', "%{$search}%");
+                });
+            })
+            ->paginate(10);
+
+        return response()->json([
+            'data' => $results->items(),
+            'next_page_url' => $results->nextPageUrl()
         ]);
     }
 

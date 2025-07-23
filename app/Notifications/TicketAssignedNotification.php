@@ -29,12 +29,21 @@ class TicketAssignedNotification  extends Notification implements ShouldQueue
 
     public function toMail($notifiable)
     {
+        $ticket = $this->ticket;
+
+        $topic = optional($ticket->topic)->name;
+        $subtopic = optional($ticket->subtopic)->name;
+        $tertiaryTopic = optional($ticket->tertiaryTopic)->name;
+
+        $ticketAbout = implode(' -> ', array_filter([$topic, $subtopic, $tertiaryTopic]));
+
         return (new MailMessage)
-            ->subject('New Ticket Assigned: ' . $this->ticket->title)
-            ->line('You have been assigned a new ticket.')
-            ->action('Resolve Ticket', URL::signedRoute('backend.ticket.resolve.via.email', $this->ticket->uid))
-            ->line('Ticket ID: ' . $this->ticket->ticket_number)
-            ->line('Priority: ' . ucfirst($this->ticket->priority));
+            ->subject('New Ticket Assigned: ' . $ticket->title)
+            ->line('Priority: ' . ucfirst($ticket->priority))
+            ->line('About: ' . $ticketAbout)
+            ->line('Message: ' . $ticket->description)
+            ->line('Ticket ID: ' . $ticket->ticket_number)
+            ->action('Resolve Ticket', URL::signedRoute('backend.ticket.resolve.via.email', $ticket->uid));
     }
 
     public function toArray($notifiable)

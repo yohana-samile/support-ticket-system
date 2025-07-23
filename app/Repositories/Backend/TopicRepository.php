@@ -19,9 +19,10 @@ class TopicRepository extends  BaseRepository {
             $topic = $this->query()->create([
                 'name' => $data['name'],
                 'saas_app_id' => $data['saas_app_id'],
-                'uid' => Str::uuid()
+                'description' => $data['description'],
+                'is_active' => $data['is_active']  ?? true,
             ]);
-            return $topic->load('topic');
+            return $topic->load('saasApp');
         });
     }
 
@@ -30,6 +31,8 @@ class TopicRepository extends  BaseRepository {
         $topic->update([
             'name' => $data['name'],
             'saas_app_id' => $data['saas_app_id'],
+            'description' => $data['description'],
+            'is_active' => $data['is_active'] ?? $topic->is_active,
         ]);
 
         return $topic->fresh();
@@ -39,15 +42,16 @@ class TopicRepository extends  BaseRepository {
     {
         return $this->query()->where('uid', $topicUid)->with('saasApp')->first();
     }
-    public function delete(Topic $topic): bool
+    public function delete(Topic $topic)
     {
         return DB::transaction(function () use ($topic) {
             activity()
-                ->performedOn($topic->topic)
+                ->performedOn($topic)
                 ->causedBy(auth()->user())
                 ->withProperties(['saas_app_id' => $topic->id])
                 ->log('deleted topic');
 
+            $this->renamingSoftDelete($topic, 'name');
             return $topic->delete();
         });
     }

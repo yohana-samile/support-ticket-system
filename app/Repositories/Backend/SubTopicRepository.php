@@ -20,7 +20,7 @@ class SubTopicRepository extends  BaseRepository {
     const MODEL = SubTopic::class;
     public function getAll()
     {
-        return $this->query()::with('saasApp')->get();
+        return $this->query()->with('topic')->orderBy('created_at', 'DESC')->get();
     }
 
     public function store(array $data)
@@ -28,53 +28,48 @@ class SubTopicRepository extends  BaseRepository {
         return DB::transaction(function () use ($data) {
             $topic = $this->query()->create([
                 'name' => $data['name'],
-                'saas_app_id' => $data['saas_app_id'],
-                'uid' => Str::uuid()
+                'topic_id' => $data['topic_id'],
+                'description' => $data['description'],
+                'is_active' => $data['is_active']  ?? true,
             ]);
-            return $topic->load('service');
+            return $topic->load('topic');
         });
     }
 
-    public function update($subTopicUid, array $data): ?Subtopic
+    public function update($subtopic, array $data)
     {
-        $subtopic = $this->findByUid($subTopicUid);
-        if ($subtopic) {
-            $subtopic->update($data);
-            return $subtopic->fresh();
-        }
+        $subtopic->update($data);
         activity()
-            ->performedOn($subtopic->subtopic)
+            ->performedOn($subtopic)
             ->causedBy(auth()->user())
-            ->withProperties(['saas_app_id' => $subtopic->id])
-            ->log('edit subtopic');
-
-        return null;
+            ->withProperties([
+                'attributes' => $data,
+                'old' => $subtopic->getOriginal()
+            ])->log('edit subtopic');
+        return $subtopic->fresh();
     }
 
-    public function delete(Topic $subTopicUid): bool
+    public function delete($subtopic)
     {
-        $subtopic = $this->findByUid($subTopicUid);
-        if (!$subtopic) {
-            return false;
-        }
-
         return DB::transaction(function () use ($subtopic) {
             activity()
                 ->performedOn($subtopic->topic)
                 ->causedBy(auth()->user())
-                ->withProperties(['saas_app_id' => $subtopic->id])
-                ->log('deleted topic');
+                ->withProperties(['sub_topic' => $subtopic->id])
+                ->log('deleted subtopic');
 
+            $this->renamingSoftDelete($subtopic, 'name');
             return $subtopic->delete();
         });
     }
+
     public function getByTopicId($topicId)
     {
-        return $this->query()->where('topic_id', $topicId)->orderBy('created_at')->get();
+        return $this->query()->where('topic_id', $topicId)->orderBy('created_at', 'DESC')->get();
     }
 
     public function findByUid($topicUid)
     {
-        return $this->query()->where('uid', $topicUid)->with('saasApp')->first();
+        return $this->query()->where('uid', $topicUid)->with('topic')->first();
     }
 }
