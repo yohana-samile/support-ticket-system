@@ -88,21 +88,21 @@
 
         <hr class="sidebar-divider">
         <div class="sidebar-heading">
-            Others
+            {{__('label.other')}}
         </div>
         <li class="nav-item {{ request()->routeIs('backend.topic.*') ? 'active' : '' }}">
             <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseOther" aria-expanded="true" aria-controls="collapseOther">
                 <i class="fas fa-fw fa-cog"></i>
-                <span>Other Settings</span>
+                <span>{{__('label.other_settings')}}</span>
             </a>
             <div id="collapseOther" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
-                    <h6 class="collapse-header">Main:</h6>
-                    <a class="collapse-item" href="{{ route('backend.topic.index') }}">{{__('Topics')}}</a>
-                    <h6 class="collapse-header">Sub:</h6>
-                    <a class="collapse-item" href="{{ route('backend.subtopic.index') }}">{{__('Sub Topics')}}</a>
-                    <h6 class="collapse-header">Tertiary:</h6>
-                    <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('Tertiary Topics')}}</a>
+                    <h6 class="collapse-header">{{__('label.mno')}}:</h6>
+                    <a class="collapse-item" href="{{ route('backend.operator.index') }}">{{__('MNOs')}}</a>
+                    <h6 class="collapse-header">{{__('label.service')}}:</h6>
+                    <a class="collapse-item" href="{{ route('backend.saas_app.index') }}">{{__('label.saas_app')}}</a>
+                    <h6 class="collapse-header">{{__('label.sender')}}:</h6>
+                    <a class="collapse-item" href="{{ route('backend.sender_id.index') }}">{{__('label.senders')}}</a>
                 </div>
             </div>
         </li>

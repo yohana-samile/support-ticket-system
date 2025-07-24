@@ -7,7 +7,8 @@ use App\Models\SenderId;
 use App\Repositories\Backend\SenderIdRepository;
 use App\Http\Requests\Backend\SenderIdRequest as storeRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
+use Illuminate\Http\Request;
+use Yajra\DataTables\DataTables;
 
 class SenderIdController extends Controller
 {
@@ -18,10 +19,42 @@ class SenderIdController extends Controller
         $this->senderIdRepo = app(SenderIdRepository::class);
     }
 
-    public function index(): JsonResponse
+    public function index()
     {
-        $senderIds = $this->senderIdRepo->getAll();
-        return response()->json(['data' => $senderIds]);
+        return view('pages.backend.sender.index');
+    }
+
+    public function create()
+    {
+        return view('pages.backend.sender.create');
+    }
+
+    public function store(storeRequest $request)
+    {
+        $sender = $this->senderIdRepo->store($request->validated());
+        return redirect()->route('backend.sender_id.show', $sender->uid)->with('success', 'SenderIds added');
+    }
+
+    public function edit(SenderId $sender)
+    {
+        return view('pages.backend.sender.edit', compact('sender'));
+    }
+
+    public function show(SenderId $sender)
+    {
+        return view('pages.backend.sender.profile.show', compact('sender'));
+    }
+
+    public function update(storeRequest $request, SenderId $sender)
+    {
+        $this->senderIdRepo->update($sender, $request->validated());
+        return redirect()->route('backend.sender_id.show', $sender->uid)->with('success', 'SenderIds updated');
+    }
+
+    public function destroy(SenderId $sender)
+    {
+        $this->senderIdRepo->delete($sender);
+        return redirect()->route('backend.sender_id.index')->with('success', 'SenderIds deleted');
     }
 
     public function activeSenderIds($clientId): JsonResponse
@@ -30,39 +63,47 @@ class SenderIdController extends Controller
         return response()->json(['data' => $senderIds]);
     }
 
-    public function store(storeRequest $request): JsonResponse
+    public function getAll(): JsonResponse
     {
-        $senderId = $this->senderIdRepo->store($request->validated());
-        return response()->json([
-            'message' => 'Sender ID created successfully',
-            'data' => $senderId
-        ], Response::HTTP_CREATED);
+        $senderIds = $this->senderIdRepo->getAll();
+        return response()->json(['data' => $senderIds]);
     }
 
-    public function show(string $uid): JsonResponse
+    public function getAllForDt(Request $request)
     {
-        $senderId = $this->senderIdRepo->findByUid($uid);
-        if (!$senderId) {
-            return response()->json(['message' => 'Sender ID not found'], Response::HTTP_NOT_FOUND);
-        }
-        return response()->json(['data' => $senderId]);
-    }
+        return DataTables::of($this->senderIdRepo->getAll($request->all()))
+            ->addColumn('name', function($sender) {
+                return $sender->sender_id;
+            })
+            ->addColumn('status_badge', function($sender) {
+                return getStatusBadge($sender->is_active);
+            })
+            ->addColumn('created_at', function($sender) {
+                return $sender->created_at->diffForHumans();
+            })
+            ->addColumn('actions', function($sender) {
+                $actions = '<a href="'.route('backend.sender_id.show', $sender->uid).'" class="text-info mr-2 text-decoration-none" title="View">
+                      <i class="fas fa-eye fa-sm"></i>
+                   </a>
+                   <a href="'.route('backend.sender_id.edit', $sender->uid).'" class="text-primary mr-2 text-decoration-none" title="Edit">
+                      <i class="fas fa-edit fa-sm"></i>
+                   </a>';
 
-    public function update(storeRequest $request, SenderId $senderId): JsonResponse
-    {
-        $senderId = $this->senderIdRepo->update($senderId, $request->validated());
-        return response()->json([
-            'message' => 'Sender ID updated successfully',
-            'data' => $senderId
-        ]);
-    }
+                if($sender->can_be_deleted) {
+                    $formId = 'delete-sender_id-form-' . $sender->uid;
 
-    public function destroy(SenderId $senderId): JsonResponse
-    {
-        $deleted = $this->senderIdRepo->delete($senderId);
-        if (!$deleted) {
-            return response()->json(['message' => 'Sender ID could not be deleted'], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-        return response()->json(['message' => 'Sender ID deleted successfully']);
+                    $actions .= '<a href="javascript:void(0);" class="text-danger mr-2 text-decoration-none" title="Delete" onclick="confirmDelete(\''.$sender->uid.'\')">
+                        <i class="fas fa-trash fa-sm"></i>
+                     </a>';
+
+                    $actions .= csrf_field()
+                        . method_field('DELETE')
+                        . '<form id="'.$formId.'" action="'.route('backend.sender_id.destroy', $sender->uid).'" method="POST" style="display: none;">'
+                        . csrf_field()
+                        . method_field('DELETE')
+                        . '</form>';
+                }
+                return $actions;
+            })->rawColumns(['name', 'status_badge', 'created_at', 'actions'])->make(true);
     }
 }

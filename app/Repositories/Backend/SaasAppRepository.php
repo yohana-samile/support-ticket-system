@@ -9,36 +9,38 @@ class SaasAppRepository extends  BaseRepository {
     const MODEL = SaasApp::class;
     public function getAll()
     {
-        return $this->query()->latest()->get();
+        return $this->query()->orderBy('created_at', 'DESC')->get();
     }
 
     public function store(array $data)
     {
         return DB::transaction(function () use ($data) {
-            return$this->query()->create($data);
+            return $this->query()->create($data);
         });
     }
 
-    public function update(SaasApp $topic, array $data): SaasApp
+    public function update($saasApp, array $data)
     {
-        $topic->update($data);
-        return $topic->fresh();
+        $saasApp->update($data);
+        return $saasApp->fresh();
     }
 
-    public function findByUid($topicUid)
+    public function findByUid($saasAppUid)
     {
-        return $this->query()->where('uid', $topicUid)->with('saas_app')->first();
+        return $this->query()->where('uid', $saasAppUid)->first();
     }
-    public function delete(SaasApp $topic): bool
+    public function delete($saasApp)
     {
-        return DB::transaction(function () use ($topic) {
+        return DB::transaction(function () use ($saasApp) {
             activity()
-                ->performedOn($topic->topic)
+                ->performedOn($saasApp)
                 ->causedBy(auth()->user())
-                ->withProperties(['saas_app_id' => $topic->id])
+                ->withProperties(['saas_app_id' => $saasApp->id])
                 ->log('deleted topic');
 
-            return $topic->delete();
+            $this->renamingSoftDelete($saasApp, 'name');
+            $this->renamingSoftDelete($saasApp, 'abbreviation');
+            return $saasApp->delete();
         });
     }
 }

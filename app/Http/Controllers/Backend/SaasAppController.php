@@ -7,6 +7,8 @@ use App\Http\Requests\Backend\SaasAppRequest as storeRequest;
 use App\Models\SaasApp;
 use App\Repositories\Backend\SaasAppRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Yajra\DataTables\DataTables;
 
 class SaasAppController extends Controller
 {
@@ -19,8 +21,40 @@ class SaasAppController extends Controller
 
     public function index()
     {
-        $saasApps = $this->saasAppRepository->getAll();
-        return view('pages.backend.saas_app.index', compact('saasApps'));
+        return view('pages.backend.saas_app.index');
+    }
+
+    public function create()
+    {
+        return view('pages.backend.saas_app.create');
+    }
+
+    public function store(storeRequest $request)
+    {
+        $saasApp = $this->saasAppRepository->store($request->validated());
+        return redirect()->route('backend.saas_app.show', $saasApp->uid)->with('success', 'Ticket created successfully!');
+    }
+
+    public function show(SaasApp $saasApp)
+    {
+        return view('pages.backend.saas_app.profile.show', compact('saasApp'));
+    }
+
+    public function edit(SaasApp $saasApp)
+    {
+        return view('pages.backend.saas_app.edit', compact('saasApp'));
+    }
+
+    public function update(storeRequest $request, SaasApp $saasApp)
+    {
+        $saasApp = $this->saasAppRepository->update($saasApp, $request->validated());
+        return redirect()->route('backend.saas_app.show', $saasApp->uid)->with('success', 'Saas App updated successfully!');
+    }
+
+    public function destroy(SaasApp $saasApp)
+    {
+        $this->saasAppRepository->delete($saasApp);
+        return redirect()->route('backend.saas_app.index')->with('success', 'Saas App deleted successfully!');
     }
 
     public function getAll()
@@ -50,38 +84,41 @@ class SaasAppController extends Controller
         ]);
     }
 
-    public function create()
+    public function getAllForDt(Request $request)
     {
-        return view('pages.backend.saas_app.create');
-    }
+        return DataTables::of($this->saasAppRepository->getAll($request->all()))
+            ->addColumn('name', function($saasApp) {
+                return '<a href="'.route('backend.saas_app.show', $saasApp->uid).'">'.Str::limit($saasApp->name, 30).'</a>';
+            })
+            ->addColumn('abbreviation', function($saasApp) {
+                return $saasApp->abbreviation;
+            })
+            ->addColumn('created_at', function($saasApp) {
+                return $saasApp->created_at->diffForHumans();
+            })
+            ->addColumn('actions', function($saasApp) {
+                $actions = '<a href="'.route('backend.saas_app.show', $saasApp->uid).'" class="text-info mr-2 text-decoration-none" title="View">
+                      <i class="fas fa-eye fa-sm"></i>
+                   </a>
+                   <a href="'.route('backend.saas_app.edit', $saasApp->uid).'" class="text-primary mr-2 text-decoration-none" title="Edit">
+                      <i class="fas fa-edit fa-sm"></i>
+                   </a>';
 
-    public function store(storeRequest $request)
-    {
-        $ticket = $this->saasAppRepository->store($request->validated());
-        return redirect()->route('backend.saas_app.show', $ticket->uid)->with('success', 'Ticket created successfully!');
-    }
+                if($saasApp->can_be_deleted) {
+                    $formId = 'delete-saas_app-form-' . $saasApp->uid;
 
-    public function show($saasAppUid)
-    {
-        $data['saasApp'] = $this->saasAppRepository->findByUid($saasAppUid);
-        return view('pages.backend.saas_app.show', $data);
-    }
+                    $actions .= '<a href="javascript:void(0);" class="text-danger mr-2 text-decoration-none" title="Delete" onclick="confirmDelete(\''.$saasApp->uid.'\')">
+                        <i class="fas fa-trash fa-sm"></i>
+                     </a>';
 
-    public function edit($saasAppUid)
-    {
-        $data['saasApp'] = $this->saasAppRepository->findByUid($saasAppUid);
-        return view('pages.backend.saas_app.edit', $data);
-    }
-
-    public function update(storeRequest $request, $saasAppUid)
-    {
-        $saasAppUid = $this->saasAppRepository->update($saasAppUid, $request->validated());
-        return redirect()->route('backend.saas_app.show', $saasAppUid->uid)->with('success', 'Saas App updated successfully!');
-    }
-
-    public function destroy($saasAppUid)
-    {
-        $this->saasAppRepository->delete($saasAppUid);
-        return redirect()->route('backend.saas_app.index')->with('success', 'Saas App deleted successfully!');
+                    $actions .= csrf_field()
+                        . method_field('DELETE')
+                        . '<form id="'.$formId.'" action="'.route('backend.saas_app.destroy', $saasApp->uid).'" method="POST" style="display: none;">'
+                        . csrf_field()
+                        . method_field('DELETE')
+                        . '</form>';
+                }
+                return $actions;
+            })->rawColumns(['name', 'abbreviation', 'status_badge', 'actions'])->make(true);
     }
 }

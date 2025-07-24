@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\SaasApp;
+use App\Models\SenderId;
 use App\Models\SubTopic;
 use App\Models\Topic;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -34,6 +36,12 @@ class RouteServiceProvider extends ServiceProvider
         });
         Route::bind('subtopic', function ($value) {
             return SubTopic::where('uid', $value)->firstOrFail();
+        });
+        Route::bind('saasApp', function ($value) {
+            return SaasApp::where('uid', $value)->firstOrFail();
+        });
+        Route::bind('sender', function ($value) {
+            return SenderId::where('uid', $value)->firstOrFail();
         });
 
         RateLimiter::for('api', function (Request $request) {
