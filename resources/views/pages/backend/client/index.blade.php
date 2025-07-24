@@ -1,43 +1,40 @@
 @extends('layouts.backend.app')
-@section('title', 'Topic')
+@section('title', __('label.create'))
 @section('content')
     <div class="container-fluid">
         <div id="content">
             <div class="d-sm-flex align-items-center justify-content-end mb-4">
-                <a href="{{ route('backend.topic.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                    <i class="fas fa-plus fa-sm text-white-50"></i> Create New Topic
+                <a href="{{ route('backend.client.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                    <i class="fas fa-plus fa-sm text-white-50"></i> {{__('label.create')}}
                 </a>
             </div>
 
             <div class="card shadow mb-4">
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered" id="topicsTable" width="100%" cellspacing="0">
+                        <table class="table table-bordered" id="clientTable" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
-                                    <th>Title</th>
-                                    <th>Saas_app</th>
-                                    <th>Descriptions</th>
-                                    <th>Status</th>
-                                    <th>Created_at</th>
-                                    <th>Actions</th>
+                                    <th>{{__('label.name')}}</th>
+                                    <th>{{__('label.email')}}</th>
+                                    <th>{{__('label.sender_ids_count')}}</th>
+                                    <th>{{__('label.saas_app')}}</th>
+                                    <th>{{__('label.status')}}</th>
+                                    <th>{{__('label.created_at')}}</th>
+                                    <th>{{__('label.action')}}</th>
                                 </tr>
                             </thead>
                         </table>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 @endsection
 
-@push('styles')
-@endpush
-
 @push('scripts')
     <script>
-        function confirmDelete(topicId) {
+        function confirmDelete(client) {
             Swal.fire({
                 title: 'Are you sure?',
                 text: "You won't be able to revert this!",
@@ -48,28 +45,29 @@
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    document.getElementById(`delete-topic-form-${topicId}`).submit();
+                    document.getElementById(`delete-topic-form-${client}`).submit();
                 }
             });
         }
 
         $(document).ready(function() {
-            $('#topicsTable').DataTable({
+            $('#clientTable').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: "{{ route('backend.topic.get_tertiary_topic_for_dt') }}",
+                    url: "{{ route('backend.client.get_client_for_dt') }}",
                     type: 'GET'
                 },
                 columns: [
-                    { data: 'topic_name', name: 'topic_name', orderable: false, searchable: false },
-                    { data: 'saas_app_name', name: 'saas_app_name', orderable: false, searchable: false },
-                    { data: 'description', name: 'description' },
+                    { data: 'name', name: 'name', orderable: false, searchable: false },
+                    { data: 'email', name: 'email', orderable: false, searchable: false },
+                    { data: 'count', name: 'sender_ids_count', orderable: false, searchable: false },
+                    { data: 'saas_app', name: 'saas_app', orderable: false, searchable: false },
                     { data: 'status_badge', name: 'is_active', orderable: false },
                     { data: 'created_at', name: 'created_at' },
                     { data: 'actions', name: 'actions', orderable: false, searchable: false }
                 ],
-                order: [[5, 'desc']], // Order by created_at (6th column)
+                order: [[5, 'desc']],
                 language: {
                     search: "_INPUT_",
                     searchPlaceholder: "Search...",

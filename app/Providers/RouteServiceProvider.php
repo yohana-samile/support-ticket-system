@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Access\Client;
 use App\Models\SaasApp;
 use App\Models\SenderId;
 use App\Models\SubTopic;
@@ -42,6 +43,9 @@ class RouteServiceProvider extends ServiceProvider
         });
         Route::bind('sender', function ($value) {
             return SenderId::where('uid', $value)->firstOrFail();
+        });
+        Route::bind('client', function ($value) {
+            return Client::where('uid', $value)->firstOrFail();
         });
 
         RateLimiter::for('api', function (Request $request) {

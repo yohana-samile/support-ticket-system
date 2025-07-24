@@ -4,34 +4,43 @@
     <div class="container-fluid">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Add New Topic</h6>
+                <h6 class="m-0 font-weight-bold text-primary">{{__('label.add_new_client')}}</h6>
             </div>
             <div class="card-body">
-                <form action="{{ route('backend.topic.store') }}" method="POST">
+                <form action="{{ route('backend.client.store') }}" method="POST">
                     @csrf
 
                     <div class="mb-3 form-group">
-                        <label for="saas_app_id">SaaS Application</label>
-                        <select class="form-control select2-ajax" id="saas_app_id" name="saas_app_id" data-placeholder="Search for a SaaS app..." data-ajax-url="{{ route('backend.saas_app.search') }}">
+                        <label for="saas_app_id">{{__('label.saas_application')}} <span class="text-danger">*</span></label>
+                        <select class="form-control select2-ajax" id="saas_app_id" name="saas_app_id" data-placeholder="Search for a SaaS app..." data-ajax-url="{{ route('backend.saas_app.search') }}" required>
                             <option value=""></option>
                             @if(old('saas_app_id'))
                                 <option value="{{ old('saas_app_id') }}" selected>{{ old('saas_app_name') }}</option>
                             @endif
                         </select>
-                        <small class="form-text text-muted">Select the SaaS application for this topic (optional)</small>
+                        <small class="form-text text-muted">Select the SaaS application client belong</small>
                     </div>
 
                     <div class="form-group">
-                        <label for="name">Topic Name <span class="text-danger">*</span></label>
+                        <label for="name">{{__('name')}} <span class="text-danger">*</span></label>
                         <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required>
                         @error('name')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-
                     <div class="form-group">
-                        <label for="description">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="3">{{ old('description') }}</textarea>
+                        <label for="email">{{__('email')}} <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required>
+                        @error('email')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">{{__('phone')}} <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone') }}" required>
+                        @error('phone  ')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="form-group">
@@ -45,10 +54,10 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Submit
+                        <i class="fas fa-save"></i> {{__('label.submit')}}
                     </button>
-                    <a href="{{ route('backend.topic.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-times"></i> Cancel
+                    <a href="{{ route('backend.client.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> {{__('label.cancel')}}
                     </a>
                 </form>
             </div>

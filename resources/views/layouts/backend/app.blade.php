@@ -120,8 +120,8 @@
             <div id="collapseAdministration" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
                     <h6 class="collapse-header">User:</h6>
-                    <a class="collapse-item" href="{{ route('backend.user.index') }}">{{__('Staff')}}</a>
-                    <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('Clients')}}</a>
+                    <a class="collapse-item" href="{{ route('backend.user.index') }}">{{__('label.staff')}}</a>
+                    <a class="collapse-item" href="{{ route('backend.client.index') }}">{{__('label.client')}}</a>
                     <h6 class="collapse-header">Authorization:</h6>
                     <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('Roles & Permissions')}}</a>
                 </div>

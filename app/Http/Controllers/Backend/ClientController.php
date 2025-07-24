@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Backend\UpdateClientRequest as updateRequest;
+use App\Http\Requests\Backend\User\StoreClientRequest as storeRequest;
 use App\Models\Access\Client;
 use App\Repositories\Backend\ClientRepository;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
-use App\Http\Requests\Backend\StoreClientRequest as storeRequest;
-use App\Http\Requests\Backend\UpdateClientRequest as updateRequest;
+use Illuminate\Support\Str;
+use Yajra\DataTables\DataTables;
 
 class ClientController extends Controller
 {
@@ -29,55 +30,32 @@ class ClientController extends Controller
         return view('pages.backend.client.create');
     }
 
-    public function edit(Client $clientUid)
+    public function edit(Client $client)
     {
-        $client = $this->clientRepo->findByUid($clientUid);
         return view('pages.backend.client.edit', compact('client'));
     }
 
-    public function store(storeRequest $request): JsonResponse
+    public function store(storeRequest $request)
     {
         $client = $this->clientRepo->store($request->validated());
-
-        return response()->json([
-            'message' => 'Client created successfully',
-            'data' => $client
-        ], Response::HTTP_CREATED);
+        return redirect()->route('backend.client.show', $client->uid)->with('success', 'Client created successfully');
     }
 
-    public function show($uid)
+    public function show(Client $client)
     {
-        $client = $this->clientRepo->findByUid($uid);
-
-        if (!$client) {
-            redirect()->back()->with('error', 'Client not found');
-        }
-        return view('pages.backend.client.show', compact('client'));
+        return view('pages.backend.client.profile.show', compact('client'));
     }
 
-    public function update(updateRequest $request, Client $client): JsonResponse
+    public function update(updateRequest $request, Client $client)
     {
         $client = $this->clientRepo->update($client, $request->validated());
-
-        return response()->json([
-            'message' => 'Client updated successfully',
-            'data' => $client
-        ]);
+        return redirect()->route('backend.client.show', $client->uid)->with('success', 'Client updated successfully');
     }
 
-    public function destroy(Client $client): JsonResponse
+    public function destroy(Client $client)
     {
-        $deleted = $this->clientRepo->delete($client);
-
-        if (!$deleted) {
-            return response()->json([
-                'message' => 'Client could not be deleted'
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-
-        return response()->json([
-            'message' => 'Client deleted successfully'
-        ]);
+        $this->clientRepo->delete($client);
+        return view('pages.backend.client.index')->with('success', 'Client deleted successfully');
     }
 
     public function getByService($serviceId): JsonResponse
@@ -95,5 +73,52 @@ class ClientController extends Controller
         return response()->json([
             'data' => $clients
         ]);
+    }
+
+    public function getAllForDt()
+    {
+        return DataTables::of($this->clientRepo->getAllClientWithSenderIdCount())
+            ->addColumn('name', function($client) {
+                return '<a href="'.route('backend.client.show', $client->uid).'">'.Str::limit($client->name, 30).'</a>';
+            })
+            ->addColumn('email', function($client) {
+                return $client->email;
+            })
+            ->addColumn('saas_app', function($client) {
+                return $client->saas_app_name ?? 'N/A';
+            })
+            ->addColumn('created_at', function($client) {
+                return $client->created_at->diffForHumans();
+            })
+            ->addColumn('status_badge', function($topic) {
+                return getStatusBadge($topic->is_active);
+            })
+            ->addColumn('count', function($client) {
+                return $client->senderIds->count() ?? 0;
+            })
+            ->addColumn('actions', function($client) {
+                $actions = '<a href="'.route('backend.client.show', $client->uid).'" class="text-info mr-2 text-decoration-none" title="View">
+                      <i class="fas fa-eye fa-sm"></i>
+                   </a>
+                   <a href="'.route('backend.client.edit', $client->uid).'" class="text-primary mr-2 text-decoration-none" title="Edit">
+                      <i class="fas fa-edit fa-sm"></i>
+                   </a>';
+
+                if($client->can_be_deleted) {
+                    $formId = 'delete-client-form-' . $client->uid;
+
+                    $actions .= '<a href="javascript:void(0);" class="text-danger mr-2 text-decoration-none" title="Delete" onclick="confirmDelete(\''.$client->uid.'\')">
+                        <i class="fas fa-trash fa-sm"></i>
+                     </a>';
+
+                    $actions .= csrf_field()
+                        . method_field('DELETE')
+                        . '<form id="'.$formId.'" action="'.route('backend.client.destroy', $client->uid).'" method="POST" style="display: none;">'
+                        . csrf_field()
+                        . method_field('DELETE')
+                        . '</form>';
+                }
+                return $actions;
+            })->rawColumns(['name', 'count', 'saas_app', 'email', 'status_badge', 'actions'])->make(true);
     }
 }

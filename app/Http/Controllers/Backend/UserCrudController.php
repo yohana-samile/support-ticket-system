@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Backend\UpdateUserRequest as updateRequest;
+use App\Http\Requests\Backend\User\StoreUserRequest as storeRequest;
 use App\Models\Access\User;
 use App\Repositories\Backend\UserRepository;
-use App\Http\Requests\Backend\StoreUserRequest as storeRequest;
-use App\Http\Requests\Backend\UpdateUserRequest as updateRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
