@@ -80,13 +80,6 @@ class ClientRepository extends BaseRepository
         });
     }
 
-    /**
-     * update password
-     */
-    /**
-     * assign id
-     */
-
     protected function generatePassword()
     {
         return Str::random(6) .rand(100, 999);

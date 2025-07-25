@@ -138,35 +138,74 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load services
     function loadServices(preSelectedId = null) {
-        showLoading(serviceSelect);
+        const serviceSelect = $('#service');
+        const serviceSelectElement = serviceSelect[0];
+        showLoading(serviceSelectElement);
 
-        fetch('/backend/saas_app/saas_app')
-            .then(response => response.json())
-            .then(data => {
-                serviceSelect.innerHTML = '<option value="" selected disabled>Select a Saas App</option>';
-                data.data.forEach(service => {
-                    const option = document.createElement('option');
-                    option.value = service.id;
-                    option.textContent = service.name;
+        serviceSelect.select2({
+            ajax: {
+                url: serviceSelect.data('ajax-url'),
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        search: params.term,
+                        page: params.page || 1
+                    };
+                },
+                processResults: function(data, params) {
+                    params.page = params.page || 1;
+                    hideLoading(serviceSelectElement);
+                    return {
+                        results: data.data.map(item => ({
+                            id: item.id,
+                            text: item.name
+                        })),
+                        pagination: {
+                            more: data.next_page_url ? true : false
+                        }
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 2,
+            placeholder: serviceSelect.data('placeholder'),
+            allowClear: true,
+            escapeMarkup: function(markup) { return markup; }
+        }).on('select2:select', function(e) {
+            handleServiceChange();
+        });
 
-                    // Mark as selected if it matches the pre-selected ID
-                    if (preSelectedId && service.id == preSelectedId) {
-                        option.selected = true;
-                        selectedServiceId = service.id; // Update the state
+        // Handle preselected service
+        if (preSelectedId) {
+            if (serviceSelect.find(`option[value="${preSelectedId}"]`).length) {
+                serviceSelect.val(preSelectedId).trigger('change');
+                handleServiceChange();
+                hideLoading(serviceSelectElement);
+            } else {
+                $.ajax({
+                    url: serviceSelect.data('ajax-url'),
+                    data: { search: '', id: preSelectedId },
+                    dataType: 'json'
+                }).done(function(data) {
+                    if (data.data && data.data.length) {
+                        const service = data.data[0];
+                        const option = new Option(service.name, service.id, true, true);
+                        serviceSelect.append(option).trigger('change');
+                        handleServiceChange();
                     }
-
-                    serviceSelect.appendChild(option);
+                    hideLoading(serviceSelectElement);
+                }).fail(function () {
+                    hideLoading(serviceSelectElement);
                 });
-                hideLoading(serviceSelect);
+            }
+        } else {
+            setTimeout(() => {
+                hideLoading(serviceSelectElement);
+            }, 500)
+        }
 
-                if (preSelectedId && selectedServiceId) {
-                    handleServiceChange();
-                    $(serviceSelect).trigger('change');
-                }
-            })
-            .catch(error => {
-                hideLoading(serviceSelect);
-            });
+        hideLoading(serviceSelect);
     }
 
     // When service is selected, load clients
@@ -193,6 +232,9 @@ document.addEventListener('DOMContentLoaded', function() {
         hideSection('attachmentsSection');
         hideSection('submitSection');
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const preSelectedClientId = urlParams.get('client_id');
+
         fetch(`/backend/client/client_by_services/${selectedServiceId}`)
             .then(response => response.json())
             .then(data => {
@@ -201,6 +243,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     const option = document.createElement('option');
                     option.value = client.id;
                     option.textContent = client.name;
+
+                    // Pre-select if this is the client from URL parameters
+                    if (preSelectedClientId && client.id == preSelectedClientId) {
+                        option.selected = true;
+                        selectedClientId = client.id;
+
+                        // Trigger client change handler immediately
+                        setTimeout(() => {
+                            handleClientChange();
+                            $(clientSelect).trigger('change');
+                        }, 100);
+                    }
+
                     clientSelect.appendChild(option);
                 });
             })
@@ -941,14 +996,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showLoading(element) {
+        const el = element.jquery ? element[0] : element;
+
+        if (!el || !el.parentNode) {
+            console.error('Invalid element passed to showLoading');
+            return;
+        }
+
+        const spinnerId = `${el.id}-spinner`;
+        if (document.getElementById(spinnerId)) {
+            return;
+        }
+
         const spinner = document.createElement('span');
         spinner.className = 'loading-spinner ms-2';
-        spinner.id = `${element.id}-spinner`;
-        element.parentNode.insertBefore(spinner, element.nextSibling);
+        spinner.id = spinnerId;
+        el.parentNode.insertBefore(spinner, el.nextSibling);
     }
 
     function hideLoading(element) {
-        const spinner = document.getElementById(`${element.id}-spinner`);
-        if (spinner) spinner.remove();
+        const el = element.jquery ? element[0] : element;
+        if (!el) return;
+
+        const spinnerId = `${el.id}-spinner`;
+        const spinner = document.getElementById(spinnerId);
+        if (spinner) {
+            spinner.remove();
+        }
     }
 });

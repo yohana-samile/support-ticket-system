@@ -6,6 +6,8 @@ Route::group([
 ], function () {
     Route::group(['prefix' => 'sender_id', 'as' => 'sender_id.'], function () {
         Route::get('/index', 'SenderIdController@index')->name('index');
+        Route::get('/search', 'SenderIdController@search')->name('search');
+
         Route::get('/active_sender_ids/{clientId}', 'SenderIdController@activeSenderIds')->name('active_sender_ids');
         Route::get('/sender_ids', 'SenderIdController@getAll')->name('sender_ids');
         Route::get('/get_sender_ids_for_dt', 'SenderIdController@getAllForDt')->name('get_sender_ids_for_dt');

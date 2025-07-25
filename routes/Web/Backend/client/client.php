@@ -10,8 +10,10 @@ Route::group([
 
         Route::get('/create', 'ClientController@create')->name('create');
         Route::post('/client', 'ClientController@store')->name('store');
-        Route::post('/assign_sender_id', 'ClientController@assignSenderId')->name('assign_sender_id');
-        Route::post('/update_password', 'ClientController@updatePassword')->name('update_password');
+        Route::put('/update_password/{client}', 'ClientController@updatePassword')->name('update_password');
+
+        Route::post('/assign_sender_id/{client}', 'ClientController@assignSenderId')->name('assign_sender_id');
+        Route::delete('/detach_sender_id/{client}/{senderId}', 'ClientController@detachSenderId')->name('detach_sender_id');
 
         Route::get('/client/{client}', 'ClientController@show')->name('show');
         Route::get('/client/edit/{client}', 'ClientController@edit')->name('edit');

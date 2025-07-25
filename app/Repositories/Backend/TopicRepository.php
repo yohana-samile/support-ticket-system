@@ -58,10 +58,7 @@ class TopicRepository extends  BaseRepository {
 
     public function getByServiceId($serviceId)
     {
-        return $this->query()
-            ->with('saasApp')
-            ->orderByRaw('CASE WHEN saas_app_id = ? THEN 0 ELSE 1 END', [$serviceId])
-            ->orderBy('name')
-            ->get();
+        return $this->query()->with('saasApp')
+            ->orderByRaw('CASE WHEN saas_app_id = ? THEN 0 ELSE 1 END', [$serviceId])->orderBy('name');
     }
 }

@@ -2,8 +2,6 @@
 @section('title', 'Add Ticket')
 
 @push('styles')
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/styles/choices.min.css">
     <style>
@@ -346,10 +344,15 @@
                     <!-- Service Selection -->
                     <div class="mb-3 form-section visible-section" id="serviceSection">
                         <label for="service" class="form-label">SaaS App <span class="text-danger">*</span></label>
-                        <select class="form-select form-control select2" id="service" required>
-                            <option value="" >Select a service</option>
+                        <select class="form-control select2-ajax" id="service" name="service"
+                                data-placeholder="Search for a SaaS app..."
+                                data-ajax-url="{{ route('backend.saas_app.search') }}" required>
+                            <option value=""></option>
+                            @if(isset($preSelectedService))
+                                <option value="{{ $preSelectedService->id }}" selected>{{ $preSelectedService->name }}</option>
+                            @endif
                         </select>
-                        <div class="form-text">Select the service this ticket is about</div>
+                        <div class="form-text">Start typing to search for a SaaS app</div>
                     </div>
 
                     <!-- Client Selection -->
@@ -426,9 +429,8 @@
                     <div class="mb-3 form-section hidden-section" id="prioritySection">
                         <label for="priority" class="form-label">Priority <span class="text-danger">*</span></label>
                         <select class="form-select select2" id="priority" required>
-                            <option value="" >Select priority</option>
                             @foreach($priorities as $priority)
-                                <option value="{{ $priority->name }}">{{ $priority->name }}</option>
+                                <option value="{{ $priority->name }}">{{ $priority->name }}</option> <-- default low -->
                             @endforeach
                         </select>
                     </div>
@@ -527,9 +529,7 @@
 @endsection
 
 @push('scripts')
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/scripts/choices.min.js"></script>
     <script src="{{ asset('asset/js/script.js') }}"></script>
 @endpush

@@ -63,6 +63,23 @@ class SenderIdController extends Controller
         return response()->json(['data' => $senderIds]);
     }
 
+    public function search(Request $request)
+    {
+        $search = $request->input('search');
+
+        $results = SenderId::query()
+            ->when($search, function($query) use ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('sender_id', 'ilike', "%{$search}%");
+                });
+            })->paginate(10);
+
+        return response()->json([
+            'data' => $results->items(),
+            'next_page_url' => $results->nextPageUrl()
+        ]);
+    }
+
     public function getAll(): JsonResponse
     {
         $senderIds = $this->senderIdRepo->getAll();

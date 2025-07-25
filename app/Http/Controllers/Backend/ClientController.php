@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Backend\UpdateClientRequest as updateRequest;
 use App\Http\Requests\Backend\User\StoreClientRequest as storeRequest;
 use App\Models\Access\Client;
+use App\Models\SenderId;
 use App\Repositories\Backend\ClientRepository;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
 
@@ -52,6 +54,31 @@ class ClientController extends Controller
         return redirect()->route('backend.client.show', $client->uid)->with('success', 'Client updated successfully');
     }
 
+    public function updatePassword(Request $request, Client $client)
+    {
+        $request->validate(['password' => ['required', 'string', 'min:8', 'confirmed'],]);
+        $client->update(['password' => $request->password]);
+        return redirect()->back()->with('success', 'Client password updated successfully');
+    }
+
+    public function assignSenderId(Request $request, Client $client)
+    {
+        $request->validate([
+            'sender_id' => ['required', 'array'],
+            'sender_id.*' => ['exists:sender_ids,id'],
+        ]);
+        $client->senderIds()->syncWithoutDetaching($request->sender_id);
+        return redirect()->back()->with('success', 'senderIds assigned to this client successfully');
+    }
+
+    public function detachSenderId(Request $request, $client, $senderId)
+    {
+        $client = Client::findOrFail($client);
+        SenderId::findOrFail($senderId);
+
+        $client->senderIds()->detach($senderId);
+        return redirect()->back()->with('success', 'senderIds removed to this client');
+    }
     public function destroy(Client $client)
     {
         $this->clientRepo->delete($client);
