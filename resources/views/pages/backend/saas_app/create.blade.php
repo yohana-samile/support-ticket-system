@@ -4,14 +4,14 @@
     <div class="container-fluid">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Add New Topic</h6>
+                <h6 class="m-0 font-weight-bold text-primary">{{__('label.create')}}</h6>
             </div>
             <div class="card-body">
                 <form action="{{ route('backend.saas_app.store') }}" method="POST">
                     @csrf
 
                     <div class="form-group">
-                        <label for="name">{{__('label.saa_app_name')}} <span class="text-danger">*</span></label>
+                        <label for="name">{{__('label.name')}} <span class="text-danger">*</span></label>
                         <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required>
                         @error('name')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -27,10 +27,10 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Submit
+                        <i class="fas fa-save"></i> {{__('label.submit')}}
                     </button>
                     <a href="{{ route('backend.saas_app.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-times"></i> Cancel
+                        <i class="fas fa-times"></i> {{__('label.cancel')}}
                     </a>
                 </form>
             </div>

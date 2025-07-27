@@ -8,7 +8,7 @@
                 <div>
                     <h5 class="h6 mb-0 font-weight-bold text-gray-800">
                         <i class="fas fa-bookmark mr-2 text-primary"></i>
-                        {{__('label.saa_app_details')}}
+                        {{__('label.basic_information')}}
                     </h5>
                 </div>
                 <a href="{{ route('backend.saas_app.index') }}" class="btn btn-sm btn-outline-secondary">
@@ -79,7 +79,7 @@
                         <i class="fas fa-edit mr-1"></i> {{__('label.edit')}}
                     </a>
                     <a href="{{ route('backend.saas_app.index') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-list mr-1"></i> {{__('label.view_all_app')}}
+                        <i class="fas fa-list mr-1"></i> {{__('label.view_all')}}
                     </a>
                 </div>
             </div>

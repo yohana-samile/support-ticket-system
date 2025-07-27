@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 hideSection('ticketHistorySection');
             });
 
-        fetch(`/backend/topic/topic_by_services/${selectedServiceId}`)
+        fetch(`/backend/topic/get_by_service/${selectedServiceId}`)
             .then(response => response.json())
             .then(data => {
                 resetSelect(topicSelect, 'Select a topic');
@@ -910,24 +910,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-            .then(response => {
+            .then(async response => {
+                const data = await response.json();
                 if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.message || 'Network response was not ok');
-                    });
+                    if (data.errors) {
+                        const errorMessages = Object.values(data.errors).flat().join('<br>');
+                        throw new Error(errorMessages);
+                    }
+                    throw new Error(data.message || 'Network response was not ok');
                 }
-                return response.json();
+                return data;
             })
             .then(data => {
                 if (data.success) {
-                    alert('Ticket created successfully!');
+                    toastr.success(data.message || 'Ticket created successfully!');
                     resetForm();
                 } else {
                     throw new Error(data.message || 'Failed to create ticket');
                 }
             })
             .catch(error => {
-                alert(`Error creating ticket: ${error.message}`);
+                const errors = error.message.split('<br>');
+                if (errors.length > 1) {
+                    errors.forEach(err => toastr.error(err));
+                } else {
+                    toastr.error(error.message || 'Error creating ticket');
+                }
             })
             .finally(() => {
                 submitBtn.disabled = false;
@@ -986,7 +994,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         for (const field of requiredFields) {
             if (!field.element.value) {
-                alert(`Please select a ${field.name}`);
+                toastr.error(`Please select a ${field.name}`);
                 field.element.focus();
                 return false;
             }

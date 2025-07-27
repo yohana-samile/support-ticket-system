@@ -9,7 +9,7 @@ Route::group([
         Route::get('/subtopic', 'SubtopicController@getAll')->name('subtopic');
         Route::get('/tertiary_topic', 'SubtopicController@getAllForDt')->name('get_tertiary_topic_for_dt');
 
-        Route::get('/get_by_topic_id/{topic}', 'SubtopicController@getByTopic')->name('get_by_topic_id');
+        Route::get('/get_by_topic_id/{topicId}', 'SubtopicController@getByTopic')->name('get_by_topic_id');
         Route::get('/search', 'SubtopicController@search')->name('search');
 
         Route::get('/create', 'SubtopicController@create')->name('create');

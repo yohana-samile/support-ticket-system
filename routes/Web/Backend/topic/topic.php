@@ -10,7 +10,7 @@ Route::group([
         Route::get('/get_tertiary_topic_for_dt', 'TopicController@getAllForDt')->name('get_tertiary_topic_for_dt');
 
         Route::get('/search', 'TopicController@search')->name('search');
-        Route::get('/topic/{service}', 'TopicController@getByService')->name('get_by_service');
+        Route::get('/get_by_service/{service}', 'TopicController@getByService')->name('get_by_service');
 
         Route::get('/create', 'TopicController@create')->name('create');
         Route::post('store/', 'TopicController@store')->name('store');

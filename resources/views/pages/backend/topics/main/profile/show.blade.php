@@ -22,7 +22,7 @@
                     <div class="col-lg-8">
                         <div class="detail-card mb-4">
                             <div class="detail-header">
-                                <h6 class="mb-0"><i class="fas fa-info-circle mr-2"></i> Basic Information</h6>
+                                <h6 class="mb-0"><i class="fas fa-info-circle mr-2"></i> {{__('label.basic_information')}}</h6>
                             </div>
                             <div class="detail-body">
                                 <div class="row">
@@ -99,7 +99,7 @@
                         <i class="fas fa-edit mr-1"></i> {{__('label.edit')}}
                     </a>
                     <a href="{{ route('backend.topic.index') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-list mr-1"></i> {{__('label.view_all_topics')}}
+                        <i class="fas fa-list mr-1"></i> {{__('label.view_all')}}
                     </a>
                 </div>
             </div>

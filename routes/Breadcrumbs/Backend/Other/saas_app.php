@@ -7,7 +7,7 @@ Breadcrumbs::for('backend.saas_app.index', function ($breadcrumbs) {
 Breadcrumbs::for('backend.saas_app.create',function($breadcrumbs){
     $breadcrumbs->parent('home');
     $breadcrumbs->push(__('label.saas_app' ), route('backend.saas_app.index'));
-    $breadcrumbs->push(__('label.create_saas_app' ), route('backend.saas_app.create'));
+    $breadcrumbs->push(__('label.create' ), route('backend.saas_app.create'));
 });
 
 Breadcrumbs::for('backend.saas_app.show', function ($breadcrumbs, $saasApp) {

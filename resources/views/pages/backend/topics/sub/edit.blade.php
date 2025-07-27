@@ -27,7 +27,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="name" class="form-label">{{__('label.subtopic_name')}} <span class="text-danger">*</span></label>
+                                <label for="name" class="form-label">{{__('label.name')}} <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $subtopic->name) }}" required>
                                 @error('name')
                                     <span class="invalid-feedback" role="alert">
@@ -76,7 +76,7 @@
                             <span class="text-muted">{{ $subtopic->topic->name ?? 'Not assigned' }}</span>
                         </div>
                         <div class="mb-3">
-                            <strong>{{__('created_at')}}:</strong>
+                            <strong>{{__('label.created_at')}}:</strong>
                             <span class="text-muted">{{ $subtopic->created_at->format('M d, Y h:i A') }}</span>
                         </div>
                         <div class="mb-3">
@@ -84,7 +84,7 @@
                             <span class="text-muted">{{ $subtopic->updated_at->format('M d, Y h:i A') }}</span>
                         </div>
                         <div class="mb-3">
-                            <strong>{{__('label.current_status')}}:</strong>
+                            <strong>{{__('label.status')}}:</strong>
                             <span class="badge badge-{{ $subtopic->is_active ? 'success' : 'danger' }}">
                                 {{ $subtopic->is_active ? 'Active' : 'Inactive' }}
                             </span>

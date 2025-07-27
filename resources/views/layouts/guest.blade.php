@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{{ config('app.name', 'Laravel') }} - @yield('title')</title>
+    <title>{{ config('app.name', 'Ticketing System') }} - @yield('title')</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
 
     <style>
-        .notify{
-            z-index: 1001 !important;
-        }
         :root {
             --primary-color: #3490dc;
             --secondary-color: #6c757d;
@@ -68,8 +66,6 @@
             border-color: var(--primary-color);
         }
     </style>
-    @notifyCss
-
     @stack('styles')
 </head>
 <body>
@@ -159,8 +155,8 @@
             <div class="col-md-3">
                 <h5>Contact</h5>
                 <ul class="list-unstyled">
-                    <li><i class="fas fa-phone me-2"></i> (123) 456-7890</li>
-                    <li><i class="fas fa-envelope me-2"></i> support@example.com</li>
+                    <li><i class="fas fa-phone me-2"></i> 255620350083</li>
+                    <li><i class="fas fa-envelope me-2"></i> support@nextbyte.co.tz</li>
                 </ul>
             </div>
         </div>
@@ -172,10 +168,9 @@
 </footer>
 
 <!-- Bootstrap 5 JS Bundle with Popper -->
+<script src="{{ asset('asset/vendor/jquery/jquery.min.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-@include('notify::components.notify')
-@notifyJs
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 @stack('scripts')
 </body>
 </html>

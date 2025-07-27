@@ -5,7 +5,7 @@
         <div id="content">
             <div class="d-sm-flex align-items-center justify-content-end mb-4">
                 <a href="{{ route('backend.topic.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                    <i class="fas fa-plus fa-sm text-white-50"></i> Create New Topic
+                    <i class="fas fa-plus fa-sm text-white-50"></i> {{__('label.create')}}
                 </a>
             </div>
 

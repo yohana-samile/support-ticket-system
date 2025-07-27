@@ -34,7 +34,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="detail-item">
-                                            <label class="detail-label">{{__('label.tertiary_name')}}</label>
+                                            <label class="detail-label">{{__('label.name')}}</label>
                                             <p class="detail-value">{{ $tertiaryTopic->name }}</p>
                                         </div>
                                     </div>
@@ -112,7 +112,7 @@
                         <i class="fas fa-edit mr-1"></i> {{__('label.edit')}}
                     </a>
                     <a href="{{ route('backend.tertiary.index') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-list mr-1"></i> {{__('label.view_all_tertiary_topics')}}
+                        <i class="fas fa-list mr-1"></i> {{__('label.view_all')}}
                     </a>
                 </div>
             </div>

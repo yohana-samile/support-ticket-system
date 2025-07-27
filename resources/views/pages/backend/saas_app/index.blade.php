@@ -5,7 +5,7 @@
         <div id="content">
             <div class="d-sm-flex align-items-center justify-content-end mb-4">
                 <a href="{{ route('backend.saas_app.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                    <i class="fas fa-plus fa-sm text-white-50"></i> {{__('label.create_new_saas_app')}}
+                    <i class="fas fa-plus fa-sm text-white-50"></i> {{__('label.create')}}
                 </a>
             </div>
 

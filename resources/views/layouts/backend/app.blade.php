@@ -1,7 +1,7 @@
 @php
     $saasApps = App\Models\SaasApp::all();
 @endphp
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -90,19 +90,27 @@
         <div class="sidebar-heading">
             {{__('label.other')}}
         </div>
-        <li class="nav-item {{ request()->routeIs('backend.topic.*') ? 'active' : '' }}">
+        <li class="nav-item {{
+            request()->routeIs('backend.operator.*') ||
+            request()->routeIs('backend.saas_app.*') ||
+            request()->routeIs('backend.sender_id.*') ? 'active' : ''
+        }}">
             <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseOther" aria-expanded="true" aria-controls="collapseOther">
                 <i class="fas fa-fw fa-cog"></i>
                 <span>{{__('label.other_settings')}}</span>
             </a>
-            <div id="collapseOther" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
+            <div id="collapseOther" class="collapse {{
+        request()->routeIs('backend.operator.*') ||
+        request()->routeIs('backend.saas_app.*') ||
+        request()->routeIs('backend.sender_id.*') ? 'show' : ''
+    }}" aria-labelledby="headingTwo" data-parent="#sidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
                     <h6 class="collapse-header">{{__('label.mno')}}:</h6>
-                    <a class="collapse-item" href="{{ route('backend.operator.index') }}">{{__('MNOs')}}</a>
+                    <a class="collapse-item {{ request()->routeIs('backend.operator.*') ? 'active' : '' }}" href="{{ route('backend.operator.index') }}">{{__('MNOs')}}</a>
                     <h6 class="collapse-header">{{__('label.service')}}:</h6>
-                    <a class="collapse-item" href="{{ route('backend.saas_app.index') }}">{{__('label.saas_app')}}</a>
+                    <a class="collapse-item {{ request()->routeIs('backend.saas_app.*') ? 'active' : '' }}" href="{{ route('backend.saas_app.index') }}">{{__('label.saas_app')}}</a>
                     <h6 class="collapse-header">{{__('label.sender')}}:</h6>
-                    <a class="collapse-item" href="{{ route('backend.sender_id.index') }}">{{__('label.senders')}}</a>
+                    <a class="collapse-item {{ request()->routeIs('backend.sender_id.*') ? 'active' : '' }}" href="{{ route('backend.sender_id.index') }}">{{__('label.senders')}}</a>
                 </div>
             </div>
         </li>
@@ -120,10 +128,10 @@
             <div id="collapseAdministration" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
                     <h6 class="collapse-header">User:</h6>
-                    <a class="collapse-item" href="{{ route('backend.user.index') }}">{{__('label.staff')}}</a>
                     <a class="collapse-item" href="{{ route('backend.client.index') }}">{{__('label.client')}}</a>
+                    <a class="collapse-item" href="javascript:void(0)">{{__('label.staff')}}</a>
                     <h6 class="collapse-header">Authorization:</h6>
-                    <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('Roles & Permissions')}}</a>
+                    <a class="collapse-item" href="javascript:void(0)">{{__('Roles & Permissions')}}</a>
                 </div>
             </div>
         </li>
@@ -226,20 +234,20 @@
     </div>
 </div>
 
-    <a class="scroll-to-top rounded" href="#page-top">
-        <i class="fas fa-angle-up"></i>
-    </a>
-    @include('layouts.partials.modal')
+<a class="scroll-to-top rounded" href="#page-top">
+    <i class="fas fa-angle-up"></i>
+</a>
+@include('layouts.partials.modal')
 
-    <script src="{{ asset('asset/vendor/jquery/jquery.min.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="{{ asset('asset/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('asset/vendor/jquery-easing/jquery.easing.min.js') }}"></script>
-    <script src="{{ asset('asset/js/sb-admin-2.min.js') }}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="{{ asset('asset/vendor/jquery/jquery.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="{{ asset('asset/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ asset('asset/vendor/jquery-easing/jquery.easing.min.js') }}"></script>
+<script src="{{ asset('asset/js/sb-admin-2.min.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
-    @stack('plugins')
-    @stack('scripts')
+@stack('plugins')
+@stack('scripts')
 </body>
 </html>

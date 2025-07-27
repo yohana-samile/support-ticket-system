@@ -64,9 +64,6 @@ class LoginController extends Controller {
         return array_merge($request->only($this->username(), 'password'), ['is_active' => true]);
     }
 
-    /**
-     * @throws \Exception
-     */
     protected function sendLoginResponse(Request $request) {
         $request->session()->regenerate();
         $this->clearLoginAttempts($request);
@@ -74,9 +71,7 @@ class LoginController extends Controller {
         if ($response = $this->authenticated($request, $this->guard()->user())) {
             return $response;
         }
-
-        smilify('success', 'Login successfully');
-        return redirect($this->redirectTo());
+        return redirect($this->redirectTo())->with('success', 'Login successfully');
     }
 
     protected function authenticated(Request $request, $user) {
@@ -90,8 +85,7 @@ class LoginController extends Controller {
         if ($user && Hash::check($credentials['password'], $user->password)) {
             Auth::guard('web')->login($user, $request->filled('remember'));
             if (!$user->is_active) {
-                notify()->error('Your account is blocked. Please contact the administrator.');
-                return redirect()->back();
+                return redirect()->back()->with('error', 'Your account is blocked. Please contact the administrator.');
             }
 
             $request->session()->regenerate();
@@ -102,15 +96,13 @@ class LoginController extends Controller {
         if ($client && Hash::check($credentials['password'], $client->password)) {
             Auth::guard('client')->login($client, $request->filled('remember'));
             if (!$client->is_active) {
-                notify()->error('Your account is blocked. Please contact the administrator.');
-                return redirect()->back();
+                return redirect()->back()->with('error', 'Your account is blocked. Please contact the administrator.');
             }
 
             $request->session()->regenerate();
             return redirect()->intended(route('client.dashboard'));
         }
-        notify()->error('These credentials do not match our records.');
-        return redirect()->back();
+        return redirect()->back()->with('error', 'These credentials do not match our records.');
     }
 
     public function username() {

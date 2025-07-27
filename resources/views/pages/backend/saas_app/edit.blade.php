@@ -48,15 +48,15 @@
             <div class="col-lg-4">
                 <div class="card shadow mb-4">
                     <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">{{__('label.saas_details')}}</h6>
+                        <h6 class="m-0 font-weight-bold text-primary">{{__('label.system_information')}}</h6>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <strong>{{__('label.saas_application')}}:</strong>
+                            <strong>{{__('label.name')}}:</strong>
                             <span class="text-muted">{{ $saasApp->name ?? 'Not assigned' }}</span>
                         </div>
                         <div class="mb-3">
-                            <strong>{{__('created_at')}}:</strong>
+                            <strong>{{__('label.created_at')}}:</strong>
                             <span class="text-muted">{{ $saasApp->created_at->format('M d, Y h:i A') }}</span>
                         </div>
                         <div class="mb-3">
