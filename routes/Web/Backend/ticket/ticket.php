@@ -6,6 +6,8 @@ Route::group([
 ], function () {
     Route::group(['prefix' => 'ticket', 'as' => 'ticket.'], function () {
         Route::get('/index', 'TicketController@index')->name('index');
+        Route::get('/get_ticket_for_dt', 'TicketController@getAllForDt')->name('get_ticket_for_dt');
+
         Route::get('/create', 'TicketController@create')->name('create');
         Route::post('/store', 'TicketController@store')->name('store');
         Route::get('/{ticket}', 'TicketController@show')->name('show');

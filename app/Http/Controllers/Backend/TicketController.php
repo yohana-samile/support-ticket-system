@@ -12,6 +12,8 @@ use App\Models\Ticket\Ticket;
 use App\Repositories\Backend\TicketRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
+use Yajra\DataTables\DataTables;
 
 class TicketController extends Controller
 {
@@ -24,8 +26,7 @@ class TicketController extends Controller
 
     public function index()
     {
-        $tickets = $this->ticketRepository->all();
-        return view('pages.backend.ticket.index', compact('tickets'));
+        return view('pages.backend.ticket.index');
     }
 
     public function create()
@@ -44,6 +45,7 @@ class TicketController extends Controller
     {
         $ticket = $this->ticketRepository->store($request->validated());
         return response()->json([
+            "success" => true,
             'message' => 'Ticket created successfully',
             'data' => $ticket
         ], Response::HTTP_CREATED);
@@ -145,5 +147,59 @@ class TicketController extends Controller
         return response()->json([
             'data' => $history
         ]);
+    }
+
+    public function getAllForDt()
+    {
+        return DataTables::of($this->ticketRepository->all())
+            ->addColumn('ticket_number', function($ticket) {
+                return '<a href="'.route('backend.ticket.show', $ticket->uid).'">'.$ticket->ticket_number.'</a>';
+            })
+            ->addColumn('title', function($ticket) {
+                return '<a href="'.route('backend.ticket.show', $ticket->uid).'">'.Str::limit($ticket->title, 30).'</a>';
+            })
+            ->addColumn('topic_name', function($ticket) {
+                return $ticket->topic ?
+                    '<a href="'.route('backend.topic.show', $ticket->topic->uid).'">'.Str::limit($ticket->topic->name, 30).'</a>' :
+                    'N/A';
+            })
+            ->addColumn('status_badge', function($ticket) {
+                return '<span class="badge badge-'.getStatusBadgeColor($ticket->status).'">'.ucfirst($ticket->status).'</span>';
+            })
+            ->addColumn('priority_badge', function($ticket) {
+                return '<span class="badge badge-'.getPriorityBadgeColor($ticket->priority).'">'.ucfirst($ticket->priority).'</span>';
+            })
+            ->addColumn('reported_by', function($ticket) {
+                return $ticket->client ? $ticket->client->name : 'N/A';
+            })
+            ->addColumn('when_reported', function($ticket) {
+                return $ticket->created_at->diffForHumans();
+            })
+            ->addColumn('assigned_to', function($ticket) {
+                return $ticket->assignedTo ? $ticket->assignedTo->name : 'Unassigned';
+            })
+            ->addColumn('actions', function($ticket) {
+                $actions = '<a href="'.route('backend.ticket.show', $ticket->uid).'" class="text-info mr-2 text-decoration-none" title="View">
+                  <i class="fas fa-eye fa-sm"></i>
+               </a>';
+                $actions .= '<a href="'.route('backend.ticket.edit', $ticket->uid).'" class="text-primary mr-2 text-decoration-none" title="Edit">
+                      <i class="fas fa-edit fa-sm"></i>
+                   </a>';
+
+                if($ticket->can_be_deleted) {
+                    $formId = 'delete-ticket-form-' . $ticket->uid;
+                    $actions .= '<a href="javascript:void(0);" class="text-danger mr-2 text-decoration-none" title="Delete" onclick="confirmDelete(\''.$ticket->uid.'\')">
+                    <i class="fas fa-trash fa-sm"></i>
+                 </a>';
+
+                    $actions .= '<form id="'.$formId.'" action="'.route('backend.ticket.destroy', $ticket->uid).'" method="POST" style="display: none;">'
+                        . csrf_field()
+                        . method_field('DELETE')
+                        . '</form>';
+                }
+                return $actions;
+            })
+            ->rawColumns(['ticket_number', 'title', 'priority_badge', 'reported_by', 'when_reported', 'assigned_to', 'topic_name', 'status_badge', 'actions'])
+            ->make(true);
     }
 }

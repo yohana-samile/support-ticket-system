@@ -1,6 +1,7 @@
 <?php
 return [
     "home" => "Home",
+    "ticket" => "Ticket",
     "topic" => "Topic",
     "topics" => "Topics",
     "sub" => "Sub",

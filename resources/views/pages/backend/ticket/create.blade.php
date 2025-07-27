@@ -99,9 +99,9 @@
                     <div class="mb-3 form-section hidden-section" id="prioritySection">
                         <label for="priority" class="form-label">Priority <span class="text-danger">*</span></label>
                         <select class="form-select select2" id="priority" required>
-                            <option selected hidden>Select priority</option>
+                            <option value="">Select priority</option>
                             @foreach($priorities as $priority)
-                                <option value="{{ $priority->name }}">{{ $priority->name }}</option> <-- default low -->
+                                <option value="{{ strtolower($priority->name) }}">{{ $priority->name }}</option>
                             @endforeach
                         </select>
                     </div>

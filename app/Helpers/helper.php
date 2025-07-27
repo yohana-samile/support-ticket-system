@@ -295,3 +295,42 @@ if (!function_exists('getStatusBadge')) {
         return '<span class="badge bg-danger">'.__('inactive').'</span>';
     }
 }
+
+
+if (!function_exists('getStatusBadgeColor')) {
+    function getStatusBadgeColor($status)
+    {
+        switch (strtolower($status)) {
+            case 'open':
+                return 'primary';
+            case 'resolved':
+                return 'success';
+            case 'closed':
+                return 'secondary';
+            case 'escalated':
+                return 'danger';
+            case 'reopened':
+                return 'info';
+            default:
+                return 'dark';
+        }
+    }
+}
+
+if (!function_exists('getPriorityBadgeColor')) {
+    function getPriorityBadgeColor($priority)
+    {
+        switch (strtolower($priority)) {
+            case 'low':
+                return 'success';
+            case 'medium':
+                return 'warning';
+            case 'high':
+                return 'danger';
+            case 'critical':
+                return 'dark';
+            default:
+                return 'info';
+        }
+    }
+}

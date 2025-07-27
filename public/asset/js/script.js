@@ -627,7 +627,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (this.value.trim() !== '') {
             // Show description and priority fields when subject is filled
             showSection('descriptionSection');
-            showSection('prioritySection');
+            //showSection('prioritySection');
         } else {
             // Hide all subsequent fields if subject is cleared
             hideSection('descriptionSection');
@@ -642,10 +642,23 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleDescriptionInput() {
         if (this.value.trim() !== '') {
             // Show attachments and submit button when description is filled
+            showSection('prioritySection');
+
+            if (!priorityField.value || priorityField.value === "") {
+                priorityField.value = "low";
+                toastr.info('Priority automatically set to "low"', '', {
+                    timeOut: 3000,
+                    positionClass: 'toast-bottom-right'
+                });
+                loadManagers();
+                showSection('managerSection');
+            }
             showSection('attachmentsSection');
             showSection('submitSection');
         } else {
             // Hide these fields if description is cleared
+            hideSection('prioritySection');
+            hideSection('managerSection');
             hideSection('attachmentsSection');
             hideSection('submitSection');
         }
@@ -957,6 +970,10 @@ document.addEventListener('DOMContentLoaded', function() {
         resetSelect(senderIdSelect, 'Select sender ID');
         resetSelect(operatorSelect, 'Select mobile operator');
         resetSelect(paymentChannelSelect, 'Select a payment channel');
+
+        // Reset priority to Low
+        priorityField.value = "low";
+        $(priorityField).trigger('change');
 
         // Hide all sections except service
         hideSection('clientSection');
