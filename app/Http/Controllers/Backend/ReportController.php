@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Access\User;
+use App\Models\Operator;
+use App\Models\PaymentChannel;
 use App\Models\Status;
 use App\Models\System\Code;
 use App\Models\System\CodeValue;
@@ -17,16 +19,18 @@ class ReportController extends Controller
     public function index()
     {
         $codeId = Code::query()->where('name', 'Ticket Priority')->value('id');
-        $staff = User::query()->where('is_active', true)->orderBy('name')->get();
-        $priorities = CodeValue::query()->where('code_id', $codeId)->get();
-        $statues = Status::orderBy('name')->get();
+        $data['staff'] = User::query()->where('is_active', true)->orderBy('name')->get();
+        $data['priorities'] = CodeValue::query()->where('code_id', $codeId)->get();
+        $data['statues'] = Status::orderBy('name')->get();
 
-        return view("pages.backend.report.index", compact('statues', 'staff', 'priorities'));
+        $data['mnos'] = Operator::orderBy('name')->get();
+        $data['paymentChannels'] = PaymentChannel::orderBy('name')->get();
+        return view("pages.backend.report.index", $data);
     }
 
     public function data(Request $request)
     {
-        $tickets = Ticket::with(['client', 'assignedTo', 'topic', 'subtopic', 'tertiaryTopic'])
+        $tickets = Ticket::with(['client', 'assignedTo', 'topic', 'subtopic', 'tertiaryTopic', 'operators', 'sender', 'paymentChannel'])
             ->when($request->start_date, function($q) use ($request) {
                 $q->whereDate('created_at', '>=', $request->start_date);
             })
@@ -54,6 +58,17 @@ class ReportController extends Controller
             ->when($request->priority, function($q) use ($request) {
                 $q->where('priority', $request->priority);
             })
+            ->when($request->mno, function($q) use ($request) {
+                $q->whereHas('operators', function($query) use ($request) {
+                    $query->where('operators.id', $request->mno);
+                });
+            })
+            ->when($request->payment_channel, function($q) use ($request) {
+                $q->where('payment_channel_id', $request->payment_channel);
+            })
+            ->when($request->sender_id, function($q) use ($request) {
+                $q->where('sender_id', $request->sender_id);
+            })
             ->select('tickets.*')
             ->addSelect([
                 'topic_path' => function($query) {
@@ -72,7 +87,7 @@ class ReportController extends Controller
 
     public function export(Request $request)
     {
-        $tickets = Ticket::with(['client', 'assignedTo', 'topic', 'subtopic', 'tertiaryTopic'])
+        $tickets = Ticket::with(['client', 'assignedTo', 'topic', 'subtopic', 'tertiaryTopic', 'operators', 'sender', 'paymentChannel'])
             ->when($request->start_date, function($q) use ($request) {
                 $q->whereDate('created_at', '>=', $request->start_date);
             })
@@ -99,6 +114,17 @@ class ReportController extends Controller
             })
             ->when($request->priority, function($q) use ($request) {
                 $q->where('priority', $request->priority);
+            })
+            ->when($request->mno, function($q) use ($request) {
+                $q->whereHas('operators', function($query) use ($request) {
+                    $query->where('operators.id', $request->mno);
+                });
+            })
+            ->when($request->payment_channel, function($q) use ($request) {
+                $q->where('payment_channel_id', $request->payment_channel);
+            })
+            ->when($request->sender_id, function($q) use ($request) {
+                $q->where('sender_id', $request->sender_id);
             })
             ->orderBy('created_at', 'desc')
             ->get();

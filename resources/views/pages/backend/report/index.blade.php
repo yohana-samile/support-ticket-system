@@ -81,13 +81,43 @@
                         </div>
                     </div>
 
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <label>{{ __('Mobile Operator') }}</label>
+                            <select class="form-control select2" name="mno" id="mnoFilter">
+                                <option value="">{{ __('All Operators') }}</option>
+                                @foreach($mnos as $mno)
+                                    <option value="{{ $mno->id }}">{{ $mno->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label>{{ __('Payment Channel') }}</label>
+                            <select class="form-control select2" name="payment_channel" id="paymentChannelFilter">
+                                <option value="">{{ __('All Channels') }}</option>
+                                @foreach($paymentChannels as $channel)
+                                    <option value="{{ $channel->id }}">{{ $channel->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label>{{ __('label.sender') }}</label>
+                            <select class="form-control select2-ajax" name="sender_id" id="senderIdFilter" data-ajax-url="{{ route('backend.sender_id.search') }}">
+                                <option value="">{{ __('All Sender IDs') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+
                     <div class="row">
                         <div class="col-md-12 text-right">
                             <button type="button" id="filterBtn" class="btn btn-primary">
-                                <i class="fas fa-filter"></i> {{ __('Filter') }}
+                                <i class="fas fa-filter"></i> {{ __('label.filter') }}
                             </button>
                             <button type="reset" id="resetBtn" class="btn btn-secondary">
-                                <i class="fas fa-undo"></i> {{ __('Reset') }}
+                                <i class="fas fa-undo"></i> {{ __('label.reset') }}
                             </button>
                         </div>
                     </div>
@@ -106,6 +136,9 @@
                                 <th>{{ __('Status') }}</th>
                                 <th>{{ __('Priority') }}</th>
                                 <th>{{ __('Assigned To') }}</th>
+                                <th>{{ __('Mobile Operator') }}</th>
+                                <th>{{ __('Payment Channel') }}</th>
+                                <th>{{ __('Sender ID') }}</th>
                                 <th>{{ __('Created At') }}</th>
                             </tr>
                         </thead>
@@ -130,6 +163,36 @@
         $(document).ready(function() {
             // Initialize Select2
             $('.select2').select2();
+
+            $('#senderIdFilter').select2({
+                ajax: {
+                    url: $('#senderIdFilter').data('ajax-url'),
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            search: params.term,
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.data.map(item => ({
+                                id: item.id,
+                                text: item.sender_id
+                            })),
+                            pagination: {
+                                more: data.next_page_url
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2,
+                placeholder: "{{ __('Search Sender ID...') }}",
+                allowClear: true
+            });
 
             $('#clientFilter').select2({
                 ajax: {
@@ -208,6 +271,9 @@
                         d.subtopic_id = $('#subtopicFilter').val();
                         d.tertiary_topic_id = $('#tertiaryTopicFilter').val();
                         d.priority = $('#priorityFilter').val();
+                        d.mno = $('#mnoFilter').val();
+                        d.payment_channel = $('#paymentChannelFilter').val();
+                        d.sender_id = $('#senderIdFilter').val();
                     }
                 },
                 columns: [
@@ -247,9 +313,14 @@
                         }
                     },
                     { data: 'assigned_to.name', name: 'assigned_to.name' },
+                    { data: 'mno.name', name: 'mno.name', defaultContent: '' },
+                    { data: 'payment_channel.name', name: 'payment_channel.name', defaultContent: '' },
+                    { data: 'sender.sender_id', name: 'sender.sender_id', defaultContent: '' },
+
                     {
                         data: 'created_at',
                         name: 'created_at',
+
                         render: function(data) {
                             return new Date(data).toLocaleString();
                         }

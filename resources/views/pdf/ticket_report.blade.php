@@ -82,6 +82,9 @@
         <th>Topic</th>
         <th>Status</th>
         <th>Priority</th>
+        <th>Payment Channel</th>
+        <th>Mno</th>
+        <th>sender_id</th>
         <th>Assigned To</th>
         <th>Created At</th>
     </tr>
