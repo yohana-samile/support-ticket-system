@@ -4,132 +4,139 @@
     <div class="container-fluid">
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">{{ __('Ticket Reports') }}</h6>
+                <div class="d-flex align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">{{ __('Ticket Reports') }}</h6>
+                    <button id="toggleFiltersBtn" class="btn btn-sm btn-link ml-2">
+                        <i class="fas fa-filter"></i> <span id="toggleFiltersText">{{ __('Hide Filters') }}</span>
+                    </button>
+                </div>
                 <button id="exportBtn" class="btn btn-success">
                     <i class="fas fa-file-export"></i> {{ __('Export') }}
                 </button>
             </div>
             <div class="card-body">
-                <form id="reportFilterForm">
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <label>{{ __('Date Range') }}</label>
-                            <div class="input-group">
-                                <input type="date" class="form-control" name="start_date" id="startDate">
-                                <input type="date" class="form-control" name="end_date" id="endDate">
+                <div id="filterSection">
+                    <form id="reportFilterForm">
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <label>{{ __('Date Range') }}</label>
+                                <div class="input-group">
+                                    <input type="date" class="form-control" name="start_date" id="startDate">
+                                    <input type="date" class="form-control" name="end_date" id="endDate">
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>{{ __('Client') }}</label>
+                                <select class="form-control select2-ajax" name="client_id" id="clientFilter" data-ajax-url="{{ route('backend.client.search') }}">
+                                    <option value="">{{ __('All Clients') }}</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>{{ __('Assigned Staff') }}</label>
+                                <select class="form-control select2" name="assigned_to" id="staffFilter">
+                                    <option value="">{{ __('All Staff') }}</option>
+                                    @foreach($staff as $user)
+                                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>{{ __('label.status') }}</label>
+                                <select class="form-control" name="status" id="statusFilter">
+                                    <option value="">{{ __('All Statuses') }}</option>
+                                    @foreach($statues as $status)
+                                        <option value="{{ $status->name }}">{{ $status->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
 
-                        <div class="col-md-3">
-                            <label>{{ __('Client') }}</label>
-                            <select class="form-control select2-ajax" name="client_id" id="clientFilter" data-ajax-url="{{ route('backend.client.search') }}">
-                                <option value="">{{ __('All Clients') }}</option>
-                            </select>
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <label>{{ __('label.topic') }}</label>
+                                <select class="form-control select2-ajax" name="topic_id" id="topicFilter" data-ajax-url="{{ route('backend.topic.search') }}">
+                                    <option value="">{{ __('All Topics') }}</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>{{ __('label.subtopic') }}</label>
+                                <select class="form-control select2" name="subtopic_id" id="subtopicFilter" disabled>
+                                    <option value="">{{ __('Select Subtopic') }}</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>{{ __('Tertiary Topic') }}</label>
+                                <select class="form-control select2" name="tertiary_topic_id" id="tertiaryTopicFilter" disabled>
+                                    <option value="">{{ __('Select Tertiary Topic') }}</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>{{ __('Priority') }}</label>
+                                <select class="form-control" name="priority" id="priorityFilter">
+                                    <option value="">{{ __('All Priorities') }}</option>
+                                    @foreach($priorities as $priority)
+                                        <option value="{{ $priority->name }}">{{ $priority->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
 
-                        <div class="col-md-3">
-                            <label>{{ __('Assigned Staff') }}</label>
-                            <select class="form-control select2" name="assigned_to" id="staffFilter">
-                                <option value="">{{ __('All Staff') }}</option>
-                                @foreach($staff as $user)
-                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
-                                @endforeach
-                            </select>
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <label>{{ __('Mobile Operator') }}</label>
+                                <select class="form-control select2" name="mno" id="mnoFilter">
+                                    <option value="">{{ __('All Operators') }}</option>
+                                    @foreach($mnos as $mno)
+                                        <option value="{{ $mno->id }}">{{ $mno->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>{{ __('Payment Channel') }}</label>
+                                <select class="form-control select2" name="payment_channel" id="paymentChannelFilter">
+                                    <option value="">{{ __('All Channels') }}</option>
+                                    @foreach($paymentChannels as $channel)
+                                        <option value="{{ $channel->id }}">{{ $channel->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>{{ __('label.sender') }}</label>
+                                <select class="form-control select2-ajax" name="sender_id" id="senderIdFilter" data-ajax-url="{{ route('backend.sender_id.search') }}">
+                                    <option value="">{{ __('All Sender IDs') }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>{{ __('label.saas_app') }}</label>
+                                <select class="form-control select2-ajax" name="saas_app" id="saasAppIdFilter" data-ajax-url="{{ route('backend.saas_app.search') }}">
+                                    <option value="">{{ __('label.saas_app') }}</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <div class="col-md-3">
-                            <label>{{ __('Status') }}</label>
-                            <select class="form-control" name="status" id="statusFilter">
-                                <option value="">{{ __('All Statuses') }}</option>
-                                @foreach($statues as $status)
-                                    <option value="{{ $status->name }}">{{ $status->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
 
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <label>{{ __('Topic') }}</label>
-                            <select class="form-control select2-ajax" name="topic_id" id="topicFilter" data-ajax-url="{{ route('backend.topic.search') }}">
-                                <option value="">{{ __('All Topics') }}</option>
-                            </select>
+                        <div class="row">
+                            <div class="col-md-12 text-right">
+                                <button type="button" id="filterBtn" class="btn btn-primary">
+                                    <i class="fas fa-filter"></i> {{ __('label.filter') }}
+                                </button>
+                                <button type="reset" id="resetBtn" class="btn btn-secondary">
+                                    <i class="fas fa-undo"></i> {{ __('label.reset') }}
+                                </button>
+                            </div>
                         </div>
+                    </form>
 
-                        <div class="col-md-3">
-                            <label>{{ __('Subtopic') }}</label>
-                            <select class="form-control select2" name="subtopic_id" id="subtopicFilter" disabled>
-                                <option value="">{{ __('Select Subtopic') }}</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label>{{ __('Tertiary Topic') }}</label>
-                            <select class="form-control select2" name="tertiary_topic_id" id="tertiaryTopicFilter" disabled>
-                                <option value="">{{ __('Select Tertiary Topic') }}</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label>{{ __('Priority') }}</label>
-                            <select class="form-control" name="priority" id="priorityFilter">
-                                <option value="">{{ __('All Priorities') }}</option>
-                                @foreach($priorities as $priority)
-                                    <option value="{{ $priority->name }}">{{ $priority->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <label>{{ __('Mobile Operator') }}</label>
-                            <select class="form-control select2" name="mno" id="mnoFilter">
-                                <option value="">{{ __('All Operators') }}</option>
-                                @foreach($mnos as $mno)
-                                    <option value="{{ $mno->id }}">{{ $mno->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label>{{ __('Payment Channel') }}</label>
-                            <select class="form-control select2" name="payment_channel" id="paymentChannelFilter">
-                                <option value="">{{ __('All Channels') }}</option>
-                                @foreach($paymentChannels as $channel)
-                                    <option value="{{ $channel->id }}">{{ $channel->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label>{{ __('label.sender') }}</label>
-                            <select class="form-control select2-ajax" name="sender_id" id="senderIdFilter" data-ajax-url="{{ route('backend.sender_id.search') }}">
-                                <option value="">{{ __('All Sender IDs') }}</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label>{{ __('label.saas_app') }}</label>
-                            <select class="form-control select2-ajax" name="saas_app" id="saasAppIdFilter" data-ajax-url="{{ route('backend.saas_app.search') }}">
-                                <option value="">{{ __('label.saas_app') }}</option>
-                            </select>
-                        </div>
-                    </div>
-
-
-                    <div class="row">
-                        <div class="col-md-12 text-right">
-                            <button type="button" id="filterBtn" class="btn btn-primary">
-                                <i class="fas fa-filter"></i> {{ __('label.filter') }}
-                            </button>
-                            <button type="reset" id="resetBtn" class="btn btn-secondary">
-                                <i class="fas fa-undo"></i> {{ __('label.reset') }}
-                            </button>
-                        </div>
-                    </div>
-                </form>
-
-                <hr>
+                    <hr>
+                </div>
 
                 <div class="table-responsive">
                     <table class="table table-bordered" id="ticketsTable" width="100%" cellspacing="0">
@@ -160,6 +167,22 @@
 
 @push('styles')
     <link href="{{ asset('asset/vendor/select2/css/select2.min.css') }}" rel="stylesheet">
+    <style>
+        #filterSection {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        .filters-collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .filters-expanded {
+            max-height: 1000px;
+            opacity: 1;
+        }
+    </style>
 @endpush
 
 @push('scripts')
@@ -170,6 +193,20 @@
         $(document).ready(function() {
             // Initialize Select2
             $('.select2').select2();
+
+            let filtersVisible = true;
+            $('#toggleFiltersBtn').click(function() {
+                filtersVisible = !filtersVisible;
+                if (filtersVisible) {
+                    $('#filterSection').removeClass('filters-collapsed').addClass('filters-expanded');
+                    $('#toggleFiltersText').text('{{ __("Hide Filters") }}');
+                } else {
+                    $('#filterSection').removeClass('filters-expanded').addClass('filters-collapsed');
+                    $('#toggleFiltersText').text('{{ __("Show Filters") }}');
+                }
+            });
+            // Initialize the filter section
+            $('#filterSection').addClass('filters-expanded');
 
             $('#saasAppIdFilter').select2({
                 ajax: {

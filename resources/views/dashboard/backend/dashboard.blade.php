@@ -60,8 +60,7 @@
                                 <option value="">All Statuses</option>
                                 @foreach($statuses as $slug => $status)
                                     <option value="{{ $slug }}"
-                                        {{ request('status') == $slug ? 'selected' : '' }}>
-                                        {{ $status['name'] }}
+                                        {{ request('status') == $slug ? 'selected' : '' }}>{{ $status['name'] }}
                                     </option>
                                 @endforeach
                             </select>
@@ -129,11 +128,6 @@
             <!-- Create Ticket Button -->
             <a href="{{ route('backend.ticket.create') }}" class="btn btn-sm btn-primary shadow-sm" style="margin-right: 10px;">
                 <i class="fas fa-plus-circle fa-sm text-white-50"></i> Create New Ticket
-            </a>
-
-            <!-- Export Button -->
-            <a href="#" class="btn btn-sm btn-success shadow-sm" id="exportReportBtn">
-                <i class="fas fa-download fa-sm text-white-50"></i> Export Report
             </a>
         </div>
 
@@ -533,42 +527,5 @@
                 }
             });
         }
-
-        // Export Report Button
-        document.getElementById('exportReportBtn')?.addEventListener('click', function(e) {
-            e.preventDefault();
-
-            // Get current filters
-            const params = new URLSearchParams(window.location.search);
-
-            // Show loading
-            const originalText = this.innerHTML;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Report...';
-            this.disabled = true;
-
-            // Call export endpoint
-            fetch(`/backend/dashboard/export?${params.toString()}`)
-                .then(response => {
-                    if (!response.ok) throw new Error('Export failed');
-                    return response.blob();
-                })
-                .then(blob => {
-                    // Create download link
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `ticket-report-${new Date().toISOString().split('T')[0]}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                })
-                .catch(error => {
-                    alert('Error generating report: ' + error.message);
-                })
-                .finally(() => {
-                    this.innerHTML = originalText;
-                    this.disabled = false;
-                });
-        });
     });
 </script>

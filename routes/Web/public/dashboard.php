@@ -9,6 +9,4 @@
         Route::get('/layouts/dashboard', function () {
             return view('dashboard.backend.dashboard');
         })->name('backend.dashboard');
-
-        Route::get('/dashboard/export', [\App\Http\Controllers\AdminController::class, 'export'])->name('dashboard.export');
     });

@@ -54,7 +54,10 @@ return [
     "is_manager" => "Is Manager?",
     "yes" => 'Yes',
     "no" => "No",
-    "reports" => "Reports"
+    "reports" => "Reports",
+    "filter" => "Filter",
+    "reset" => "Reset",
+    "report" => "Report"
 
 
 

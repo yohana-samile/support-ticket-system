@@ -6,7 +6,6 @@ use App\Models\PaymentChannel;
 use App\Models\SaasApp;
 use App\Models\Status;
 use App\Models\Ticket\Ticket;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 
 class AdminController extends Controller
@@ -148,41 +147,6 @@ class AdminController extends Controller
             ->get()
             ->filter(fn($t) => $t->$relation);
     }
-
-    public function export()
-    {
-        $ticketQuery = Ticket::query();
-
-        // Apply the same filters as the dashboard
-        if (request()->has('payment_channel')) {
-            $ticketQuery->where('payment_channel_id', request('payment_channel'));
-        }
-
-        if (request()->has('mobile_operator')) {
-            $ticketQuery->where('mobile_operator', request('mobile_operator'));
-        }
-
-        if (request()->has('saas_app')) {
-            $ticketQuery->where('saas_app_id', request('saas_app'));
-        }
-
-        if (request()->has('status')) {
-            $ticketQuery->where('status', request('status'));
-        }
-
-        $data = [
-            'totalTickets' => $ticketQuery->count(),
-            'openTickets' => $ticketQuery->clone()->where('status', 'open')->count(),
-            'resolvedTickets' => $ticketQuery->clone()->where('status', 'resolved')->count(),
-            'reopenedCount' => $ticketQuery->clone()->where('status', 'reopened')->count(),
-            'recentTickets' => $ticketQuery->clone()->with(['user', 'assignedTo'])->latest()->take(10)->get(),
-            'filters' => request()->only(['payment_channel', 'mobile_operator', 'saas_app', 'status'])
-        ];
-
-        $pdf = Pdf::loadView('dashboard.exports.dashboard', $data);
-        return $pdf->download('ticket-report.pdf');
-    }
-
     public function landing()
     {
         return view('auth.login');
