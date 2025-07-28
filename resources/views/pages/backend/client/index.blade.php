@@ -17,6 +17,7 @@
                                 <tr>
                                     <th>{{__('label.name')}}</th>
                                     <th>{{__('label.email')}}</th>
+                                    <th>{{__('label.phone')}}</th>
                                     <th>{{__('label.sender_ids_count')}}</th>
                                     <th>{{__('label.saas_app')}}</th>
                                     <th>{{__('label.status')}}</th>
@@ -59,10 +60,11 @@
                     type: 'GET'
                 },
                 columns: [
-                    { data: 'name', name: 'name', orderable: false, searchable: false },
-                    { data: 'email', name: 'email', orderable: false, searchable: false },
-                    { data: 'count', name: 'sender_ids_count', orderable: false, searchable: false },
-                    { data: 'saas_app', name: 'saas_app', orderable: false, searchable: false },
+                    { data: 'name', name: 'name', orderable: true, searchable: true },
+                    { data: 'phone', name: 'phone', orderable: true, searchable: true },
+                    { data: 'email', name: 'email', orderable: true, searchable: true },
+                    { data: 'count', name: 'sender_ids_count', orderable: true, searchable: false },
+                    { data: 'saas_app', name: 'saas_app', orderable: true, searchable: true },
                     { data: 'status_badge', name: 'is_active', orderable: false },
                     { data: 'created_at', name: 'created_at' },
                     { data: 'actions', name: 'actions', orderable: false, searchable: false }

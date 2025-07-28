@@ -84,7 +84,7 @@
             <td>{{ $priority }}</td>
         </tr>
         <tr>
-            <td>Category:</td>
+            <td>Topic:</td>
             <td>{{ $ticketAbout }}</td>
         </tr>
         <tr>

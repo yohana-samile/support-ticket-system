@@ -1,7 +1,7 @@
 @php
     $saasApps = App\Models\SaasApp::all();
 @endphp
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -18,13 +18,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
 
     <style>
-        body {
-            zoom: 90%;
-        }
-        html, body, #wrapper {
-            height: 100%;
-            min-height: 100%;
-        }
     </style>
     @stack('styles')
 </head>
