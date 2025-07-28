@@ -7,9 +7,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Facades\URL;
 
-class TicketAssignedNotification  extends Notification implements ShouldQueue
+class TicketAssignedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -30,29 +29,64 @@ class TicketAssignedNotification  extends Notification implements ShouldQueue
     public function toMail($notifiable)
     {
         $ticket = $this->ticket;
-
-        $topic = optional($ticket->topic)->name;
-        $subtopic = optional($ticket->subtopic)->name;
-        $tertiaryTopic = optional($ticket->tertiaryTopic)->name;
-
-        $ticketAbout = implode(' -> ', array_filter([$topic, $subtopic, $tertiaryTopic]));
+        $saasApp = optional($ticket->saasApp)->abbreviation ?? 'N/A';
+        $client = optional($ticket->client)->name ?? 'N/A';
+        $priority = $this->formatPriority($ticket->priority);
+        $ticketAbout = $this->getTicketCategoryPath($ticket);
+        $createdAt = $ticket->created_at->format('M j, Y g:i A');
+        $timeSinceCreation = $ticket->created_at->diffForHumans();
+        $operators = $ticket->operators->pluck('name')->join(', ') ?: null;
 
         return (new MailMessage)
-            ->subject('New Ticket Assigned: ' . $ticket->title)
-            ->line('Priority: ' . ucfirst($ticket->priority))
-            ->line('About: ' . $ticketAbout)
-            ->line('Message: ' . $ticket->description)
-            ->line('Ticket ID: ' . $ticket->ticket_number)
-            ->action('Resolve Ticket', URL::signedRoute('backend.ticket.resolve.via.email', $ticket->uid));
+            ->subject("{$priority} Ticket Assigned: {$ticket->title}")
+            ->view('emails.ticket_assigned', [
+                'notifiable' => $notifiable,
+                'ticket' => $ticket,
+                'saasApp' => $saasApp,
+                'client' => $client,
+                'priority' => $priority,
+                'ticketAbout' => $ticketAbout,
+                'createdAt' => $createdAt,
+                'timeSinceCreation' => $timeSinceCreation,
+                'operators' => $operators,
+            ]);
     }
 
     public function toArray($notifiable)
     {
         return [
             'ticket_id' => $this->ticket->id,
+            'ticket_number' => $this->ticket->ticket_number,
             'title' => $this->ticket->title,
+            'priority' => $this->ticket->priority,
+            'service' => optional($this->ticket->saasApp)->name,
+            'client' => optional($this->ticket->client)->name,
+            'category' => $this->getTicketCategoryPath($this->ticket, ' → '),
             'message' => 'You have been assigned a new ticket',
             'url' => route('backend.ticket.show', $this->ticket->uid),
         ];
+    }
+
+    protected function getTicketCategoryPath(Ticket $ticket, string $separator = ' → '): string
+    {
+        $path = [
+            optional($ticket->topic)->name,
+            optional($ticket->subtopic)->name,
+            optional($ticket->tertiaryTopic)->name
+        ];
+
+        return implode($separator, array_filter($path)) ?: 'General';
+    }
+
+    protected function formatPriority(string $priority): string
+    {
+        $emoji = [
+            'low' => '🔵',
+            'medium' => '🟡',
+            'high' => '🔴',
+            'critical' => '🚨'
+        ][strtolower($priority)] ?? '⚪';
+
+        return ucfirst($priority) . " {$emoji}";
     }
 }

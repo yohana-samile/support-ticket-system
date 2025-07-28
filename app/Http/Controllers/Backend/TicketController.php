@@ -62,6 +62,7 @@ class TicketController extends Controller
             'subtopic',
             'tertiaryTopic',
             'assignedTo',
+            'operators',
             'activities' => function($query) {
                 $query->with('causer')
                     ->latest()

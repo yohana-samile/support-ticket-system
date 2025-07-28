@@ -42,7 +42,16 @@ return [
     "topic_name" => "Topic Name",
     "cancel" => "Cancel",
     "submit" => "Submit",
-    "update" => "Update"
+    "update" => "Update",
+    "assign" => "Assign",
+    "phone" => "Phone",
+    "client" => "Client",
+    "email" => "Email",
+    "assigned_at" => "Assigned At",
+    "staff" => "Staff",
+    "update_pass" => "Update Password",
+    "client_details" => "Client Details"
+
 
 
 ];

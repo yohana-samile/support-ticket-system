@@ -13,6 +13,6 @@ class Operator extends BaseModel
 
     public function tickets()
     {
-        return $this->belongsToMany(Ticket::class, 'ticket_operators', 'operator_id', 'ticket_id');
+        return $this->belongsToMany(Ticket::class, 'ticket_operator', 'operator_id', 'ticket_id');
     }
 }

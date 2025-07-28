@@ -2,7 +2,6 @@
 
 namespace App\Models\Ticket;
 
-
 use App\Models\Access\Client;
 use App\Models\Access\User;
 use App\Models\Attachment;
@@ -13,7 +12,6 @@ use App\Models\SaasApp;
 use App\Models\SenderId;
 use App\Models\SubTopic;
 use App\Models\TertiaryTopic;
-use App\Models\TicketOperator;
 use App\Models\TicketStatusHistory;
 use App\Models\Topic;
 
@@ -79,6 +77,6 @@ trait TicketRelationship
 
     public function operators()
     {
-        return $this->belongsToMany(Operator::class, 'ticket_operators', 'ticket_id', 'operator_id');
+        return $this->belongsToMany(Operator::class, 'ticket_operator', 'ticket_id', 'operator_id')->withTimestamps();
     }
 }

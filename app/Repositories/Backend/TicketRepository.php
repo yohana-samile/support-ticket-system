@@ -2,10 +2,8 @@
 
 namespace App\Repositories\Backend;
 use App\Models\Access\User;
-use App\Models\Operator;
 use App\Models\System\CodeValue;
 use App\Models\Ticket\Ticket;
-use App\Models\TicketOperator;
 use App\Models\TicketStatusHistory;
 use App\Notifications\TicketAssignedNotification;
 use App\Notifications\TicketCreatedNotification;
@@ -37,7 +35,7 @@ class TicketRepository extends  BaseRepository {
 
     public function find($ticketUid)
     {
-        return $this->query()->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user', 'assignedTo', 'comments.user', 'attachments'])->where('uid', $ticketUid)->first();
+        return $this->query()->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user', 'assignedTo', 'comments.user', 'attachments', 'operators'])->where('uid', $ticketUid)->first();
     }
 
     public function store(array $data) {
@@ -80,10 +78,7 @@ class TicketRepository extends  BaseRepository {
 
             if (!empty($data['operator'])) {
                 foreach ($data['operator'] as $operatorId) {
-                    TicketOperator::create([
-                        'operator_id' => $operatorId,
-                        'ticket_id' => $ticket->id,
-                    ]);
+                    $ticket->operators()->syncWithoutDetaching($data['operator']);
                 }
             }
 
@@ -222,12 +217,16 @@ class TicketRepository extends  BaseRepository {
 
     protected function handleReassignmentNotifications(Ticket $ticket, ?User $previousAssignee, ?User $newAssignee): void
     {
-        // Notify new assignee if changed
+        /**
+         * Notify new assignee if changed
+         */
         if ($newAssignee && (!$previousAssignee || $newAssignee->id !== $previousAssignee->id)) {
             $newAssignee->notify(new TicketReassignedNotification($ticket));
         }
 
-        // Notify previous assignee if they were removed
+        /**
+         * Notify previous assignee if they were removed
+         */
         if ($previousAssignee && (!$newAssignee || $newAssignee->id !== $previousAssignee->id)) {
             $previousAssignee->notify(new TicketUnassignedNotification($ticket));
         }
@@ -254,16 +253,15 @@ class TicketRepository extends  BaseRepository {
                 case 'mail':
                     $user->notify(new TicketAssignedNotification($ticket));
                     break;
-
                 case 'database':
                     $user->notify(new TicketAssignedNotification($ticket, false));
                     break;
-
                 case 'sms':
                     $this->notifyForNewTicket($user, $ticket);
                     break;
                 case 'whatsapp':
                     //TODO Implement whatsapp notification
+                    //$this->sendTicketNotification($user, $ticket);
                     break;
             }
         }
@@ -276,11 +274,11 @@ class TicketRepository extends  BaseRepository {
 
     public function getUserTickets($userId)
     {
-        return $this->ticket->where('client_id', $userId)->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'assignedTo'])->latest()->paginate();
+        return $this->ticket->where('client_id', $userId)->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'assignedTo', 'operators'])->latest()->paginate();
     }
 
     public function getAssignedTickets($userId, $perPage = 15)
     {
-        return $this->query()->where('assigned_to', $userId)->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user'])->latest()->paginate($perPage);
+        return $this->query()->where('assigned_to', $userId)->with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user', 'operators'])->latest()->paginate($perPage);
     }
 }

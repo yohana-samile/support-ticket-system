@@ -142,6 +142,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const serviceSelectElement = serviceSelect[0];
         showLoading(serviceSelectElement);
 
+        // Destroy existing Select2 instance if it exists
+        if (serviceSelect.hasClass('select2-hidden-accessible')) {
+            serviceSelect.select2('destroy');
+        }
+
+        // Clear any existing options
+        serviceSelect.empty().append('<option value=""></option>');
+
+        // Initialize Select2
         serviceSelect.select2({
             ajax: {
                 url: serviceSelect.data('ajax-url'),
@@ -150,7 +159,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 data: function(params) {
                     return {
                         search: params.term,
-                        page: params.page || 1
+                        page: params.page || 1,
+                        id: preSelectedId // Include the preselected ID in requests
                     };
                 },
                 processResults: function(data, params) {
@@ -178,34 +188,52 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Handle preselected service
         if (preSelectedId) {
+            // console.log("preSelectedServiceId ", preSelectedId);
+
+            // First try to find if the option already exists
             if (serviceSelect.find(`option[value="${preSelectedId}"]`).length) {
                 serviceSelect.val(preSelectedId).trigger('change');
                 handleServiceChange();
                 hideLoading(serviceSelectElement);
             } else {
+                // Fetch the specific service
                 $.ajax({
                     url: serviceSelect.data('ajax-url'),
-                    data: { search: '', id: preSelectedId },
+                    data: {
+                        search: '',
+                        id: preSelectedId,
+                        specific: true // Add this to ensure you get exactly what you requested
+                    },
                     dataType: 'json'
                 }).done(function(data) {
                     if (data.data && data.data.length) {
-                        const service = data.data[0];
+                        const service = data.data.find(item => item.id == preSelectedId);
+
+                        if (!service) {
+                            // console.error('Requested service not found in response', {
+                            //     requestedId: preSelectedId,
+                            //     returnedData: data.data
+                            // });
+                            hideLoading(serviceSelectElement);
+                            return;
+                        }
+
+                        // console.log("Creating option for service:", service);
                         const option = new Option(service.name, service.id, true, true);
                         serviceSelect.append(option).trigger('change');
                         handleServiceChange();
                     }
                     hideLoading(serviceSelectElement);
-                }).fail(function () {
+                }).fail(function(error) {
+                    // console.error('Failed to load preselected service:', error);
                     hideLoading(serviceSelectElement);
                 });
             }
         } else {
             setTimeout(() => {
                 hideLoading(serviceSelectElement);
-            }, 500)
+            }, 500);
         }
-
-        hideLoading(serviceSelect);
     }
 
     // When service is selected, load clients

@@ -53,14 +53,14 @@
                         </div>
 
                         <div class="mb-3">
-                            <h6 class="font-weight-bold">Description</h6>
+                            <h6 class="font-weight-bold">{{__('label.description')}}</h6>
                             <div class="border p-3 bg-light rounded">
                                 {!! nl2br(e($ticket->description)) !!}
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <h6 class="font-weight-bold">Topic</h6>
+                            <h6 class="font-weight-bold">{{__('label.topic')}}</h6>
                             <p>
                                 @if($ticket->topic)
                                     {{ $ticket->topic->name }}
@@ -143,8 +143,8 @@
                                 @if($ticket->sender_id)
                                     <p class="mb-1"><strong>Sender ID:</strong> {{ $ticket->sender->sender_id }}</p>
                                 @endif
-                                @if($ticket->mobile_operator)
-                                    <p class="mb-1"><strong>Mobile Operator:</strong> {{ $ticket->mobile_operator }}</p>
+                                @if($ticket->operators->isNotEmpty())
+                                    <p class="mb-1"><strong>Mobile Operator:</strong> {{ $ticket->operators->pluck('name')->join(', ') }}</p>
                                 @endif
                                 @if($ticket->time_solved)
                                     <p class="mb-0"><strong>Time Solved:</strong> {{ $ticket->time_solved->format('M d, Y h:i A') }}</p>

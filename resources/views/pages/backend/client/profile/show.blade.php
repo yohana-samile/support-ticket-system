@@ -27,7 +27,7 @@
                         <!-- Basic Information Section -->
                         <div class="detail-card mb-4">
                             <div class="detail-header">
-                                <h6 class="mb-0"><i class="fas fa-info-circle mr-2"></i> Basic Information</h6>
+                                <h6 class="mb-0"><i class="fas fa-info-circle mr-2"></i> {{__('label.basic_information')}}</h6>
                             </div>
                             <div class="detail-body">
                                 <div class="row">
@@ -132,7 +132,7 @@
                                 <h6 class="mb-0"><i class="fas fa-ticket-alt mr-2"></i> Latest Tickets</h6>
                                 <div>
                                     <a href="{{ route('backend.ticket.create', ['saas_app_id' => $client->saas_app_id, 'client_id' => $client->id]) }}" class="btn btn-sm btn-outline-primary mr-2">
-                                        <i class="fas fa-plus mr-1"></i> {{__('label.create_new')}}
+                                        <i class="fas fa-plus mr-1"></i> {{__('label.create')}}
                                     </a>
                                     <a href="{{ route('backend.ticket.index', ['client_id' => $client->uid]) }}" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-list mr-1"></i> View All
@@ -274,7 +274,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{__('label.cancel')}}</button>
                         <button type="submit" class="btn btn-primary">Update Password</button>
                     </div>
                 </form>
