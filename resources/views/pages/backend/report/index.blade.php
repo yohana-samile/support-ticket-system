@@ -108,6 +108,12 @@
                                 <option value="">{{ __('All Sender IDs') }}</option>
                             </select>
                         </div>
+                        <div class="col-md-3">
+                            <label>{{ __('label.saas_app') }}</label>
+                            <select class="form-control select2-ajax" name="saas_app" id="saasAppIdFilter" data-ajax-url="{{ route('backend.saas_app.search') }}">
+                                <option value="">{{ __('label.saas_app') }}</option>
+                            </select>
+                        </div>
                     </div>
 
 
@@ -130,10 +136,11 @@
                         <thead>
                             <tr>
                                 <th>{{ __('Ticket ID') }}</th>
-                                <th>{{ __('Client') }}</th>
+                                <th>{{ __('label.saas_app') }}</th>
+                                <th>{{ __('label.client') }}</th>
                                 <th>{{ __('Subject') }}</th>
-                                <th>{{ __('Topic') }}</th>
-                                <th>{{ __('Status') }}</th>
+                                <th>{{ __('label.topic') }}</th>
+                                <th>{{ __('label.status') }}</th>
                                 <th>{{ __('Priority') }}</th>
                                 <th>{{ __('Assigned To') }}</th>
                                 <th>{{ __('Mobile Operator') }}</th>
@@ -163,6 +170,37 @@
         $(document).ready(function() {
             // Initialize Select2
             $('.select2').select2();
+
+            $('#saasAppIdFilter').select2({
+                ajax: {
+                    url: $('#saasAppIdFilter').data('ajax-url'),
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            search: params.term,
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.data.map(item => ({
+                                id: item.id,
+                                text: item.abbreviation
+                            })),
+                            pagination: {
+                                more: data.next_page_url
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2,
+                placeholder: "{{ __('Search Saas app...') }}",
+                allowClear: true
+            });
+
 
             $('#senderIdFilter').select2({
                 ajax: {
@@ -274,10 +312,12 @@
                         d.mno = $('#mnoFilter').val();
                         d.payment_channel = $('#paymentChannelFilter').val();
                         d.sender_id = $('#senderIdFilter').val();
+                        d.saas_app = $('#saasAppIdFilter').val();
                     }
                 },
                 columns: [
                     { data: 'ticket_number', name: 'ticket_number' },
+                    { data: 'saas_app.abbreviation', name: 'saas_app.abbreviation' },
                     { data: 'client.name', name: 'client.name' },
                     { data: 'title', name: 'title' },
                     {

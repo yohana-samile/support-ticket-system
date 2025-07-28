@@ -2,14 +2,26 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=1200px">
     <title>Ticket Report</title>
     <style>
-        body { font-family: Arial, sans-serif; }
+        body { font-family: Arial, sans-serif; font-size: 10px; }
         .header { text-align: center; margin-bottom: 20px; }
         .title { font-size: 18px; font-weight: bold; }
         .subtitle { font-size: 14px; color: #666; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            table-layout: fixed;
+            word-wrap: break-word;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 4px;
+            text-align: left;
+            font-size: 10px;
+        }
         th { background-color: #f2f2f2; }
         .badge { padding: 3px 6px; border-radius: 3px; font-size: 12px; }
         .badge-primary { background-color: #007bff; color: white; }
@@ -73,61 +85,68 @@
     </div>
 @endif
 
-<table>
-    <thead>
-    <tr>
-        <th>Ticket ID</th>
-        <th>Client</th>
-        <th>Subject</th>
-        <th>Topic</th>
-        <th>Status</th>
-        <th>Priority</th>
-        <th>Payment Channel</th>
-        <th>Mno</th>
-        <th>sender_id</th>
-        <th>Assigned To</th>
-        <th>Created At</th>
-    </tr>
-    </thead>
-    <tbody>
-    @foreach($tickets as $ticket)
+<div style="overflow-x: auto;">
+    <table>
+        <thead>
         <tr>
-            <td>{{ $ticket->ticket_number }}</td>
-            <td>{{ $ticket->client->name ?? '' }}</td>
-            <td>{{ $ticket->title }}</td>
-            <td>
-                {{ $ticket->topic->name ?? '' }}
-                @if($ticket->subtopic)
-                    → {{ $ticket->subtopic->name }}
-                @endif
-                @if($ticket->tertiaryTopic)
-                    → {{ $ticket->tertiaryTopic->name }}
-                @endif
-            </td>
-            <td>
-                    <span class="badge
-                        @if($ticket->status === 'open') badge-primary
-                        @elseif($ticket->status === 'resolved') badge-success
-                        @else badge-secondary
-                        @endif">
-                        {{ ucfirst($ticket->status) }}
-                    </span>
-            </td>
-            <td>
-                    <span class="badge
-                        @if($ticket->priority === 'low') badge-info
-                        @elseif($ticket->priority === 'medium') badge-warning
-                        @elseif($ticket->priority === 'high') badge-danger
-                        @elseif($ticket->priority === 'critical') badge-dark
-                        @endif">
-                        {{ ucfirst($ticket->priority) }}
-                    </span>
-            </td>
-            <td>{{ $ticket->assignedTo->name ?? '' }}</td>
-            <td>{{ $ticket->created_at->format('Y-m-d H:i') }}</td>
+            <th>Ticket ID</th>
+            <th>saas_app</th>
+            <th>Client</th>
+            <th>Subject</th>
+            <th>Topic</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Payment Channel</th>
+            <th>Mno</th>
+            <th>sender_id</th>
+            <th>Assigned To</th>
+            <th>Created At</th>
         </tr>
-    @endforeach
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+        @foreach($tickets as $ticket)
+            <tr>
+                <td>{{ $ticket->ticket_number }}</td>
+                <td>{{ $ticket->saasApp->abbreviation ?? '' }}</td>
+                <td>{{ $ticket->client->name ?? '' }}</td>
+                <td>{{ $ticket->title }}</td>
+                <td>
+                    {{ $ticket->topic->name ?? '' }}
+                    @if($ticket->subtopic)
+                        → {{ $ticket->subtopic->name }}
+                    @endif
+                    @if($ticket->tertiaryTopic)
+                        → {{ $ticket->tertiaryTopic->name }}
+                    @endif
+                </td>
+                <td>
+                        <span class="badge
+                            @if($ticket->status === 'open') badge-primary
+                            @elseif($ticket->status === 'resolved') badge-success
+                            @else badge-secondary
+                            @endif">
+                            {{ ucfirst($ticket->status) }}
+                        </span>
+                </td>
+                <td>
+                        <span class="badge
+                            @if($ticket->priority === 'low') badge-info
+                            @elseif($ticket->priority === 'medium') badge-warning
+                            @elseif($ticket->priority === 'high') badge-danger
+                            @elseif($ticket->priority === 'critical') badge-dark
+                            @endif">
+                            {{ ucfirst($ticket->priority) }}
+                        </span>
+                </td>
+                <td>{{ $ticket->paymentChannel->name ?? '' }}</td>
+                <td>{{ $ticket->operators->pluck('name')->join(', ') ?? '' }}</td>
+                <td>{{ $ticket->sender->sender_id ?? '' }}</td>
+                <td>{{ $ticket->assignedTo->name ?? '' }}</td>
+                <td>{{ $ticket->created_at->format('Y-m-d H:i') }}</td>
+            </tr>
+        @endforeach
+        </tbody>
+    </table>
+</div>
 </body>
 </html>

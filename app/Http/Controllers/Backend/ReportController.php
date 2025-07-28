@@ -30,7 +30,7 @@ class ReportController extends Controller
 
     public function data(Request $request)
     {
-        $tickets = Ticket::with(['client', 'assignedTo', 'topic', 'subtopic', 'tertiaryTopic', 'operators', 'sender', 'paymentChannel'])
+        $tickets = Ticket::with(['client', 'assignedTo', 'topic', 'subtopic', 'tertiaryTopic', 'operators', 'sender', 'paymentChannel', 'saasApp'])
             ->when($request->start_date, function($q) use ($request) {
                 $q->whereDate('created_at', '>=', $request->start_date);
             })
@@ -69,6 +69,9 @@ class ReportController extends Controller
             ->when($request->sender_id, function($q) use ($request) {
                 $q->where('sender_id', $request->sender_id);
             })
+            ->when($request->saas_app, function($q) use ($request) {
+                $q->where('saas_app_id', $request->saas_app);
+            })
             ->select('tickets.*')
             ->addSelect([
                 'topic_path' => function($query) {
@@ -87,7 +90,7 @@ class ReportController extends Controller
 
     public function export(Request $request)
     {
-        $tickets = Ticket::with(['client', 'assignedTo', 'topic', 'subtopic', 'tertiaryTopic', 'operators', 'sender', 'paymentChannel'])
+        $tickets = Ticket::with(['client', 'assignedTo', 'topic', 'subtopic', 'tertiaryTopic', 'operators', 'sender', 'paymentChannel', 'saasApp'])
             ->when($request->start_date, function($q) use ($request) {
                 $q->whereDate('created_at', '>=', $request->start_date);
             })
@@ -126,10 +129,15 @@ class ReportController extends Controller
             ->when($request->sender_id, function($q) use ($request) {
                 $q->where('sender_id', $request->sender_id);
             })
+            ->when($request->saas_app, function($q) use ($request) {
+                $q->where('saas_app_id', $request->saas_app);
+            })
             ->orderBy('created_at', 'desc')
             ->get();
 
         $pdf = PDF::loadView('pdf.ticket_report', [
+            'page-width' => '300mm', // wider page
+            'zoom' => 0.8,
             'tickets' => $tickets,
             'filters' => $request->all()
         ]);
