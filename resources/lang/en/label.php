@@ -50,7 +50,11 @@ return [
     "assigned_at" => "Assigned At",
     "staff" => "Staff",
     "update_pass" => "Update Password",
-    "client_details" => "Client Details"
+    "client_details" => "Client Details",
+    "is_manager" => "Is Manager?",
+    "yes" => 'Yes',
+    "no" => "No",
+    "reports" => "Reports"
 
 
 

@@ -8,6 +8,7 @@ Route::group([
         Route::get('/index', 'UserCrudController@index')->name('index');
         Route::get('/user', 'UserCrudController@getAll')->name('user');
         Route::get('/active_manager', 'UserCrudController@activeManagers')->name('active_manager');
+        Route::get('/get_staff_user_for_dt', 'UserCrudController@getAllForDt')->name('get_staff_user_for_dt');
 
         Route::get('/create', 'UserCrudController@create')->name('create');
         Route::post('/', 'UserCrudController@store')->name('store');

@@ -7,6 +7,7 @@ Route::group([
     Route::group(['prefix' => 'client', 'as' => 'client.'], function () {
         Route::get('/index', 'ClientController@index')->name('index');
         Route::get('/get_client_for_dt', 'ClientController@getAllForDt')->name('get_client_for_dt');
+        Route::get('/search', 'ClientController@search')->name('search');
 
         Route::get('/create', 'ClientController@create')->name('create');
         Route::post('/client', 'ClientController@store')->name('store');

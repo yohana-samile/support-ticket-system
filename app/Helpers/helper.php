@@ -290,9 +290,19 @@ if (!function_exists('getStatusBadge')) {
     function getStatusBadge(bool $isActive): string
     {
         if ($isActive) {
-            return '<span class="badge bg-primary text-white">'.__('active').'</span>';
+            return '<span class="badge bg-primary text-white">'.__('label.active').'</span>';
         }
-        return '<span class="badge bg-danger">'.__('inactive').'</span>';
+        return '<span class="badge bg-danger">'.__('label.inactive').'</span>';
+    }
+}
+
+if (!function_exists('getManagerBadge')) {
+    function getManagerBadge(bool $isManager): string
+    {
+        if ($isManager) {
+            return '<span class="badge bg-primary text-white">'.__('label.yes').'</span>';
+        }
+        return '<span class="badge bg-danger">'.__('label.no').'</span>';
     }
 }
 

@@ -86,6 +86,14 @@
             </div>
         </li>
 
+        <hr class="sidebar-divider my-0" />
+        <li class="nav-item {{ request()->routeIs('backend.report.index') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('backend.report.index') }}">
+                <i class="fas fa-fw fa-database"></i>
+                <span>{{__('label.reports')}}</span>
+            </a>
+        </li>
+
         <hr class="sidebar-divider">
         <div class="sidebar-heading">
             {{__('label.other')}}
@@ -120,18 +128,39 @@
             Administration
         </div>
 
-        <li class="nav-item {{ request()->routeIs('backend.user.*') ? 'active' : '' }}">
-            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseAdministration" aria-expanded="true" aria-controls="collapseAdministration">
+        <li class="nav-item {{
+            request()->routeIs('backend.user.*') ||
+            request()->routeIs('backend.client.*') ||
+            request()->routeIs('backend.role.*') ||
+            request()->routeIs('backend.permission.*') ? 'active' : ''
+        }}">
+            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseAdministration" aria-expanded="{{
+                request()->routeIs('backend.user.*') ||
+                request()->routeIs('backend.client.*') ||
+                request()->routeIs('backend.role.*') ||
+                request()->routeIs('backend.permission.*') ? 'true' : 'false'
+            }}" aria-controls="collapseAdministration">
                 <i class="fas fa-fw fa-cog"></i>
                 <span>User management</span>
             </a>
-            <div id="collapseAdministration" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
+            <div id="collapseAdministration" class="collapse {{
+                    request()->routeIs('backend.user.*') ||
+                    request()->routeIs('backend.client.*') ||
+                    request()->routeIs('backend.role.*') ||
+                    request()->routeIs('backend.permission.*') ? 'show' : ''
+                }}" aria-labelledby="headingTwo" data-parent="#sidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
                     <h6 class="collapse-header">User:</h6>
-                    <a class="collapse-item" href="{{ route('backend.client.index') }}">{{__('label.client')}}</a>
-                    <a class="collapse-item" href="javascript:void(0)">{{__('label.staff')}}</a>
+                    <a class="collapse-item {{ request()->routeIs('backend.client.*') ? 'active' : '' }}" href="{{ route('backend.client.index') }}">
+                        {{__('label.client')}}
+                    </a>
+                    <a class="collapse-item {{ request()->routeIs('backend.user.*') ? 'active' : '' }}" href="{{ route('backend.user.index') }}">
+                        {{__('label.staff')}}
+                    </a>
                     <h6 class="collapse-header">Authorization:</h6>
-                    <a class="collapse-item" href="javascript:void(0)">{{__('Roles & Permissions')}}</a>
+                    <a class="collapse-item {{ request()->routeIs('backend.role.*') || request()->routeIs('backend.permission.*') ? 'active' : '' }}" href="javascript:void(0)">
+                        {{__('Roles & Permissions')}}
+                    </a>
                 </div>
             </div>
         </li>

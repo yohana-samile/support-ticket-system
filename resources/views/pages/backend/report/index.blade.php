@@ -1,0 +1,344 @@
+@extends('layouts.backend.app')
+@section('title', __('label.report'))
+@section('content')
+    <div class="container-fluid">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">{{ __('Ticket Reports') }}</h6>
+                <button id="exportBtn" class="btn btn-success">
+                    <i class="fas fa-file-export"></i> {{ __('Export') }}
+                </button>
+            </div>
+            <div class="card-body">
+                <form id="reportFilterForm">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <label>{{ __('Date Range') }}</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" name="start_date" id="startDate">
+                                <input type="date" class="form-control" name="end_date" id="endDate">
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label>{{ __('Client') }}</label>
+                            <select class="form-control select2-ajax" name="client_id" id="clientFilter" data-ajax-url="{{ route('backend.client.search') }}">
+                                <option value="">{{ __('All Clients') }}</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label>{{ __('Assigned Staff') }}</label>
+                            <select class="form-control select2" name="assigned_to" id="staffFilter">
+                                <option value="">{{ __('All Staff') }}</option>
+                                @foreach($staff as $user)
+                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label>{{ __('Status') }}</label>
+                            <select class="form-control" name="status" id="statusFilter">
+                                <option value="">{{ __('All Statuses') }}</option>
+                                @foreach($statues as $status)
+                                    <option value="{{ $status->name }}">{{ $status->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <label>{{ __('Topic') }}</label>
+                            <select class="form-control select2-ajax" name="topic_id" id="topicFilter" data-ajax-url="{{ route('backend.topic.search') }}">
+                                <option value="">{{ __('All Topics') }}</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label>{{ __('Subtopic') }}</label>
+                            <select class="form-control select2" name="subtopic_id" id="subtopicFilter" disabled>
+                                <option value="">{{ __('Select Subtopic') }}</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label>{{ __('Tertiary Topic') }}</label>
+                            <select class="form-control select2" name="tertiary_topic_id" id="tertiaryTopicFilter" disabled>
+                                <option value="">{{ __('Select Tertiary Topic') }}</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label>{{ __('Priority') }}</label>
+                            <select class="form-control" name="priority" id="priorityFilter">
+                                <option value="">{{ __('All Priorities') }}</option>
+                                @foreach($priorities as $priority)
+                                    <option value="{{ $priority->name }}">{{ $priority->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 text-right">
+                            <button type="button" id="filterBtn" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> {{ __('Filter') }}
+                            </button>
+                            <button type="reset" id="resetBtn" class="btn btn-secondary">
+                                <i class="fas fa-undo"></i> {{ __('Reset') }}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <hr>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="ticketsTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>{{ __('Ticket ID') }}</th>
+                                <th>{{ __('Client') }}</th>
+                                <th>{{ __('Subject') }}</th>
+                                <th>{{ __('Topic') }}</th>
+                                <th>{{ __('Status') }}</th>
+                                <th>{{ __('Priority') }}</th>
+                                <th>{{ __('Assigned To') }}</th>
+                                <th>{{ __('Created At') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@push('styles')
+    <link href="{{ asset('asset/vendor/select2/css/select2.min.css') }}" rel="stylesheet">
+@endpush
+
+@push('scripts')
+    <script src="{{ asset('asset/vendor/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('asset/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('asset/vendor/select2/js/select2.min.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize Select2
+            $('.select2').select2();
+
+            $('#clientFilter').select2({
+                ajax: {
+                    url: $('#clientFilter').data('ajax-url'),
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            search: params.term,
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.data.map(item => ({
+                                id: item.id,
+                                text: item.name
+                            })),
+                            pagination: {
+                                more: data.next_page_url
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2,
+                placeholder: $('#clientFilter').data('placeholder'),
+                allowClear: true
+            });
+
+
+            $('#topicFilter').select2({
+                ajax: {
+                    url: $('#topicFilter').data('ajax-url'),
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            search: params.term,
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.data.map(item => ({
+                                id: item.id,
+                                text: item.name
+                            })),
+                            pagination: {
+                                more: data.next_page_url
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2,
+                placeholder: $('#topicFilter').data('placeholder'),
+                allowClear: true
+            });
+
+            // Initialize DataTable
+            const table = $('#ticketsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: "{{ route('backend.report.data') }}",
+                    data: function(d) {
+                        d.start_date = $('#startDate').val();
+                        d.end_date = $('#endDate').val();
+                        d.client_id = $('#clientFilter').val();
+                        d.assigned_to = $('#staffFilter').val();
+                        d.status = $('#statusFilter').val();
+                        d.topic_id = $('#topicFilter').val();
+                        d.subtopic_id = $('#subtopicFilter').val();
+                        d.tertiary_topic_id = $('#tertiaryTopicFilter').val();
+                        d.priority = $('#priorityFilter').val();
+                    }
+                },
+                columns: [
+                    { data: 'ticket_number', name: 'ticket_number' },
+                    { data: 'client.name', name: 'client.name' },
+                    { data: 'title', name: 'title' },
+                    {
+                        data: 'topic_path',
+                        name: 'topic_path',
+                        render: function(data, type, row) {
+                            return data ? data.replace(/->/g, ' &rarr; ') : '';
+                        }
+                    },
+                    {
+                        data: 'status',
+                        name: 'status',
+                        render: function(data) {
+                            const statusClass = {
+                                'open': 'badge-primary',
+                                'resolved': 'badge-success',
+                                'closed': 'badge-secondary'
+                            }[data] || 'badge-light';
+                            return `<span class="badge ${statusClass}">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
+                        }
+                    },
+                    {
+                        data: 'priority',
+                        name: 'priority',
+                        render: function(data) {
+                            const priorityClass = {
+                                'low': 'badge-info',
+                                'medium': 'badge-warning',
+                                'high': 'badge-danger',
+                                'critical': 'badge-dark'
+                            }[data] || 'badge-light';
+                            return `<span class="badge ${priorityClass}">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
+                        }
+                    },
+                    { data: 'assigned_to.name', name: 'assigned_to.name' },
+                    {
+                        data: 'created_at',
+                        name: 'created_at',
+                        render: function(data) {
+                            return new Date(data).toLocaleString();
+                        }
+                    }
+                ]
+            });
+
+            // Load subtopics when topic changes
+            $('#topicFilter').change(function() {
+                const topicId = $(this).val();
+                $('#subtopicFilter').empty().append('<option value="">{{ __('Select Subtopic') }}</option>');
+                $('#tertiaryTopicFilter').empty().append('<option value="">{{ __('Select Tertiary Topic') }}</option>');
+
+                if (topicId) {
+                    $('#subtopicFilter').prop('disabled', false);
+                    $.get("{{ route('backend.subtopic.get_by_topic_id', ['topicId' => '__topicId__']) }}".replace('__topicId__', topicId), function(data) {
+                        data.data.forEach(subtopic => {
+                            $('#subtopicFilter').append(`<option value="${subtopic.id}">${subtopic.name}</option>`);
+                        });
+                    });
+                } else {
+                    $('#subtopicFilter').prop('disabled', true);
+                    $('#tertiaryTopicFilter').prop('disabled', true);
+                }
+            });
+
+            // Load tertiary topics when subtopic changes
+            $('#subtopicFilter').change(function() {
+                const subtopicId = $(this).val();
+                $('#tertiaryTopicFilter').empty().append('<option value="">{{ __('Select Tertiary Topic') }}</option>');
+
+                if (subtopicId) {
+                    $('#tertiaryTopicFilter').prop('disabled', false);
+                    $.get("{{ route('backend.tertiary.tertiary_topic_by_subtopic_id', ['subtopicUid' => '__subtopicId__']) }}".replace('__subtopicId__', subtopicId), function(data) {
+                        data.data.forEach(tertiaryTopic => {
+                            $('#tertiaryTopicFilter').append(`<option value="${tertiaryTopic.id}">${tertiaryTopic.name}</option>`);
+                        });
+                    });
+                } else {
+                    $('#tertiaryTopicFilter').prop('disabled', true);
+                }
+            });
+
+            // Apply filters
+            $('#filterBtn').click(function() {
+                table.ajax.reload();
+            });
+
+            // Reset filters
+            $('#resetBtn').click(function() {
+                $('#reportFilterForm')[0].reset();
+                $('.select2').val(null).trigger('change');
+                $('#subtopicFilter').prop('disabled', true);
+                $('#tertiaryTopicFilter').prop('disabled', true);
+                table.ajax.reload();
+            });
+
+            // Export functionality
+            $('#exportBtn').click(function() {
+                const form = $('#reportFilterForm');
+                const url = "{{ route('backend.report.export') }}";
+
+                // Create a temporary form for download
+                const tempForm = $('<form>', {
+                    'action': url,
+                    'method': 'POST',
+                    'target': '_blank'
+                }).append($('<input>', {
+                    'name': '_token',
+                    'value': "{{ csrf_token() }}",
+                    'type': 'hidden'
+                }));
+
+                // Add all filter values to the form
+                form.find('input, select').each(function() {
+                    if ($(this).attr('name')) {
+                        tempForm.append($('<input>', {
+                            'name': $(this).attr('name'),
+                            'value': $(this).val(),
+                            'type': 'hidden'
+                        }));
+                    }
+                });
+
+                // Submit the form
+                $('body').append(tempForm);
+                tempForm.submit();
+                tempForm.remove();
+            });
+        });
+    </script>
+@endpush

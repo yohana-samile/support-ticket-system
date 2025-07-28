@@ -1000,7 +1000,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resetSelect(paymentChannelSelect, 'Select a payment channel');
 
         // Reset priority to Low
-        priorityField.value = "low";
+        priorityField.value = ""; //"low"
         $(priorityField).trigger('change');
 
         // Hide all sections except service

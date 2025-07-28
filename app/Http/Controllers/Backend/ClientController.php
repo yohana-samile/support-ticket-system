@@ -7,6 +7,7 @@ use App\Http\Requests\Backend\UpdateClientRequest as updateRequest;
 use App\Http\Requests\Backend\User\StoreClientRequest as storeRequest;
 use App\Models\Access\Client;
 use App\Models\SenderId;
+use App\Models\SubTopic;
 use App\Repositories\Backend\ClientRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -93,6 +94,24 @@ class ClientController extends Controller
         ]);
     }
 
+    public function search(Request $request)
+    {
+        $search = $request->input('search');
+
+        $results = Client::query()
+            ->when($search, function($query) use ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'ilike', "%{$search}%");
+                });
+            })
+            ->paginate(10);
+
+        return response()->json([
+            'data' => $results->items(),
+            'next_page_url' => $results->nextPageUrl()
+        ]);
+    }
+
     public function getAll(): JsonResponse
     {
         $clients = $this->clientRepo->getAll();
@@ -117,8 +136,8 @@ class ClientController extends Controller
             ->addColumn('created_at', function($client) {
                 return $client->created_at->diffForHumans();
             })
-            ->addColumn('status_badge', function($topic) {
-                return getStatusBadge($topic->is_active);
+            ->addColumn('status_badge', function($client) {
+                return getStatusBadge($client->is_active);
             })
             ->addColumn('count', function($client) {
                 return $client->senderIds->count() ?? 0;

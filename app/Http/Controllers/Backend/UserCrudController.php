@@ -9,6 +9,8 @@ use App\Models\Access\User;
 use App\Repositories\Backend\UserRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
+use Yajra\DataTables\DataTables;
 
 class UserCrudController extends Controller
 {
@@ -21,7 +23,7 @@ class UserCrudController extends Controller
 
     public function index()
     {
-        return view('pages.backend.user.index');
+        return view('pages.backend.user.staff.index');
     }
 
     public function create()
@@ -112,5 +114,46 @@ class UserCrudController extends Controller
         return response()->json([
             'data' => $users
         ]);
+    }
+
+    public function getAllForDt()
+    {
+        return DataTables::of($this->userRepo->getAll())
+            ->addColumn('name', function($user) {
+                return '<a href="'.route('backend.user.show', $user->uid).'">'.Str::limit($user->name, 30).'</a>';
+            })
+            ->addColumn('created_at', function($user) {
+                return $user->created_at->diffForHumans();
+            })
+            ->addColumn('manager_badge', function($user) {
+                return getManagerBadge($user->is_super_admin);
+            })
+            ->addColumn('status_badge', function($user) {
+                return getStatusBadge($user->is_active);
+            })
+            ->addColumn('actions', function($user) {
+                $actions = '<a href="javascript:void(0)" class="text-info mr-2 text-decoration-none" title="View">
+                      <i class="fas fa-eye fa-sm"></i>
+                   </a>
+                   <a href="'.route('backend.user.edit', $user->uid).'" class="text-primary mr-2 text-decoration-none" title="Edit" hidden>
+                      <i class="fas fa-edit fa-sm"></i>
+                   </a>';
+
+                if($user->can_be_deleted) {
+                    $formId = 'delete-user-form-' . $user->uid;
+
+                    $actions .= '<a href="javascript:void(0);" class="text-danger mr-2 text-decoration-none" title="Delete" onclick="confirmDelete(\''.$user->uid.'\')">
+                        <i class="fas fa-trash fa-sm"></i>
+                     </a>';
+
+                    $actions .= csrf_field()
+                        . method_field('DELETE')
+                        . '<form id="'.$formId.'" action="'.route('backend.user.destroy', $user->uid).'" method="POST" style="display: none;">'
+                        . csrf_field()
+                        . method_field('DELETE')
+                        . '</form>';
+                }
+                return $actions;
+            })->rawColumns(['name', 'manager_badge', 'status_badge', 'actions'])->make(true);
     }
 }
