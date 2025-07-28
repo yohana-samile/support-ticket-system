@@ -57,7 +57,8 @@ return [
     "reports" => "Reports",
     "filter" => "Filter",
     "reset" => "Reset",
-    "report" => "Report"
+    "report" => "Report",
+    "inactive" => "Inactive"
 
 
 

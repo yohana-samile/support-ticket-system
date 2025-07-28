@@ -292,7 +292,7 @@ if (!function_exists('getStatusBadge')) {
         if ($isActive) {
             return '<span class="badge bg-primary text-white">'.__('label.active').'</span>';
         }
-        return '<span class="badge bg-danger">'.__('label.inactive').'</span>';
+        return '<span class="badge bg-danger text-white">'.__('label.inactive').'</span>';
     }
 }
 
@@ -302,7 +302,7 @@ if (!function_exists('getManagerBadge')) {
         if ($isManager) {
             return '<span class="badge bg-primary text-white">'.__('label.yes').'</span>';
         }
-        return '<span class="badge bg-danger">'.__('label.no').'</span>';
+        return '<span class="badge bg-danger text-white">'.__('label.no').'</span>';
     }
 }
 

@@ -7,7 +7,6 @@ use App\Http\Requests\Backend\UpdateClientRequest as updateRequest;
 use App\Http\Requests\Backend\User\StoreClientRequest as storeRequest;
 use App\Models\Access\Client;
 use App\Models\SenderId;
-use App\Models\SubTopic;
 use App\Repositories\Backend\ClientRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

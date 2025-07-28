@@ -80,12 +80,12 @@ class ClientRepository extends BaseRepository
         });
     }
 
-    protected function generatePassword()
+    public function generatePassword()
     {
         return Str::random(6) .rand(100, 999);
     }
 
-    protected function sendEmailWithPassword($client, $password)
+    public function sendEmailWithPassword($client, $password)
     {
         Notification::send($client, new ClientAccountCreatedNotification([
             'email' => $client->email,
