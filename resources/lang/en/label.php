@@ -58,7 +58,10 @@ return [
     "filter" => "Filter",
     "reset" => "Reset",
     "report" => "Report",
-    "inactive" => "Inactive"
+    "inactive" => "Inactive",
+    "sender_ids_count" => "SenderIds Count",
+    "user" => "User",
+    "client_information" => "Client Information"
 
 
 

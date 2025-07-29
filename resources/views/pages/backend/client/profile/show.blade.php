@@ -103,13 +103,13 @@
                                                         <td>
                                                             <form id="detach-sender-id-form-{{ $senderId->id }}"
                                                                   method="POST"
-                                                                  action="{{ route('backend.client.detach_sender_id', ['client' => $client->id, 'senderId' => $senderId->id]) }}">
+                                                                  action="{{ route('backend.client.detach_sender_id', ['clientId' => $client->id, 'senderId' => $senderId->id]) }}">
                                                                 @csrf
                                                                 @method('DELETE')
 
                                                                 <button type="button"
                                                                         class="btn btn-link text-danger p-0"
-                                                                        onclick="confirmRemoveSenderId({{ $senderId->id }})"
+                                                                        onclick="confirmRemoveSenderId({{ $senderId->id }}, {{ $client->id }})"
                                                                         title="Remove Sender ID">
                                                                     <i class="fas fa-trash-alt"></i>
                                                                 </button>
@@ -447,7 +447,7 @@
         });
 
 
-        function confirmRemoveSenderId(senderId) {
+        function confirmRemoveSenderId(senderId, clientId) {
             Swal.fire({
                 title: 'Are you sure?',
                 text: "This will remove the sender ID from this client!",
@@ -460,24 +460,48 @@
                 reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    const formId = `detach-sender-id-form-${senderId}`;
-                    const form = document.getElementById(formId);
+                    const url = `/backend/client/detach_sender_id/${clientId}/sender_ids/${senderId}`;
 
-                    if (form) {
-                        Swal.fire({
-                            title: 'Processing...',
-                            text: 'Please wait',
-                            allowOutsideClick: false,
-                            showConfirmButton: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                                form.submit();
-                            }
-                        });
-                    } else {
-                        console.error(`Form not found: ${formId}`);
-                        Swal.fire('Error', 'Failed to remove sender ID', 'error');
-                    }
+                    Swal.fire({
+                        title: 'Processing...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+
+                            fetch(url, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                    'Accept': 'application/json'
+                                }
+                            })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error('Network response was not ok');
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire({
+                                            title: 'Success!',
+                                            text: data.message,
+                                            icon: 'success'
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire('Error', data.message, 'error');
+                                    }
+                                })
+                                .catch(error => {
+                                    Swal.fire('Error', 'Failed to remove sender ID', 'error');
+                                });
+                        }
+                    });
                 }
             });
         }

@@ -61,15 +61,15 @@
                 },
                 columns: [
                     { data: 'name', name: 'name', orderable: true, searchable: true },
-                    { data: 'phone', name: 'phone', orderable: true, searchable: true },
                     { data: 'email', name: 'email', orderable: true, searchable: true },
+                    { data: 'phone', name: 'phone', orderable: true, searchable: true },
                     { data: 'count', name: 'sender_ids_count', orderable: true, searchable: false },
                     { data: 'saas_app', name: 'saas_app', orderable: true, searchable: true },
-                    { data: 'status_badge', name: 'is_active', orderable: false },
-                    { data: 'created_at', name: 'created_at' },
+                    { data: 'status_badge', name: 'is_active', orderable: false, searchable: false },
+                    { data: 'created_at', name: 'created_at', orderable: true },
                     { data: 'actions', name: 'actions', orderable: false, searchable: false }
                 ],
-                order: [[5, 'desc']],
+                order: [[6, 'desc']],
                 language: {
                     search: "_INPUT_",
                     searchPlaceholder: "Search...",

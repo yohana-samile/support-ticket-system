@@ -43,8 +43,8 @@ class SassAppController extends Controller
         DB::transaction(function () use ($data, &$createdIds) {
             foreach ($data as $item) {
                 $app = SaasApp::create([
-                    'name' => $item['name'],
-                    'abbreviation' => $item['abbreviation']
+                    'name' =>  strtoupper($item['name']),
+                    'abbreviation' => strtoupper($item['abbreviation'])
                 ]);
                 $createdIds[] = $app->id;
             }

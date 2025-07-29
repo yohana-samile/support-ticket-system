@@ -10,17 +10,17 @@ Route::group([
         Route::get('/search', 'ClientController@search')->name('search');
 
         Route::get('/create', 'ClientController@create')->name('create');
-        Route::post('/client', 'ClientController@store')->name('store');
+        Route::post('/store', 'ClientController@store')->name('store');
         Route::put('/update_password/{client}', 'ClientController@updatePassword')->name('update_password');
 
         Route::post('/assign_sender_id/{client}', 'ClientController@assignSenderId')->name('assign_sender_id');
-        Route::delete('/detach_sender_id/{client}/{senderId}', 'ClientController@detachSenderId')->name('detach_sender_id');
+        Route::delete('/detach_sender_id/{clientId}/sender_ids/{senderId}', 'ClientController@detachSenderId')->name('detach_sender_id');
 
-        Route::get('/client/{client}', 'ClientController@show')->name('show');
-        Route::get('/client/edit/{client}', 'ClientController@edit')->name('edit');
-        Route::put('/client/{client}', 'ClientController@update')->name('update');
+        Route::get('/show/{client}', 'ClientController@show')->name('show');
+        Route::get('/edit/edit/{client}', 'ClientController@edit')->name('edit');
+        Route::put('/update/{client}', 'ClientController@update')->name('update');
 
-        Route::delete('/client/{client}', 'ClientController@destroy')->name('destroy');
+        Route::delete('/destroy/{client}', 'ClientController@destroy')->name('destroy');
 
         Route::get('/client_by_services/{serviceId}', 'ClientController@getByService')->name('client_by_services');
     });

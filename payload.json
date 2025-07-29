@@ -1,0 +1,72 @@
+//singe insert for senderIds
+// {
+//     "sender_id": "MyBrand",
+//     "is_active": true
+// }
+
+//bulk insert
+
+{
+    "sender_ids": [
+        {
+            "sender_id": "COMPANY1",
+            "is_active": true
+        },
+        {
+            "sender_id": "SALES",
+            "is_active": false
+        },
+        {
+            "sender_id": "ALERTS"  // is_active will default to true
+        }
+    ]
+}
+
+//for saas_app
+// {
+//     "name": "MyBrand",
+//     "abbreviation": "MyBrand"
+// }
+
+{
+    "apps": [
+        {
+            "name": "Customer Relationship Management",
+            "abbreviation": "CRM"
+        },
+        {
+            "name": "Enterprise Resource Planning",
+            "abbreviation": "ERP"
+        },
+        {
+            "name": "Human Resource Management",
+            "abbreviation": "HRM"
+        }
+    ]
+}
+
+//for clients
+
+{
+    "clients": [
+        {
+            "name": "Alice Smith",
+            "email": "alice@example.com",
+            "saas_app_name": "MyBrand",
+            "sender_ids": ["ALERTS", "ERPMAIN"]
+        },
+        {
+            "name": "Bob Johnson",
+            "email": "bob@example.com",
+            "phone": "9876543210",
+            "saas_app_name": "MyBrand",
+            "is_active": false
+        }
+    ]
+}
+
+//   {
+//             "name": "Alice Smith",
+//             "email": "alice@example.com",
+//             "saas_app_name": "MyBrand"
+//         }

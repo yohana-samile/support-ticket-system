@@ -10,6 +10,7 @@ use App\Models\SenderId;
 use App\Repositories\Backend\ClientRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
 
@@ -71,13 +72,16 @@ class ClientController extends Controller
         return redirect()->back()->with('success', 'senderIds assigned to this client successfully');
     }
 
-    public function detachSenderId(Request $request, $client, $senderId)
+    public function detachSenderId($clientId, $senderId)
     {
-        $client = Client::findOrFail($client);
-        SenderId::findOrFail($senderId);
-
-        $client->senderIds()->detach($senderId);
-        return redirect()->back()->with('success', 'senderIds removed to this client');
+        $client = Client::findOrFail($clientId);
+        DB::transaction(function () use ($client, $senderId) {
+            $client->senderIds()->detach($senderId);
+        });
+        return response()->json([
+            'success' => true,
+            'message' => 'Sender ID successfully removed'
+        ]);
     }
     public function destroy(Client $client)
     {
@@ -126,9 +130,6 @@ class ClientController extends Controller
             ->addColumn('name', function($client) {
                 return '<a href="'.route('backend.client.show', $client->uid).'">'.Str::limit($client->name, 30).'</a>';
             })
-            ->addColumn('email', function($client) {
-                return $client->email;
-            })
             ->addColumn('saas_app', function($client) {
                 return $client->saas_app_name ?? 'N/A';
             })
@@ -164,6 +165,6 @@ class ClientController extends Controller
                         . '</form>';
                 }
                 return $actions;
-            })->rawColumns(['name', 'count', 'saas_app', 'email', 'status_badge', 'actions'])->make(true);
+            })->rawColumns(['name', 'count', 'saas_app',  'status_badge', 'actions'])->make(true);
     }
 }
