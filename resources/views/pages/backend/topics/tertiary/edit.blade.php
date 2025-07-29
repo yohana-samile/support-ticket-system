@@ -32,7 +32,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="sub_topic_id" class="form-label">{{__('label.sub_topic')}} <span class="text-danger">*</span></label>
+                                <label for="sub_topic_id" class="form-label">{{__('label.subtopic')}} <span class="text-danger">*</span></label>
                                 <select class="form-control select2-ajax" id="sub_topic_id" name="sub_topic_id"
                                         data-placeholder="{{ __('Search sub topic...') }}"
                                         data-ajax-url="{{ route('backend.subtopic.search') }}"
@@ -79,7 +79,7 @@
 
                             <div class="form-group">
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> {{__('label.update_topic')}}
+                                    <i class="fas fa-save"></i> {{__('label.update')}}
                                 </button>
                                 <a href="{{ route('backend.tertiary.index') }}" class="btn btn-secondary">
                                     <i class="fas fa-times"></i> {{__('label.cancel')}}
@@ -101,11 +101,11 @@
                             <span class="text-muted">{{ $tertiaryTopic->subtopic->topic->name ?? 'Not assigned' }}</span>
                         </div>
                         <div class="mb-3">
-                            <strong>{{__('label.sub_topic')}}:</strong>
+                            <strong>{{__('label.subtopic')}}:</strong>
                             <span class="text-muted">{{ $tertiaryTopic->subtopic->name ?? 'Not assigned' }}</span>
                         </div>
                         <div class="mb-3">
-                            <strong>{{__('created_at')}}:</strong>
+                            <strong>{{__('label.created_at')}}:</strong>
                             <span class="text-muted">{{ $tertiaryTopic->created_at->format('M d, Y h:i A') }}</span>
                         </div>
                         <div class="mb-3">
@@ -113,7 +113,7 @@
                             <span class="text-muted">{{ $tertiaryTopic->updated_at->format('M d, Y h:i A') }}</span>
                         </div>
                         <div class="mb-3">
-                            <strong>{{__('label.current_status')}}:</strong>
+                            <strong>{{__('label.status')}}:</strong>
                             <span class="badge badge-{{ $tertiaryTopic->is_active ? 'success' : 'danger' }}">
                                 {{ $tertiaryTopic->is_active ? 'Active' : 'Inactive' }}
                             </span>

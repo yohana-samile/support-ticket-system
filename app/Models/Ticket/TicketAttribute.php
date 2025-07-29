@@ -14,6 +14,7 @@ trait TicketAttribute
             'in_progress' => 'in_progress',
             'resolved' => 'resolved',
             'closed' => 'closed',
+            'escalated' => 'escalated'
         ][$this->status] ?? 'secondary';
     }
 

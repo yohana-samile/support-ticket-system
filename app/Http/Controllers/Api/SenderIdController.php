@@ -42,7 +42,7 @@ class SenderIdController extends Controller
         DB::transaction(function () use ($data, &$createdIds) {
             foreach ($data as $item) {
                 $sender = SenderId::create([
-                    'sender_id' => strtoupper($item['sender_id']),
+                    'sender_id' => $item['sender_id'],
                     'is_active' => $item['is_active'] ?? true
                 ]);
                 $createdIds[] = $sender->id;

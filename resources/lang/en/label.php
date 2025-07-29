@@ -61,7 +61,16 @@ return [
     "inactive" => "Inactive",
     "sender_ids_count" => "SenderIds Count",
     "user" => "User",
-    "client_information" => "Client Information"
+    "client_information" => "Client Information",
+    "subtopic_information" => "Subtopic Information",
+    "main_topic" => "Main Topic",
+    "tertiary_topic_name" => "Tertiary Topic Name",
+    "tertiary_topic_information" => "Tertiary Topic Information",
+    "saas_information" => "Saas Information",
+    "last_activity" => "Last Activity",
+    "sender_details" => "SenderId Details",
+    "sender_information" => "Senderid Information",
+    "select_sender" => "Select SenderId"
 
 
 

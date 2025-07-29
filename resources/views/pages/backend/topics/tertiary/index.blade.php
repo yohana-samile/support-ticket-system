@@ -59,15 +59,15 @@
                     type: 'GET'
                 },
                 columns: [
-                    { data: 'topic_name', name: 'topic_name', orderable: false, searchable: false },
-                    { data: 'subtopic_name', name: 'subtopic_name', orderable: false, searchable: false },
-                    { data: 'tertiary_name', name: 'name' },
-                    { data: 'description', name: 'description' },
+                    { data: 'topic_name', name: 'topic_name', orderable: true, searchable: true },
+                    { data: 'subtopic_name', name: 'subtopic_name', orderable: true, searchable: true },
+                    { data: 'tertiary_name', name: 'name', orderable: true, searchable: true },
+                    { data: 'description', name: 'description', orderable: true, searchable: true },
                     { data: 'status_badge', name: 'is_active', orderable: false },
                     { data: 'created_at', name: 'created_at' },
                     { data: 'actions', name: 'actions', orderable: false, searchable: false }
                 ],
-                order: [[5, 'desc']], // Order by created_at (6th column)
+                order: [[5, 'desc']],
                 language: {
                     search: "_INPUT_",
                     searchPlaceholder: "Search...",

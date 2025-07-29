@@ -13,7 +13,7 @@
                             @csrf
                             @method('PUT')
                             <div class="form-group">
-                                <label for="name" class="form-label">{{__('label.topic_name')}} <span class="text-danger">*</span></label>
+                                <label for="name" class="form-label">{{__('label.saas_app')}} <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $saasApp->name) }}" required>
                                 @error('name')
                                 <span class="invalid-feedback" role="alert">

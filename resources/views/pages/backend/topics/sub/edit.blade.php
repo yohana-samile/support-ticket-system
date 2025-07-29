@@ -54,7 +54,7 @@
 
                             <div class="form-group">
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> {{__('label.update_topic')}}
+                                    <i class="fas fa-save"></i> {{__('label.update')}}
                                 </button>
                                 <a href="{{ route('backend.subtopic.index') }}" class="btn btn-secondary">
                                     <i class="fas fa-times"></i> {{__('label.cancel')}}

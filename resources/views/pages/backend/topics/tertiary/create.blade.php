@@ -11,7 +11,7 @@
                     @csrf
 
                     <div class="mb-3 form-group">
-                        <label for="sub_topic_id">{{__('label.sub_topic')}} <span class="text-danger">*</span></label>
+                        <label for="sub_topic_id">{{__('label.subtopic')}} <span class="text-danger">*</span></label>
                         <select class="form-control select2-ajax" id="sub_topic_id" name="sub_topic_id"
                                 data-placeholder="{{ __('Search for a sub Topic...') }}"
                                 data-ajax-url="{{ route('backend.subtopic.search') }}" required>

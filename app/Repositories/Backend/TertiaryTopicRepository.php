@@ -13,7 +13,7 @@ class TertiaryTopicRepository extends  BaseRepository {
 
     public function getAll()
     {
-        return $this->query()->with('subtopic')->get();
+        return $this->query()->with('subtopic');
     }
 
     public function store(array $data)

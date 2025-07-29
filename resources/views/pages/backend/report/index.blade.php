@@ -45,7 +45,7 @@
 
                             <div class="col-md-3">
                                 <label>{{ __('label.status') }}</label>
-                                <select class="form-control" name="status" id="statusFilter">
+                                <select class="form-control select2" name="status" id="statusFilter">
                                     <option value="">{{ __('All Statuses') }}</option>
                                     @foreach($statues as $status)
                                         <option value="{{ $status->name }}">{{ $status->name }}</option>
@@ -78,7 +78,7 @@
 
                             <div class="col-md-3">
                                 <label>{{ __('Priority') }}</label>
-                                <select class="form-control" name="priority" id="priorityFilter">
+                                <select class="form-control select2" name="priority" id="priorityFilter">
                                     <option value="">{{ __('All Priorities') }}</option>
                                     @foreach($priorities as $priority)
                                         <option value="{{ $priority->name }}">{{ $priority->name }}</option>

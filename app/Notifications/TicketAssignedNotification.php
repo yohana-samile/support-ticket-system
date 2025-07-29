@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Ticket\Ticket;
+use App\Traits\EmailTrait;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -10,7 +11,7 @@ use Illuminate\Notifications\Notification;
 
 class TicketAssignedNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, EmailTrait;
 
     public $ticket;
     public $sendMail;
@@ -65,28 +66,5 @@ class TicketAssignedNotification extends Notification implements ShouldQueue
             'message' => 'You have been assigned a new ticket',
             'url' => route('backend.ticket.show', $this->ticket->uid),
         ];
-    }
-
-    protected function getTicketCategoryPath(Ticket $ticket, string $separator = ' → '): string
-    {
-        $path = [
-            optional($ticket->topic)->name,
-            optional($ticket->subtopic)->name,
-            optional($ticket->tertiaryTopic)->name
-        ];
-
-        return implode($separator, array_filter($path)) ?: 'General';
-    }
-
-    protected function formatPriority(string $priority): string
-    {
-        $emoji = [
-            'low' => '🔵',
-            'medium' => '🟡',
-            'high' => '🔴',
-            'critical' => '🚨'
-        ][strtolower($priority)] ?? '⚪';
-
-        return ucfirst($priority) . " {$emoji}";
     }
 }

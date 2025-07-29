@@ -53,7 +53,7 @@ class TicketObserver
         $keywords = [
             'not fixed', 'still an issue', 'reopen', 'unsolved',
             'not resolved', 'still broken', 'does not work',
-            'issue persists', 'problem remains'
+            'issue persists', 'problem remains', 'still a problem'
         ];
         $message = strtolower(trim($message));
         foreach ($keywords as $keyword) {

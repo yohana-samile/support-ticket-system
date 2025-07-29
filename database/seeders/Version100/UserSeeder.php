@@ -25,7 +25,7 @@ class UserSeeder extends Seeder
                     "is_super_admin" => true,
                     "email_verified_at" => now(),
                     "email" => $email,
-                    "phone" => '+255620350083',
+                    "phone" => '255620350083',
                     "password" => Hash::make($password),
                 ]);
 

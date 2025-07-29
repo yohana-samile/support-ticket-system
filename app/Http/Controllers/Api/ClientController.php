@@ -87,7 +87,7 @@ class ClientController extends Controller
                 $password = $this->clientRepo->generatePassword();
 
                 $client = Client::create([
-                    'name' => strtoupper($item['name']),
+                    'name' => $item['name'],
                     'email' => $item['email'],
                     'phone' => $item['phone'] ?? null,
                     'saas_app_id' => $saasApp->id,
@@ -98,7 +98,6 @@ class ClientController extends Controller
                 // Process sender IDs if provided
                 if (!empty($item['sender_ids'])) {
                     foreach ($item['sender_ids'] as $senderIdValue) {
-                        $senderIdValue = strtoupper($senderIdValue);
 
                         // Find or create sender ID
                         $senderId = SenderId::firstOrCreate(
