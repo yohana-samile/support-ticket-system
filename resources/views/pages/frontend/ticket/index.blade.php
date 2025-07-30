@@ -47,11 +47,11 @@
                                 <tr>
                                     <td>{{ $ticket->ticket_number }}</td>
                                     <td>
-                                        <a href="{{ route('frontend.ticket.show', $ticket->id) }}">
+                                        <a href="{{ route('frontend.ticket.show', $ticket->uid) }}">
                                             {{ Str::limit($ticket->title, 30) }}
                                         </a>
                                     </td>
-                                    <td>{{ $ticket->category->name }}</td>
+                                    <td>{{ $ticket->topic->name }}</td>
                                     <td>
                                     <span class="badge badge-{{ $ticket->status_badge }}">
                                         {{ ucfirst(str_replace('_', ' ', $ticket->status)) }}

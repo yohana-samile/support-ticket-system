@@ -1,7 +1,7 @@
 <?php
-Breadcrumbs::for('backend.user', function ($breadcrumbs) {
+Breadcrumbs::for('backend.user.index', function ($breadcrumbs) {
     $breadcrumbs->parent('home');
-    $breadcrumbs->push(__('Users'), route('backend.user'));
+    $breadcrumbs->push(__('label.user'), route('backend.user.index'));
 });
 
 /*create admin */

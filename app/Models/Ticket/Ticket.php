@@ -18,6 +18,8 @@ class Ticket extends BaseModel
         'reopened_at' => 'datetime',
     ];
 
+    protected $appends = ['can_be_deleted'];
+
     public function activities()
     {
         return $this->morphMany(\Spatie\Activitylog\Models\Activity::class, 'subject')->latest();

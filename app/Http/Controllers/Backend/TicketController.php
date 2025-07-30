@@ -183,7 +183,7 @@ class TicketController extends Controller
                 $actions = '<a href="'.route('backend.ticket.show', $ticket->uid).'" class="text-info mr-2 text-decoration-none" title="View">
                   <i class="fas fa-eye fa-sm"></i>
                </a>';
-                $actions .= '<a href="'.route('backend.ticket.edit', $ticket->uid).'" class="text-primary mr-2 text-decoration-none" title="Edit">
+                $actions .= '<a href="'.route('backend.ticket.edit', $ticket->uid).'" class="text-primary mr-2 text-decoration-none" title="Edit" hidden>
                       <i class="fas fa-edit fa-sm"></i>
                    </a>';
 

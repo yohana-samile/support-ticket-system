@@ -51,7 +51,7 @@ class TicketObserver
     private function isNegativeReply(string $message): bool
     {
         $keywords = [
-            'not fixed', 'still an issue', 'reopen', 'unsolved',
+            'not fixed', 'still an issue', 'reopen', 'unsolved', 'not satisfied',
             'not resolved', 'still broken', 'does not work',
             'issue persists', 'problem remains', 'still a problem'
         ];

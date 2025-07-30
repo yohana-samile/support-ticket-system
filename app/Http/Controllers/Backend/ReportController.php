@@ -2,21 +2,93 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\Exports\SaasAppSummaryExport;
 use App\Http\Controllers\Controller;
 use App\Models\Access\User;
 use App\Models\Operator;
 use App\Models\PaymentChannel;
+use App\Models\SaasApp;
 use App\Models\Status;
 use App\Models\System\Code;
 use App\Models\System\CodeValue;
 use App\Models\Ticket\Ticket;
+use App\Models\Topic;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
+use Yajra\DataTables\DataTables;
 
 class ReportController extends Controller
 {
     public function index()
+    {
+        return view("pages.backend.report.index", [
+            'summaryCounts' => [
+                'saas_apps' => SaasApp::count(),
+                'topics' => Topic::count(),
+                'mnos' => Operator::count(),
+                'payment_channels' => PaymentChannel::count(),
+                'total_tickets' => Ticket::count()
+            ]
+        ]);
+    }
+
+    public function summary(Request $request)
+    {
+        $type = $request->query('type');
+        $statuses = Status::all();
+
+        switch ($type) {
+            case 'saas_app':
+                return view('pages.backend.report.partials.saas_app_summary', [
+                    'title' => 'Saas Applications Summary',
+                    'statuses' => $statuses
+                ]);
+            case 'topic':
+                return view('pages.backend.report.partials.topic_summary', [
+                    'title' => 'Saas Topic Summary',
+                    'statuses' => $statuses
+                ]);
+
+            case 'mno':
+                return view('pages.backend.report.partials.mno_summary', [
+                    'title' => 'Saas MNOs Summary',
+                    'statuses' => $statuses
+                ]);
+
+            case 'payment_channel':
+                return view('pages.backend.report.partials.payment_channel_summary', [
+                    'title' => 'Saas Payment Channels Summary',
+                    'statuses' => $statuses
+                ]);
+            default:
+                abort(404);
+        }
+    }
+
+    private function getTopicSummary(Request $request)
+    {
+        $statuses = Status::getStatusesWithColors();
+        $withCount = ['tickets'];
+
+        foreach ($statuses as $status) {
+            $withCount["tickets as {$status->slug}_tickets_count"] = function($q) use ($status) {
+                $q->where('status', $status->slug);
+            };
+        }
+
+        return [
+            'items' => Topic::withCount($withCount)
+                ->with('subtopics')
+                ->orderBy('name')
+                ->get(),
+            'title' => 'Topics Summary',
+            'statuses' => $statuses
+        ];
+    }
+
+    public function history(Request $request)
     {
         $codeId = Code::query()->where('name', 'Ticket Priority')->value('id');
         $data['staff'] = User::query()->where('is_active', true)->orderBy('name')->get();
@@ -25,7 +97,96 @@ class ReportController extends Controller
 
         $data['mnos'] = Operator::orderBy('name')->get();
         $data['paymentChannels'] = PaymentChannel::orderBy('name')->get();
-        return view("pages.backend.report.index", $data);
+
+        return view('pages.backend.report.history', $data);
+    }
+
+    public function saasAppData(Request $request)
+    {
+        $statuses = Status::all();
+        $query = SaasApp::query();
+
+        $withCount = ['tickets'];
+        foreach ($statuses as $status) {
+            $withCount["tickets as {$status->slug}_tickets_count"] = function($q) use ($status) {
+                $q->where('status', $status->slug);
+            };
+        }
+
+        // Date filtering
+        if ($request->start_date) {
+            $query->whereHas('tickets', function($q) use ($request) {
+                $q->where('created_at', '>=', $request->start_date);
+            });
+        }
+
+        if ($request->end_date) {
+            $query->whereHas('tickets', function($q) use ($request) {
+                $q->where('created_at', '<=', $request->end_date);
+            });
+        }
+
+        // Handle search
+        if ($request->has('search') && !empty($request->search['value'])) {
+            $searchTerm = strtolower($request->search['value']);
+
+            $query->where(function($q) use ($searchTerm) {
+                $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"])
+                    ->orWhereRaw('LOWER(abbreviation) LIKE ?', ["%{$searchTerm}%"]);
+            });
+        }
+
+        // Handle sorting
+        if ($request->has('order')) {
+            $orderColumn = $request->order[0]['column'];
+            $orderDirection = $request->order[0]['dir'];
+
+            // Only allow sorting by name (column 0)
+            if ($orderColumn == 0) {
+                $query->orderBy('name', $orderDirection);
+            }
+        } else {
+            $query->orderBy('name', 'asc');
+        }
+
+        return DataTables::of($query->withCount($withCount))
+            ->addColumn('name', function($saasApp) {
+                return $saasApp->name;
+            })
+            ->addColumn('abbreviation', function($saasApp) {
+                return $saasApp->abbreviation;
+            })
+            ->filterColumn('name', function($query, $keyword) {
+                $query->whereRaw('LOWER(name) LIKE ?', ["%".strtolower($keyword)."%"]);
+            })->toJson();
+    }
+
+    public function getMnoSummary(Request $request)
+    {
+
+    }
+
+    public function getPaymentChannelSummary(Request $request)
+    {
+
+    }
+
+    public function exportSummary(Request $request)
+    {
+        $type = $request->query('type');
+        $filters = $request->except(['_token', 'type']);
+
+        switch ($type) {
+            case 'saas_app':
+                return Excel::download(
+                    new SaasAppSummaryExport($filters),
+                    'saas-app-summary-'.now()->format('Y-m-d').'.xlsx'
+                );
+
+            // other export types
+            default:
+                abort(404, 'Invalid export type');
+        }
     }
 
     public function data(Request $request)

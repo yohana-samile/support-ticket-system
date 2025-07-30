@@ -48,13 +48,8 @@ trait TicketAttribute
             ->useLogName('ticket');
     }
 
-    public function checkIfCanBeDeleted() {
-        if ($this->users || $this->permissions) {
-            return false;
-        }
-        else{
-            return true;
-        }
+    public function getCanBeDeletedAttribute() {
+        return !$this->statusHistory()->exists() && !$this->comments()->exists() && !$this->attachments()->exists() && $this->status == 'open';
     }
 
 }

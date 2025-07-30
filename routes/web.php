@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Backend\ClientController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -48,7 +47,6 @@ Route::group(['middleware' => 'web'], function () {
 
     Route::get('/', [AdminController::class, 'landing']);
     Route::get('dashboard', [AdminController::class, 'dashboard'])->name("home");
-    Route::get('dashboard', [ClientController::class, 'dashboard'])->name("client.dashboard");
 
     Route::group(['middleware' => 'web'], function () {
         Route::group(['middleware' => 'dashboard'], function () {

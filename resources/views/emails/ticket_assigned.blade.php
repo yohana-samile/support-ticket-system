@@ -114,7 +114,7 @@
         {!! nl2br(e($ticket->description)) !!}
     </div>
 
-    <a href="{{ URL::signedRoute('backend.ticket.resolve.via.email', $ticket->uid) }}" class="action-button">
+    <a href="{{ URL::signedRoute('backend.ticket.resolve.via.email', $ticket->uid) }}" class="action-button" style="color: white">
         Resolve Ticket
     </a>
 

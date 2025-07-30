@@ -19,6 +19,7 @@ class SaasApp extends BaseModel
     public function getCanBeDeletedAttribute() {
         return !$this->tickets()->exists();
     }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
