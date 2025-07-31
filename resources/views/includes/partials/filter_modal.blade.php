@@ -45,9 +45,23 @@
     </div>
 </div>
 
+@push('after-style')
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" rel="stylesheet">
+@endpush
+
 @push('scripts')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+
     <script>
+        let table;
+
         $(document).ready(function() {
+            //initialize datepicker
+            $('.input-daterange').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true
+            });
+
             // Handle cutoff period selection
             $('select[name="cutoff_period"]').change(function() {
                 if ($(this).val() && $(this).val() !== 'custom') {
@@ -65,6 +79,15 @@
             $('#applyFilters').click(function() {
                 const startDate = $('#startDate').val();
                 const endDate = $('#endDate').val();
+                const cutoffPeriod = $('select[name="cutoff_period"]').val();
+
+                if(cutoffPeriod === 'custom' && (!startDate || !endDate)) {
+                    toastr.error('Please select both start and end dates for custom range', '', {
+                        timeout: 3000,
+                        positionClass: 'toast-bottom-right'
+                    });
+                    return;
+                }
 
                 if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
                     toastr.info('Start date cannot be after end date', '', {
@@ -92,7 +115,61 @@
 
                 $('#startDate').datepicker('clearDates');
                 $('#endDate').datepicker('clearDates');
+
+                table.search('').draw();
             }
+
+
+            /**
+             * Export data
+             */
+
+            // Export functionality
+            $('#exportData').click(function() {
+                const titleMap = {
+                    'Saas Applications Summary': 'saas_app',
+                    'Topic Summary': 'topic',
+                    'MNOs Summary Count': 'mno',
+                    'Payment Channels Summary': 'payment_channel',
+                    'All tickets reports': 'all_report',
+                    'List Tickets By Mnos': 'ticket_list_by_mno'
+                };
+                const currentTitle = $('.card-header-title').text().trim();
+                const exportType = titleMap[currentTitle];
+                const exportUrl = "{{ route('backend.report.export_summary') }}?type=" + exportType;
+
+                const filters = {
+                    start_date: $('#startDate').val(),
+                    end_date: $('#endDate').val(),
+                    // Add other filters as needed
+                };
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = exportUrl;
+                form.target = '_blank';
+                form.style.display = 'none';
+
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = '{{ csrf_token() }}';
+                form.appendChild(csrfInput);
+
+                for (const key in filters) {
+                    if (filters[key]) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = key;
+                        input.value = filters[key];
+                        form.appendChild(input);
+                    }
+                }
+
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+            });
         });
     </script>
 @endpush

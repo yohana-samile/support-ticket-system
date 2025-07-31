@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers\Backend;
 
-use App\Exports\SaasAppSummaryExport;
+use App\Exports\Tickets\AllReportExport;
+use App\Exports\Tickets\MnoSummaryExport;
+use App\Exports\Tickets\PaymentChannelSummaryExport;
+use App\Exports\Tickets\SaasAppSummaryExport;
+use App\Exports\Tickets\TopicSummaryExport;
 use App\Http\Controllers\Controller;
 use App\Models\Access\User;
 use App\Models\Operator;
@@ -23,7 +27,25 @@ class ReportController extends Controller
 {
     public function index()
     {
-        return view("pages.backend.report.index", [
+        return view("pages.backend.report.ticket.index", [
+            'summaryCounts' => [
+                'saas_apps' => SaasApp::count(),
+                'topics' => Topic::count(),
+                'mnos' => Operator::count(),
+                'payment_channels' => PaymentChannel::count(),
+                'total_tickets' => Ticket::count()
+            ]
+        ]);
+    }
+
+    public function allReport()
+    {
+        return view("pages.backend.report.ticket.all_report", ['title' => 'All tickets reports', 'total_tickets' => Ticket::count()]);
+    }
+
+    public function reportBy()
+    {
+        return view("pages.backend.report.ticket.index" , [
             'summaryCounts' => [
                 'saas_apps' => SaasApp::count(),
                 'topics' => Topic::count(),
@@ -47,19 +69,19 @@ class ReportController extends Controller
                 ]);
             case 'topic':
                 return view('pages.backend.report.partials.topic_summary', [
-                    'title' => 'Saas Topic Summary',
+                    'title' => 'Topic Summary',
                     'statuses' => $statuses
                 ]);
 
             case 'mno':
                 return view('pages.backend.report.partials.mno_summary', [
-                    'title' => 'Saas MNOs Summary',
+                    'title' => 'MNOs Summary',
                     'statuses' => $statuses
                 ]);
 
             case 'payment_channel':
                 return view('pages.backend.report.partials.payment_channel_summary', [
-                    'title' => 'Saas Payment Channels Summary',
+                    'title' => 'Payment Channels Summary',
                     'statuses' => $statuses
                 ]);
             default:
@@ -67,28 +89,68 @@ class ReportController extends Controller
         }
     }
 
-    private function getTopicSummary(Request $request)
+    public function getTopicSummary(Request $request)
     {
-        $statuses = Status::getStatusesWithColors();
-        $withCount = ['tickets'];
+        $statuses = Status::all();
+        $query = Topic::query()->with('subtopics');
 
+        $withCount = ['tickets'];
         foreach ($statuses as $status) {
             $withCount["tickets as {$status->slug}_tickets_count"] = function($q) use ($status) {
                 $q->where('status', $status->slug);
             };
         }
 
-        return [
-            'items' => Topic::withCount($withCount)
-                ->with('subtopics')
-                ->orderBy('name')
-                ->get(),
-            'title' => 'Topics Summary',
-            'statuses' => $statuses
-        ];
+        if ($request->start_date) {
+            $query->whereHas('tickets', function($q) use ($request) {
+                $q->where('created_at', '>=', $request->start_date);
+            });
+        }
+
+        if ($request->end_date) {
+            $query->whereHas('tickets', function($q) use ($request) {
+                $q->where('created_at', '<=', $request->end_date);
+            });
+        }
+
+        // Handle search
+        if ($request->has('search') && !empty($request->search['value'])) {
+            $searchTerm = strtolower($request->search['value']);
+
+            $query->where(function($q) use ($searchTerm) {
+                $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"])
+                    ->orWhereHas('subtopics', function($q) use ($searchTerm) {
+                        $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"]);
+                    });
+            });
+        }
+
+        // Handle sorting
+        if ($request->has('order')) {
+            $orderColumn = $request->order[0]['column'];
+            $orderDirection = $request->order[0]['dir'];
+
+            // Only allow sorting by name (column 0)
+            if ($orderColumn == 0) {
+                $query->orderBy('name', $orderDirection);
+            }
+        } else {
+            $query->orderBy('name', 'asc');
+        }
+
+        return DataTables::of($query->withCount($withCount))
+            ->addColumn('name', function($topic) {
+                return $topic->name;
+            })
+            ->addColumn('subtopics', function($topic) {
+                return $topic->subtopics->pluck('name')->join(', ');
+            })
+            ->filterColumn('name', function($query, $keyword) {
+                $query->whereRaw('LOWER(name) LIKE ?', ["%".strtolower($keyword)."%"]);
+            })->toJson();
     }
 
-    public function history(Request $request)
+    public function byFilter(Request $request)
     {
         $codeId = Code::query()->where('name', 'Ticket Priority')->value('id');
         $data['staff'] = User::query()->where('is_active', true)->orderBy('name')->get();
@@ -98,7 +160,7 @@ class ReportController extends Controller
         $data['mnos'] = Operator::orderBy('name')->get();
         $data['paymentChannels'] = PaymentChannel::orderBy('name')->get();
 
-        return view('pages.backend.report.history', $data);
+        return view('pages.backend.report.ticket.filter_report', $data);
     }
 
     public function saasAppData(Request $request)
@@ -161,14 +223,56 @@ class ReportController extends Controller
             })->toJson();
     }
 
-    public function getMnoSummary(Request $request)
-    {
-
-    }
-
     public function getPaymentChannelSummary(Request $request)
     {
+        $statuses = Status::all();
+        $query = PaymentChannel::query();
 
+        $withCount = ['tickets'];
+        foreach ($statuses as $status) {
+            $withCount["tickets as {$status->slug}_tickets_count"] = function($q) use ($status) {
+                $q->where('status', $status->slug);
+            };
+        }
+
+        // Date filtering
+        if ($request->start_date) {
+            $query->whereHas('tickets', function($q) use ($request) {
+                $q->where('created_at', '>=', $request->start_date);
+            });
+        }
+
+        if ($request->end_date) {
+            $query->whereHas('tickets', function($q) use ($request) {
+                $q->where('created_at', '<=', $request->end_date);
+            });
+        }
+
+        // Handle search
+        if ($request->has('search') && !empty($request->search['value'])) {
+            $searchTerm = strtolower($request->search['value']);
+            $query->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"]);
+        }
+
+        // Handle sorting
+        if ($request->has('order')) {
+            $orderColumn = $request->order[0]['column'];
+            $orderDirection = $request->order[0]['dir'];
+
+            if ($orderColumn == 0) {
+                $query->orderBy('name', $orderDirection);
+            }
+        } else {
+            $query->orderBy('name', 'asc');
+        }
+
+        return DataTables::of($query->withCount($withCount))
+            ->addColumn('name', function($channel) {
+                return $channel->name;
+            })
+            ->filterColumn('name', function($query, $keyword) {
+                $query->whereRaw('LOWER(name) LIKE ?', ["%".strtolower($keyword)."%"]);
+            })->toJson();
     }
 
     public function exportSummary(Request $request)
@@ -182,8 +286,31 @@ class ReportController extends Controller
                     new SaasAppSummaryExport($filters),
                     'saas-app-summary-'.now()->format('Y-m-d').'.xlsx'
                 );
-
-            // other export types
+            case 'topic':
+                return Excel::download(
+                    new TopicSummaryExport($filters),
+                    'topic-summary-'.now()->format('Y-m-d').'.xlsx'
+                );
+            case 'mno':
+                return Excel::download(
+                    new MnoSummaryExport($filters),
+                    'mno-summary-'.now()->format('Y-m-d').'.xlsx'
+                );
+            case 'payment_channel':
+                return Excel::download(
+                    new PaymentChannelSummaryExport($filters),
+                    'payment-channel-summary-'.now()->format('Y-m-d').'.xlsx'
+                );
+            case 'all_report':
+                return Excel::download(
+                    new AllReportExport($filters),
+                    'all-report-'.now()->format('Y-m-d').'.xlsx'
+                );
+            case 'ticket_list_by_mno':
+                return Excel::download(
+                    new AllReportExport($filters),
+                    'ticket-list-by-mno-'.now()->format('Y-m-d').'.xlsx'
+                );
             default:
                 abort(404, 'Invalid export type');
         }

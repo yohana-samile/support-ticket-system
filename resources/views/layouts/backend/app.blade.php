@@ -60,12 +60,29 @@
 
         <hr class="sidebar-divider">
         <div class="sidebar-heading">
-            {{__('label.topics')}}
+            {{__('label.reports')}}
+        </div>
+        <li class="nav-item {{ request()->routeIs(['backend.report.*']) }}">
+            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseReports" aria-expanded="{{ request()->routeIs(['backend.report.*']) ? 'true' : 'false' }}">
+                <i class="fas fa-fw fa-file-alt"></i>
+                <span>{{__('label.reports_management')}}</span>
+            </a>
+            <div id="collapseReports" class="collapse {{ request()->routeIs(['backend.report.*']) ? 'show' : '' }}" aria-labelledby="headingTwo" data-parent="#sidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <h6 class="collapse-header">{{__('label.tickets')}}:</h6>
+                    <a class="collapse-item {{ request()->routeIs('backend.report.*') ? 'active' : '' }}" href="{{ route('backend.report.index') }}">{{__('label.ticket')}}</a>
+                </div>
+            </div>
+        </li>
+
+        <hr class="sidebar-divider">
+        <div class="sidebar-heading">
+            {{__('label.general')}}
         </div>
         <li class="nav-item {{ request()->routeIs(['backend.topic.*', 'backend.subtopic.*', 'backend.tertiary.*']) ? 'active' : '' }}">
             <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseTopic" aria-expanded="{{ request()->routeIs(['backend.topic.*', 'backend.subtopic.*', 'backend.tertiary.*']) ? 'true' : 'false' }}">
-                <i class="fas fa-fw fa-file-alt"></i>
-                <span>{{__('label.topics_management')}}</span>
+                <i class="fas fa-fw fa-cog"></i>
+                <span>{{__('label.general_settings')}}</span>
             </a>
             <div id="collapseTopic" class="collapse {{ request()->routeIs(['backend.topic.*', 'backend.subtopic.*', 'backend.tertiary.*']) ? 'show' : '' }}" aria-labelledby="headingTwo" data-parent="#sidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
@@ -77,14 +94,6 @@
                     <a class="collapse-item {{ request()->routeIs('backend.tertiary.*') ? 'active' : '' }}" href="{{ route('backend.tertiary.index') }}">{{__('label.tertiary_topics')}}</a>
                 </div>
             </div>
-        </li>
-
-        <hr class="sidebar-divider my-0" />
-        <li class="nav-item {{ request()->routeIs('backend.report.index') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ route('backend.report.index') }}">
-                <i class="fas fa-fw fa-database"></i>
-                <span>{{__('label.reports')}}</span>
-            </a>
         </li>
 
         <hr class="sidebar-divider">

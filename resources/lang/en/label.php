@@ -23,6 +23,7 @@ return [
     "show" => "Show",
     "subtopic" => "Subtopic",
     "actions" => "Actions",
+    "action" => "Action",
     "descriptions" => "Descriptions",
     "description" => "Description",
     "create" => "Create New",
@@ -54,6 +55,8 @@ return [
     "is_manager" => "Is Manager?",
     "yes" => 'Yes',
     "no" => "No",
+    "clear" => "Clear",
+    "apply" => "Apply",
     "reports" => "Reports",
     "filter" => "Filter",
     "reset" => "Reset",
@@ -70,7 +73,24 @@ return [
     "last_activity" => "Last Activity",
     "sender_details" => "SenderId Details",
     "sender_information" => "Senderid Information",
-    "select_sender" => "Select SenderId"
+    "select_sender" => "Select SenderId",
+    "payment_channel" => "Payment Channel",
+    "export" => "Export",
+    "back_to_summary" => "Back To Summary",
+    "report_history" => "Report History",
+    "general" => "General",
+    "reports_management" => "Report Management",
+    "general_settings" => "General Settings",
+    "tickets" => "Tickets",
+    "ticket_about" => "Ticket About",
+    "priority" => "Priority",
+    "by_mno" => "By Mnos",
+    "tickets_report" => "Tickets Reports",
+    "subject" => "Subject",
+    "reported_by" => "Reported by",
+    "tickets_by_mno" => "List tickets by Mnos",
+    "tile" => "Title",
+    "view" => "View"
 
 
 

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Exports;
+namespace App\Exports\Tickets;
 
+use App\Models\SaasApp;
 use App\Models\Status;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use App\Models\SaasApp;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class SaasAppSummaryExport implements FromCollection, WithHeadings, WithMapping

@@ -21,7 +21,7 @@ class PaymentChannel extends BaseModel
         return $query->orderBy('name');
     }
 
-    public function ticket()
+    public function tickets()
     {
         return $this->hasMany(Ticket::class);
     }

@@ -10,6 +10,7 @@ use App\Models\System\Code;
 use App\Models\System\CodeValue;
 use App\Models\Ticket\Ticket;
 use App\Repositories\Backend\TicketRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
@@ -150,9 +151,17 @@ class TicketController extends Controller
         ]);
     }
 
-    public function getAllForDt()
+    public function getAllForDt(Request $request)
     {
-        return DataTables::of($this->ticketRepository->all())
+        $query = $this->ticketRepository->all();
+        if ($request->start_date && $request->end_date) {
+            $query->whereBetween('created_at', [
+                Carbon::parse($request->start_date)->startOfDay(),
+                Carbon::parse($request->end_date)->endOfDay()
+            ]);
+        }
+
+        return DataTables::of($query)
             ->addColumn('ticket_number', function($ticket) {
                 return '<a href="'.route('backend.ticket.show', $ticket->uid).'">'.$ticket->ticket_number.'</a>';
             })
