@@ -10,5 +10,6 @@ Route::group([
         Route::get('/list_by_topic/{topic}', 'TopicGroupController@ticketsByTopic')->name('list_by_topic');
 
         Route::get('/topic_data', 'TopicGroupController@getTopicSummary')->name('topic_data');
+        Route::get('/export_ticket_by_topic', 'TopicGroupController@exportTicketByTopic')->name('export_ticket_by_topic');
     });
 })->middleware('access.routeNeedsPermission:manage_report');

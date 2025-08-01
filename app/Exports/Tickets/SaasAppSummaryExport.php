@@ -4,10 +4,12 @@ namespace App\Exports\Tickets;
 
 use App\Models\SaasApp;
 use App\Models\Status;
+use Illuminate\Http\Request;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Yajra\DataTables\DataTables;
 
 class SaasAppSummaryExport implements FromCollection, WithHeadings, WithMapping
 {
@@ -18,6 +20,66 @@ class SaasAppSummaryExport implements FromCollection, WithHeadings, WithMapping
     {
         $this->filters = $filters;
         $this->statuses = Status::orderBy('name')->get();
+    }
+
+    public function saasAppData(Request $request)
+    {
+        $statuses = Status::all();
+        $query = SaasApp::query();
+
+        $withCount = ['tickets'];
+        foreach ($statuses as $status) {
+            $withCount["tickets as {$status->slug}_tickets_count"] = function($q) use ($status) {
+                $q->where('status', $status->slug);
+            };
+        }
+
+        // Date filtering
+        if ($request->start_date) {
+            $query->whereHas('tickets', function($q) use ($request) {
+                $q->where('created_at', '>=', $request->start_date);
+            });
+        }
+
+        if ($request->end_date) {
+            $query->whereHas('tickets', function($q) use ($request) {
+                $q->where('created_at', '<=', $request->end_date);
+            });
+        }
+
+        // Handle search
+        if ($request->has('search') && !empty($request->search['value'])) {
+            $searchTerm = strtolower($request->search['value']);
+
+            $query->where(function($q) use ($searchTerm) {
+                $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"])
+                    ->orWhereRaw('LOWER(abbreviation) LIKE ?', ["%{$searchTerm}%"]);
+            });
+        }
+
+        // Handle sorting
+        if ($request->has('order')) {
+            $orderColumn = $request->order[0]['column'];
+            $orderDirection = $request->order[0]['dir'];
+
+            // Only allow sorting by name (column 0)
+            if ($orderColumn == 0) {
+                $query->orderBy('name', $orderDirection);
+            }
+        } else {
+            $query->orderBy('name', 'asc');
+        }
+
+        return DataTables::of($query->withCount($withCount))
+            ->addColumn('name', function($saasApp) {
+                return $saasApp->name;
+            })
+            ->addColumn('abbreviation', function($saasApp) {
+                return $saasApp->abbreviation;
+            })
+            ->filterColumn('name', function($query, $keyword) {
+                $query->whereRaw('LOWER(name) LIKE ?', ["%".strtolower($keyword)."%"]);
+            })->toJson();
     }
 
     public function collection()

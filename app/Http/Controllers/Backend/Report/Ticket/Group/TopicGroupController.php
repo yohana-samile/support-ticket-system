@@ -1,6 +1,8 @@
 <?php
 namespace App\Http\Controllers\Backend\Report\Ticket\Group;
 
+use App\Exports\Tickets\Topic\ExportTopicExcel;
+use App\Exports\Tickets\Topic\ExportTopicPdf;
 use App\Http\Controllers\Controller;
 use App\Models\Status;
 use App\Models\Ticket\Ticket;
@@ -8,6 +10,7 @@ use App\Models\Topic;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TopicGroupController extends Controller
 {
@@ -80,6 +83,41 @@ class TopicGroupController extends Controller
             })->toJson();
     }
 
+    public function exportTicketByTopic(Request $request, Topic $topic)
+    {
+        $type = $request->query('type', 'excel');
+        $scope = $request->query('scope', 'current');
+        $topicId = $request->query('topic');
+
+        $filters = [
+            'scope' => $scope,
+            'topic_id' => $scope === 'all' ? null : $topicId,
+            'start_date' => $scope === 'current' ? $request->query('start_date') : null,
+            'end_date' => $scope === 'current' ? $request->query('end_date') : null,
+        ];
+        if ($scope === 'current' && empty($topicId)) {
+            abort(400, 'Topic selection is required for current view exports');
+        }
+        $filename = $scope === 'all'
+            ? 'all-tickets-'.now()->format('Y-m-d')
+            : 'tickets-topic-'.$topicId.'-'.now()->format('Y-m-d');
+
+        switch ($type) {
+            case 'excel':
+                return Excel::download(
+                    new ExportTopicExcel($filters),
+                    $filename.'.xlsx'
+                );
+            case 'pdf':
+                $export = new ExportTopicPdf($filters);
+                if ($scope === 'all') {
+                    $export->chunkSize = 500;
+                }
+                return $export->download($filename.'.pdf');
+            default:
+                abort(404, 'Invalid export type');
+        }
+    }
 
     public function ticketsByTopic(Topic $topic, Request $request)
     {

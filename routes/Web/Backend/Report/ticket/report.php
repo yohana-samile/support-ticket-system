@@ -19,9 +19,7 @@ Route::group([
 
 
             Route::get('/report_by', 'ReportController@reportBy')->name('report_by');
-            //Route::get('/history', 'ReportController@history')->name('history');
 
-            Route::get('/saas_app_data', 'ReportController@saasAppData')->name('saas_app_data');
         });
     });
 })->middleware('access.routeNeedsPermission:manage_report');
