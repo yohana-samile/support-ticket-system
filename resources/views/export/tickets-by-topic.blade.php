@@ -22,7 +22,7 @@
 </div>
 
 <div class="info">
-    <p><strong>Topic:</strong> {{ $topic }}</p>
+    <p><strong>Title:</strong> {{ $title }}</p>
     <p><strong>Date Range:</strong>
         {{ $startDate ? $startDate : 'Start' }} to {{ $endDate ? $endDate : 'End' }}</p>
     <p><strong>Generated On:</strong> {{ now()->format('Y-m-d H:i:s') }}</p>
@@ -32,6 +32,12 @@
     <thead>
     <tr>
         <th>Ticket ID</th>
+        @isset($mno)
+            <th>MNO</th>
+        @endisset
+        @isset($channel)
+            <th>Payment channel</th>
+        @endisset
         <th>Saas</th>
         <th>Client</th>
         <th>Subject</th>
@@ -49,6 +55,12 @@
     @foreach($tickets as $ticket)
         <tr>
             <td>{{ $ticket->ticket_number }}</td>
+            @isset($mno)
+                <td>{{ $ticket->operators->pluck('name')->join(', ') }}</td>
+            @endisset
+            @isset($channel)
+                <td>{{ $ticket->paymentChannel->name ?? 'N/A' }}</td>
+            @endisset
             <td>{{ $ticket->saasApp->name }}</td>
             <td>{{ $ticket->client->name }}</td>
             <td>{{ $ticket->title }}</td>

@@ -10,5 +10,6 @@ Route::group([
         Route::get('/list_by_saas_app/{saas}', 'SaasAppGroupController@ticketsBySaasApp')->name('list_by_saas_app');
 
         Route::get('/saas_app_data', 'SaasAppGroupController@saasAppData')->name('saas_app_data');
+        Route::get('/export_ticket_by_saas_app', 'SaasAppGroupController@exportTicketBySaasApp')->name('export_ticket_by_saas_app');
     });
 })->middleware('access.routeNeedsPermission:manage_report');

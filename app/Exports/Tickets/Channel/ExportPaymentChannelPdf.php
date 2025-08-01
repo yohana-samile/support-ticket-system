@@ -1,32 +1,32 @@
 <?php
 
-namespace App\Exports\Tickets\Topic;
+namespace App\Exports\Tickets\Channel;
 
 use App\Exports\SharedFunctions;
+use App\Models\PaymentChannel;
 use App\Models\Ticket\Ticket;
-use App\Models\Topic;
 use Barryvdh\DomPDF\Facade\Pdf;
 
-class ExportTopicPdf
+class ExportPaymentChannelPdf
 {
     use SharedFunctions;
     protected $filters;
-    protected $topic;
+    protected $channel;
     public $chunkSize = 500;
 
     public function __construct(array $filters)
     {
         $this->filters = $filters;
-        if ($filters['scope'] === 'current' && isset($filters['topic_id'])) {
-            $this->topic = Topic::where('uid', $filters['topic_id'])->firstOrFail();
+        if ($filters['scope'] === 'current' && isset($filters['channel'])) {
+            $this->channel = PaymentChannel::where('uid', $filters['channel'])->firstOrFail();
         }
     }
 
     public function download()
     {
-        $query = Ticket::with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user', 'assignedTo'])
+        $query = Ticket::query()
             ->when($this->filters['scope'] === 'current', function ($query) {
-                $query->where('topic_id', $this->topic->id);
+                $query->where('payment_channel_id', $this->channel->id);
             })
             ->when($this->filters['start_date'] && $this->filters['scope'] === 'current', function ($query) {
                 $query->whereDate('created_at', '>=', $this->filters['start_date']);
@@ -46,9 +46,11 @@ class ExportTopicPdf
             'scope' => $this->filters['scope'],
             'startDate' => $this->filters['start_date'] ?? null,
             'endDate' => $this->filters['end_date'] ?? null,
-            'title' => isset($this->filters['topic']) ? $this->topic->name : 'All Topics'
+            'title' => isset($this->filters['channel']) ? $this->channel->name : 'All Payment Channels',
+            'channel' => 'channel'
         ]);
 
         return $pdf->download($filename);
     }
+
 }

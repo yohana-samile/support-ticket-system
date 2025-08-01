@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Exports\Tickets;
+namespace App\Exports\Tickets\Mno;
 
 use App\Models\Operator;
 use App\Models\Status;

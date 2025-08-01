@@ -1,24 +1,24 @@
 <?php
 
-namespace App\Exports\Tickets\Topic;
+namespace App\Exports\Tickets\Saas;
 
 use App\Exports\SharedFunctions;
+use App\Models\SaasApp;
 use App\Models\Ticket\Ticket;
-use App\Models\Topic;
 use Barryvdh\DomPDF\Facade\Pdf;
 
-class ExportTopicPdf
+class ExportSaasAppPdf
 {
     use SharedFunctions;
     protected $filters;
-    protected $topic;
+    protected $saas;
     public $chunkSize = 500;
 
     public function __construct(array $filters)
     {
         $this->filters = $filters;
-        if ($filters['scope'] === 'current' && isset($filters['topic_id'])) {
-            $this->topic = Topic::where('uid', $filters['topic_id'])->firstOrFail();
+        if ($filters['scope'] === 'current' && isset($filters['saas_app_id'])) {
+            $this->saas = SaasApp::where('uid', $filters['saas_app_id'])->firstOrFail();
         }
     }
 
@@ -26,7 +26,7 @@ class ExportTopicPdf
     {
         $query = Ticket::with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user', 'assignedTo'])
             ->when($this->filters['scope'] === 'current', function ($query) {
-                $query->where('topic_id', $this->topic->id);
+                $query->where('saas_app_id', $this->saas->id);
             })
             ->when($this->filters['start_date'] && $this->filters['scope'] === 'current', function ($query) {
                 $query->whereDate('created_at', '>=', $this->filters['start_date']);
@@ -46,9 +46,10 @@ class ExportTopicPdf
             'scope' => $this->filters['scope'],
             'startDate' => $this->filters['start_date'] ?? null,
             'endDate' => $this->filters['end_date'] ?? null,
-            'title' => isset($this->filters['topic']) ? $this->topic->name : 'All Topics'
+            'title' => isset($this->filters['saas']) ? $this->saas->name : 'All Saa Applications'
         ]);
 
         return $pdf->download($filename);
     }
+
 }

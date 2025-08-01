@@ -11,9 +11,44 @@
                 <button class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#reportFilterModal">
                     <i class="fas fa-filter"></i> {{ __('label.filter') }}
                 </button>
-                <button class="btn btn-sm btn-outline-success" id="exportData">
-                    <i class="fas fa-file-export"></i> {{ __('label.export') }}
-                </button>
+                <div class="btn-group" id="exportControls">
+                    <button class="btn btn-sm btn-outline-success export-action"
+                            id="exportExcelBtn"
+                            data-type="excel"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Export to Excel">
+                        <i class="fas fa-file-excel"></i>
+                    </button>
+
+                    <!-- PDF Export Button with Tooltip -->
+                    <button class="btn btn-sm btn-outline-danger export-action"
+                            id="exportPdfBtn"
+                            data-type="pdf"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Export to PDF">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
+
+                    <!-- Export Options Dropdown -->
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Export options">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header">Export Options</h6></li>
+                        <li><a class="dropdown-item" href="#" id="exportCurrentView"><i class="fas fa-table me-2"></i>Current View</a></li>
+                        <li><a class="dropdown-item" href="#" id="exportAllData"><i class="fas fa-database me-2"></i>All Data (All saas)</a></li>
+                        {{--                        <li><hr class="dropdown-divider"></li>--}}
+                        {{--                        <li><a class="dropdown-item" href="#" id="exportSettings"><i class="fas fa-sliders-h me-2"></i>Advanced Options</a></li>--}}
+                    </ul>
+                </div>
             </div>
         </div>
         <div class="card-body">
@@ -89,7 +124,99 @@
                 let uid = $(this).val();
                 loadTickets(uid);
             });
-        });
 
+            /**
+             * export
+             */
+            $('[data-bs-toggle="tooltip"]').tooltip();
+
+            // Set default export type and scope
+            let exportType = 'excel';
+            let exportScope = 'current'; // 'current' or 'all'
+
+            // Highlight default button
+            $('#exportExcelBtn').addClass('active');
+
+            // Handle export type selection
+            $('.export-action').on('click', function() {
+                exportType = $(this).data('type');
+
+                // Update button states
+                $('.export-action').removeClass('active');
+                $(this).addClass('active');
+
+                // Execute export with current scope
+                performExport();
+            });
+
+            // Handle export scope selection
+            $('#exportCurrentView').on('click', function(e) {
+                e.preventDefault();
+                exportScope = 'current';
+                performExport();
+            });
+
+            $('#exportAllData').on('click', function(e) {
+                e.preventDefault();
+                exportScope = 'all';
+                performExport();
+            });
+
+            // Main export function
+            function performExport() {
+                let uid = exportScope === 'current' ? $('#channelSelector').val() : 'all';
+                let start_date = $('#startDate').val();
+                let end_date = $('#endDate').val();
+
+                if (!uid && exportScope === 'current') {
+                    toastr.info('Please select a channel first', '', {
+                        timeOut: 3000,
+                        positionClass: 'toast-bottom-right'
+                    });
+                    return;
+                }
+
+                // Show loading state
+                const btn = $(`.export-action[data-type="${exportType}"]`);
+                const originalHtml = btn.html();
+                btn.html('<i class="fas fa-spinner fa-spin"></i>');
+
+                // Prepare export URL
+                const url = "{{ route('backend.report.export_ticket_by_payment_channel') }}" +
+                    '?channel=' + encodeURIComponent(uid) +
+                    '&start_date=' + encodeURIComponent(start_date) +
+                    '&end_date=' + encodeURIComponent(end_date) +
+                    '&type=' + encodeURIComponent(exportType) +
+                    '&scope=' + encodeURIComponent(exportScope);
+
+                // Use hidden iframe for download to avoid page navigation
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = url;
+                document.body.appendChild(iframe);
+
+                // Reset button after delay
+                setTimeout(() => {
+                    btn.html(originalHtml);
+                    document.body.removeChild(iframe);
+
+                    // Show success notification
+                    toastr.success(`Exporting ${exportScope === 'all' ? 'all channel data' : 'current view'} as ${exportType.toUpperCase()}`, 'Export Started', {
+                        timeOut: 3000,
+                        positionClass: 'toast-bottom-right'
+                    });
+                }, 2000);
+            }
+            //
+            // // Settings handler
+            // $('#exportSettings').on('click', function(e) {
+            //     e.preventDefault();
+            //     // You could implement a modal with advanced options here
+            //     toastr.info('there is no Advanced export options Settings for now', {
+            //         timeOut: 3000,
+            //         positionClass: 'toast-bottom-right'
+            //     });
+            // });
+        });
     </script>
 @endpush

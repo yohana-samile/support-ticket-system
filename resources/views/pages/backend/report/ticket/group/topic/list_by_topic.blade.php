@@ -12,7 +12,6 @@
                     <i class="fas fa-filter"></i> {{ __('label.filter') }}
                 </button>
                 <div class="btn-group" id="exportControls">
-                    <!-- Main Export Button with Tooltip -->
                     <button class="btn btn-sm btn-outline-success export-action"
                             id="exportExcelBtn"
                             data-type="excel"
@@ -44,10 +43,10 @@
                     </button>
                     <ul class="dropdown-menu">
                         <li><h6 class="dropdown-header">Export Options</h6></li>
-                        <li><a class="dropdown-item" href="#" id="exportCurrentView"><i class="fas fa-table me-2"></i>Current View</a></li>
-                        <li><a class="dropdown-item" href="#" id="exportAllData"><i class="fas fa-database me-2"></i>All Data (All Topics)</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" id="exportSettings"><i class="fas fa-sliders-h me-2"></i>Advanced Options</a></li>
+                        <li><a class="dropdown-item" href="#" id="exportCurrentView"><i class="fas fa-table me-2"></i> Current View</a></li>
+                        <li><a class="dropdown-item" href="#" id="exportAllData"><i class="fas fa-database me-2"></i> All Data (All Topics)</a></li>
+{{--                        <li><hr class="dropdown-divider"></li>--}}
+{{--                        <li><a class="dropdown-item" href="#" id="exportSettings"><i class="fas fa-sliders-h me-2"></i>Advanced Options</a></li>--}}
                     </ul>
                 </div>
 
@@ -93,7 +92,6 @@
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         $(document).ready(function () {
@@ -250,16 +248,16 @@
                     });
                 }, 2000);
             }
-
-            // Settings handler
-            $('#exportSettings').on('click', function(e) {
-                e.preventDefault();
-                // You could implement a modal with advanced options here
-                toastr.info('there is no Advanced export options Settings for now', {
-                    timeOut: 3000,
-                    positionClass: 'toast-bottom-right'
-                });
-            });
+            //
+            // // Settings handler
+            // $('#exportSettings').on('click', function(e) {
+            //     e.preventDefault();
+            //     // You could implement a modal with advanced options here
+            //     toastr.info('there is no Advanced export options Settings for now', {
+            //         timeOut: 3000,
+            //         positionClass: 'toast-bottom-right'
+            //     });
+            // });
         });
     </script>
 @endpush

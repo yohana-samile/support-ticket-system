@@ -1,12 +1,15 @@
 <?php
 namespace App\Http\Controllers\Backend\Report\Ticket\Group;
 
+use App\Exports\Tickets\Mno\ExportMnoExcel;
+use App\Exports\Tickets\Mno\ExportMnoPdf;
 use App\Http\Controllers\Controller;
 use App\Models\Operator;
 use App\Models\Status;
 use App\Models\Ticket\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 
 class MnoReportGroupController extends Controller
@@ -17,6 +20,42 @@ class MnoReportGroupController extends Controller
         $data['title'] = "MNOs Summary Count";
         $data['total_tickets'] = Ticket::count();
         return view("pages.backend.report.ticket.group.mno.by_mno", $data);
+    }
+
+    public function exportTicketByMno(Request $request)
+    {
+        $type = $request->query('type', 'excel');
+        $scope = $request->query('scope', 'current');
+        $topicId = $request->query('operator');
+
+        $filters = [
+            'scope' => $scope,
+            'operator' => $scope === 'all' ? null : $topicId,
+            'start_date' => $scope === 'current' ? $request->query('start_date') : null,
+            'end_date' => $scope === 'current' ? $request->query('end_date') : null,
+        ];
+        if ($scope === 'current' && empty($topicId)) {
+            abort(400, 'operator selection is required for current view exports');
+        }
+        $filename = $scope === 'all'
+            ? 'all-tickets-'.now()->format('Y-m-d')
+            : 'tickets-operator-'.$topicId.'-'.now()->format('Y-m-d');
+
+        switch ($type) {
+            case 'excel':
+                return Excel::download(
+                    new ExportMnoExcel($filters),
+                    $filename.'.xlsx'
+                );
+            case 'pdf':
+                $export = new ExportMnoPdf($filters);
+                if ($scope === 'all') {
+                    $export->chunkSize = 500;
+                }
+                return $export->download($filename.'.pdf');
+            default:
+                abort(404, 'Invalid export type');
+        }
     }
 
     public function ticketsByMno($uid, Request $request)

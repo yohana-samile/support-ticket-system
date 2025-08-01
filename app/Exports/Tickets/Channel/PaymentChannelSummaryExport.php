@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Exports\Tickets;
+namespace App\Exports\Tickets\channel;
 
 use App\Models\PaymentChannel;
 use App\Models\Status;

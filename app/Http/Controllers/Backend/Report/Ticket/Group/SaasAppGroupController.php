@@ -1,12 +1,15 @@
 <?php
 namespace App\Http\Controllers\Backend\Report\Ticket\Group;
 
+use App\Exports\Tickets\Saas\ExportSaasAppExcel;
+use App\Exports\Tickets\Saas\ExportSaasAppPdf;
 use App\Http\Controllers\Controller;
 use App\Models\SaasApp;
 use App\Models\Status;
 use App\Models\Ticket\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 
 class SaasAppGroupController extends Controller
@@ -17,6 +20,42 @@ class SaasAppGroupController extends Controller
         $data['title'] = "Saas App Summary Count";
         $data['total_tickets'] = Ticket::count();
         return view("pages.backend.report.ticket.group.saas_app.by_saas_app", $data);
+    }
+
+    public function exportTicketBySaasApp(Request $request)
+    {
+        $type = $request->query('type', 'excel');
+        $scope = $request->query('scope', 'current');
+        $topicId = $request->query('saas');
+
+        $filters = [
+            'scope' => $scope,
+            'saas_app_id' => $scope === 'all' ? null : $topicId,
+            'start_date' => $scope === 'current' ? $request->query('start_date') : null,
+            'end_date' => $scope === 'current' ? $request->query('end_date') : null,
+        ];
+        if ($scope === 'current' && empty($topicId)) {
+            abort(400, 'Saas App selection is required for current view exports');
+        }
+        $filename = $scope === 'all'
+            ? 'all-tickets-'.now()->format('Y-m-d')
+            : 'tickets-saas-'.$topicId.'-'.now()->format('Y-m-d');
+
+        switch ($type) {
+            case 'excel':
+                return Excel::download(
+                    new ExportSaasAppExcel($filters),
+                    $filename.'.xlsx'
+                );
+            case 'pdf':
+                $export = new ExportSaasAppPdf($filters);
+                if ($scope === 'all') {
+                    $export->chunkSize = 500;
+                }
+                return $export->download($filename.'.pdf');
+            default:
+                abort(404, 'Invalid export type');
+        }
     }
 
     public function ticketsBySaasApp($uid, Request $request)

@@ -9,7 +9,6 @@ Route::group([
             Route::get('/index', 'ReportController@index')->name('index');
             Route::get('/all_reports', 'ReportController@allReport')->name('all_reports');
             Route::get('/by_filter', 'ReportController@byFilter')->name('by_filter');
-            Route::get('/summary', 'ReportController@summary')->name('summary');
 
             Route::get('/data', 'ReportController@data')->name('data');
             Route::post('/export', 'ReportController@export')->name('export');

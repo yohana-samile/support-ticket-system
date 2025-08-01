@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Exports\Tickets\AllReportExport;
-use App\Exports\Tickets\MnoSummaryExport;
-use App\Exports\Tickets\PaymentChannelSummaryExport;
-use App\Exports\Tickets\SaasAppSummaryExport;
+use App\Exports\Tickets\channel\PaymentChannelSummaryExport;
+use App\Exports\Tickets\Mno\MnoSummaryExport;
+use App\Exports\Tickets\Saas\SaasAppSummaryExport;
 use App\Exports\Tickets\Topic\TicketTopicExport;
 use App\Http\Controllers\Controller;
 use App\Models\Access\User;
@@ -198,7 +198,7 @@ class ReportController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $pdf = PDF::loadView('pdf.ticket_report', [
+        $pdf = PDF::loadView('export.ticket_report', [
             'page-width' => '300mm', // wider page
             'zoom' => 0.8,
             'tickets' => $tickets,

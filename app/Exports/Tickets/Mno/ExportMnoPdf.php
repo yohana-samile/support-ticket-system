@@ -1,24 +1,25 @@
 <?php
 
-namespace App\Exports\Tickets\Topic;
+namespace App\Exports\Tickets\Mno;
 
 use App\Exports\SharedFunctions;
+use App\Models\Operator;
+use App\Models\SaasApp;
 use App\Models\Ticket\Ticket;
-use App\Models\Topic;
 use Barryvdh\DomPDF\Facade\Pdf;
 
-class ExportTopicPdf
+class ExportMnoPdf
 {
     use SharedFunctions;
     protected $filters;
-    protected $topic;
+    protected $mno;
     public $chunkSize = 500;
 
     public function __construct(array $filters)
     {
         $this->filters = $filters;
-        if ($filters['scope'] === 'current' && isset($filters['topic_id'])) {
-            $this->topic = Topic::where('uid', $filters['topic_id'])->firstOrFail();
+        if ($filters['scope'] === 'current' && isset($filters['operator'])) {
+            $this->mno = Operator::where('uid', $filters['operator'])->firstOrFail();
         }
     }
 
@@ -26,7 +27,7 @@ class ExportTopicPdf
     {
         $query = Ticket::with(['topic', 'subtopic', 'tertiaryTopic', 'client', 'user', 'assignedTo'])
             ->when($this->filters['scope'] === 'current', function ($query) {
-                $query->where('topic_id', $this->topic->id);
+                $query->join('ticket_operator', 'tickets.id', '=', 'ticket_operator.ticket_id')->where('ticket_operator.operator_id', $this->mno->id);
             })
             ->when($this->filters['start_date'] && $this->filters['scope'] === 'current', function ($query) {
                 $query->whereDate('created_at', '>=', $this->filters['start_date']);
@@ -34,7 +35,7 @@ class ExportTopicPdf
             ->when($this->filters['end_date'] && $this->filters['scope'] === 'current', function ($query) {
                 $query->whereDate('created_at', '<=', $this->filters['end_date']);
             })
-            ->orderBy('created_at', 'desc');
+            ->orderBy('created_at', 'desc')->select('tickets.*');
 
         $tickets = $this->filters['scope'] === 'all'
             ? $query->lazy($this->chunkSize)
@@ -46,9 +47,11 @@ class ExportTopicPdf
             'scope' => $this->filters['scope'],
             'startDate' => $this->filters['start_date'] ?? null,
             'endDate' => $this->filters['end_date'] ?? null,
-            'title' => isset($this->filters['topic']) ? $this->topic->name : 'All Topics'
+            'title' => isset($this->filters['operator']) ? $this->mno->name : 'All Mno',
+            'mno' => 'mno'
         ]);
 
         return $pdf->download($filename);
     }
+
 }

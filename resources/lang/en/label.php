@@ -97,7 +97,11 @@ return [
     "list_by_saas_app" => "List tickets by saas",
     "by_saas_app" => "By Saas App",
     "list_by_topic" => "List by topic",
-    "by_topic" => "By topic"
+    "by_topic" => "By topic",
+    "all_reports" => "All Reports",
+    "reports_by_filter" => "Reports By Filter",
+    "all_tickets_reports" => "All Tickets Reports",
+    "title" => "Title"
 
 
 

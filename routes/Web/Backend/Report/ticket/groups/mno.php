@@ -8,5 +8,7 @@ Route::group([
         Route::get('/by_mno', 'MnoReportGroupController@byMno')->name('by_mno');
         Route::get('/mno_data', 'MnoReportGroupController@mnoData')->name('mno_data');
         Route::get('/list_by_mno/{mno}', 'MnoReportGroupController@ticketsByMno')->name('list_by_mno');
+
+        Route::get('/export_ticket_by_mno', 'MnoReportGroupController@exportTicketByMno')->name('export_ticket_by_mno');
     });
 })->middleware('access.routeNeedsPermission:manage_report');

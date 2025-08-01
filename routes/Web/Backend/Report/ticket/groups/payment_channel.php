@@ -8,5 +8,7 @@ Route::group([
         Route::get('/by_payment_channel', 'PaymentChannelGroupController@byPaymentChannel')->name('by_payment_channel');
         Route::get('/payment_channel_data', 'PaymentChannelGroupController@paymentChannelData')->name('payment_channel_data');
         Route::get('/list_by_payment_channel/{channel}', 'PaymentChannelGroupController@ticketsByPaymentChannel')->name('list_by_payment_channel');
+
+        Route::get('/export_ticket_by_payment_channel', 'PaymentChannelGroupController@exportTicketByPaymentChannel')->name('export_ticket_by_payment_channel');
     });
 })->middleware('access.routeNeedsPermission:manage_report');

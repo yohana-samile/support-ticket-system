@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Exports\Tickets;
+namespace App\Exports\Tickets\Saas;
 
 use App\Models\SaasApp;
 use App\Models\Status;

@@ -9,3 +9,9 @@ Breadcrumbs::for('backend.report.all_reports', function ($breadcrumbs) {
     $breadcrumbs->push(__('label.reports'), route('backend.report.index'));
     $breadcrumbs->push(__('label.all_reports'), route('backend.report.all_reports'));
 });
+
+Breadcrumbs::for('backend.report.by_filter', function ($breadcrumbs) {
+    $breadcrumbs->parent('home');
+    $breadcrumbs->push(__('label.reports'), route('backend.report.index'));
+    $breadcrumbs->push(__('label.reports_by_filter'), route('backend.report.by_filter'));
+});

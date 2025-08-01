@@ -1,13 +1,15 @@
 <?php
 namespace App\Http\Controllers\Backend\Report\Ticket\Group;
 
+use App\Exports\Tickets\Channel\ExportPaymentChannelExcel;
+use App\Exports\Tickets\Channel\ExportPaymentChannelPdf;
 use App\Http\Controllers\Controller;
-use App\Models\Operator;
 use App\Models\PaymentChannel;
 use App\Models\Status;
 use App\Models\Ticket\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 
 class PaymentChannelGroupController extends Controller
@@ -18,6 +20,42 @@ class PaymentChannelGroupController extends Controller
         $data['title'] = "Payment Channels Summary Count";
         $data['total_tickets'] = Ticket::count();
         return view("pages.backend.report.ticket.group.payment_channel.by_payment_channel", $data);
+    }
+
+    public function exportTicketByPaymentChannel(Request $request)
+    {
+        $type = $request->query('type', 'excel');
+        $scope = $request->query('scope', 'current');
+        $topicId = $request->query('channel');
+
+        $filters = [
+            'scope' => $scope,
+            'channel' => $scope === 'all' ? null : $topicId,
+            'start_date' => $scope === 'current' ? $request->query('start_date') : null,
+            'end_date' => $scope === 'current' ? $request->query('end_date') : null,
+        ];
+        if ($scope === 'current' && empty($topicId)) {
+            abort(400, 'channel selection is required for current view exports');
+        }
+        $filename = $scope === 'all'
+            ? 'all-tickets-'.now()->format('Y-m-d')
+            : 'tickets-channel-'.$topicId.'-'.now()->format('Y-m-d');
+
+        switch ($type) {
+            case 'excel':
+                return Excel::download(
+                    new ExportPaymentChannelExcel($filters),
+                    $filename.'.xlsx'
+                );
+            case 'pdf':
+                $export = new ExportPaymentChannelPdf($filters);
+                if ($scope === 'all') {
+                    $export->chunkSize = 500;
+                }
+                return $export->download($filename.'.pdf');
+            default:
+                abort(404, 'Invalid export type');
+        }
     }
 
     public function ticketsByPaymentChannel($uid, Request $request)
