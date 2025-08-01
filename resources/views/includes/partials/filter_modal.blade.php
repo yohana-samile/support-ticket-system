@@ -128,9 +128,9 @@
             $('#exportData').click(function() {
                 const titleMap = {
                     'Saas Applications Summary': 'saas_app',
-                    'Topic Summary': 'topic',
+                    'Topic Summary Count': 'topic',
                     'MNOs Summary Count': 'mno',
-                    'Payment Channels Summary': 'payment_channel',
+                    'Payment Channels Summary Count': 'payment_channel',
                     'All tickets reports': 'all_report',
                     'List Tickets By Mnos': 'ticket_list_by_mno'
                 };

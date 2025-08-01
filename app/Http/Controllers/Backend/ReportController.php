@@ -89,66 +89,6 @@ class ReportController extends Controller
         }
     }
 
-    public function getTopicSummary(Request $request)
-    {
-        $statuses = Status::all();
-        $query = Topic::query()->with('subtopics');
-
-        $withCount = ['tickets'];
-        foreach ($statuses as $status) {
-            $withCount["tickets as {$status->slug}_tickets_count"] = function($q) use ($status) {
-                $q->where('status', $status->slug);
-            };
-        }
-
-        if ($request->start_date) {
-            $query->whereHas('tickets', function($q) use ($request) {
-                $q->where('created_at', '>=', $request->start_date);
-            });
-        }
-
-        if ($request->end_date) {
-            $query->whereHas('tickets', function($q) use ($request) {
-                $q->where('created_at', '<=', $request->end_date);
-            });
-        }
-
-        // Handle search
-        if ($request->has('search') && !empty($request->search['value'])) {
-            $searchTerm = strtolower($request->search['value']);
-
-            $query->where(function($q) use ($searchTerm) {
-                $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"])
-                    ->orWhereHas('subtopics', function($q) use ($searchTerm) {
-                        $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"]);
-                    });
-            });
-        }
-
-        // Handle sorting
-        if ($request->has('order')) {
-            $orderColumn = $request->order[0]['column'];
-            $orderDirection = $request->order[0]['dir'];
-
-            // Only allow sorting by name (column 0)
-            if ($orderColumn == 0) {
-                $query->orderBy('name', $orderDirection);
-            }
-        } else {
-            $query->orderBy('name', 'asc');
-        }
-
-        return DataTables::of($query->withCount($withCount))
-            ->addColumn('name', function($topic) {
-                return $topic->name;
-            })
-            ->addColumn('subtopics', function($topic) {
-                return $topic->subtopics->pluck('name')->join(', ');
-            })
-            ->filterColumn('name', function($query, $keyword) {
-                $query->whereRaw('LOWER(name) LIKE ?', ["%".strtolower($keyword)."%"]);
-            })->toJson();
-    }
 
     public function byFilter(Request $request)
     {

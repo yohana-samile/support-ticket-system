@@ -90,7 +90,14 @@ return [
     "reported_by" => "Reported by",
     "tickets_by_mno" => "List tickets by Mnos",
     "tile" => "Title",
-    "view" => "View"
+    "view" => "View",
+    "channel" => "Channel",
+    "by_payment_channel" => "By payment channel",
+    "tickets_by_payment_channel" => "List tickets by channel",
+    "list_by_saas_app" => "List tickets by saas",
+    "by_saas_app" => "By Saas App",
+    "list_by_topic" => "List by topic",
+    "by_topic" => "By topic"
 
 
 

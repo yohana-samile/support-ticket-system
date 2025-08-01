@@ -10,20 +10,21 @@ Route::group([
 
         Route::get('/create', 'TicketController@create')->name('create');
         Route::post('/store', 'TicketController@store')->name('store');
-        Route::get('/{ticket}', 'TicketController@show')->name('show');
+        Route::get('/show/{ticket}', 'TicketController@show')->name('show');
         Route::get('/edit/{ticket}', 'TicketController@edit')->name('edit');
-        Route::put('/{ticket}', 'TicketController@update')->name('update');
+        Route::put('update/{ticket}', 'TicketController@update')->name('update');
 
         Route::put('/assigned', 'TicketController@assigned')->name('assigned');
         Route::post('/reassign/{ticket}', 'TicketController@reassign')->name('reassign');
 
-        Route::delete('/{ticket}', 'TicketController@destroy')->name('destroy');
+        Route::delete('/destroy/{ticket}', 'TicketController@destroy')->name('destroy');
+        Route::put('/cancel/{ticket}', 'TicketController@cancel')->name('cancel');
         Route::delete('/attachment/{ticket}', 'TicketController@destroyAttachment')->name('destroy_attachment');
 
-        Route::post('/update-status/{ticket}', 'TicketController@updateStatus')->name('update-status');
+        Route::post('/update_status/{ticket}', 'TicketController@updateStatus')->name('update-status');
         Route::get('/resolve/{ticket}', 'TicketController@resolveViaEmail')->name('resolve.via.email')->middleware('signed');
 
-        Route::post('/attach-services/{ticket}', 'TicketController@attachServices')->name('attach-services');
+        Route::post('/attach_services/{ticket}', 'TicketController@attachServices')->name('attach-services');
         Route::get('/reports', 'TicketController@reports')->name('reports');
 
         Route::get('/client_ticket_history/{clientId}', 'TicketController@getClientHistory')->name('client_ticket_history');

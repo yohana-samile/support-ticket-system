@@ -1,6 +1,17 @@
 @extends('layouts.backend.app')
 @section('title', __('label.report_summary'))
 @section('content')
+    @php
+        $reportLinks = [
+            ['route' => 'backend.report.all_reports', 'title' => __('label.all_tickets_reports'), 'class' => 'text-danger'],
+            ['route' => 'backend.report.by_saas_app', 'title' => __('Report by Saas Applications summary count'), 'class' => 'text-primary'],
+            ['route' => 'backend.report.by_topic', 'title' => __('Report by Topics summary count'), 'class' => 'text-success'],
+            ['route' => 'backend.report.by_mno', 'title' => __('Report by Mobile Operators & summary count'), 'class' => 'text-warning'],
+            ['route' => 'backend.report.by_payment_channel', 'title' => __('Report by Payment Channels summary count'), 'class' => 'text-primary'],
+            ['route' => 'backend.report.by_filter', 'title' => __('Report Filter'), 'class' => 'text-info'],
+        ];
+    @endphp
+
     <div class="container-fluid">
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex justify-content-between align-items-center">
@@ -16,82 +27,20 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr class="pointer">
-                                <td>
-                                    <a href="{{ route('backend.report.all_reports') }}" class="text-decoration-none text-danger font-weight-bold d-block">
-                                        {{ __('label.all_tickets_reports') }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('backend.report.all_reports') }}" class="text-decoration-none text-muted">
-                                        {{__('label.view')}}
-                                    </a>
-                                </td>
-                            </tr>
-
-                            <tr class="pointer">
-                                <td>
-                                    <a href="{{ route('backend.report.by_saas_app') }}" class="text-decoration-none text-primary font-weight-bold d-block">
-                                        {{ __('Report by Saas Applications summary count') }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('backend.report.all_reports') }}" class="text-decoration-none text-muted">
-                                        {{__('label.view')}}
-                                    </a>
-                                </td>
-                            </tr>
-
-                            <tr class="pointer">
-                                <td>
-                                    <a href="{{ route('backend.report.by_topic') }}" class="text-decoration-none text-success font-weight-bold d-block">
-                                        {{ __('Report by Topics summary count') }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('backend.report.all_reports') }}" class="text-decoration-none text-muted">
-                                        {{__('label.view')}}
-                                    </a>
-                                </td>
-                            </tr>
-
-                            <tr class="pointer">
-                                <td>
-                                    <a href="{{ route('backend.report.by_mno') }}" class="text-decoration-none text-warning font-weight-bold d-block">
-                                        {{ __('Report by Mobile Operators & summary count') }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('backend.report.all_reports') }}" class="text-decoration-none text-muted">
-                                        {{__('label.view')}}
-                                    </a>
-                                </td>
-                            </tr>
-
-                            <tr class="pointer">
-                                <td>
-                                    <a href="{{ route('backend.report.by_payment_channel') }}" class="text-decoration-none text-primary font-weight-bold d-block">
-                                        {{ __('Report by Payment Channels summary count') }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('backend.report.all_reports') }}" class="text-decoration-none text-muted">
-                                        {{__('label.view')}}
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr class="pointer">
-                                <td>
-                                    <a href="{{ route('backend.report.by_filter') }}" class="text-decoration-none text-info font-weight-bold d-block">
-                                        {{ __('Report Filter') }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('backend.report.all_reports') }}" class="text-decoration-none text-muted">
-                                        {{__('label.view')}}
-                                    </a>
-                                </td>
-                            </tr>
+                            @foreach ($reportLinks as $link)
+                                <tr class="pointer">
+                                    <td>
+                                        <a href="{{ route($link['route']) }}" class="text-decoration-none font-weight-bold d-block {{ $link['class'] }}">
+                                            {{ $link['title'] }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('backend.report.all_reports') }}" class="text-decoration-none text-muted">
+                                            {{ __('label.view') }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -127,12 +76,17 @@
 @push('scripts')
     <script>
         $(document).ready(function () {
-            $('table.table').DataTable({
+            const table = $('table.table').DataTable({
                 responsive: true,
                 language: {
                     search: "_INPUT_",
                     searchPlaceholder: "Search reports..."
                 }
+            });
+
+            // Hide placeholder when any link inside table is clicked
+            $('#summaryCards a').on('click', function () {
+                $('#initialPlaceholder').hide();
             });
         });
     </script>
