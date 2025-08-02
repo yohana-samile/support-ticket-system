@@ -101,7 +101,9 @@ return [
     "all_reports" => "All Reports",
     "reports_by_filter" => "Reports By Filter",
     "all_tickets_reports" => "All Tickets Reports",
-    "title" => "Title"
+    "title" => "Title",
+    "by_client" => "By Client",
+    "list_by_client" => "List by client"
 
 
 

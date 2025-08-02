@@ -13,12 +13,6 @@ Route::group([
             Route::get('/data', 'ReportController@data')->name('data');
             Route::post('/export', 'ReportController@export')->name('export');
             Route::post('/export_summary', 'ReportController@exportSummary')->name('export_summary');
-
-
-
-
-            Route::get('/report_by', 'ReportController@reportBy')->name('report_by');
-
         });
     });
 })->middleware('access.routeNeedsPermission:manage_report');

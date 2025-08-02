@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Backend;
 
 use App\Exports\Tickets\AllReportExport;
 use App\Exports\Tickets\channel\PaymentChannelSummaryExport;
+use App\Exports\Tickets\Client\TicketClientExportSummary;
 use App\Exports\Tickets\Mno\MnoSummaryExport;
 use App\Exports\Tickets\Saas\SaasAppSummaryExport;
 use App\Exports\Tickets\Topic\TicketTopicExport;
@@ -85,6 +86,11 @@ class ReportController extends Controller
                 return Excel::download(
                     new AllReportExport($filters),
                     'all-report-'.now()->format('Y-m-d').'.xlsx'
+                );
+            case 'client':
+                return Excel::download(
+                    new TicketClientExportSummary($filters),
+                    'client-summary-'.now()->format('Y-m-d').'.xlsx'
                 );
             default:
                 abort(404, 'Invalid export type');

@@ -132,6 +132,7 @@
                     'MNOs Summary Count': 'mno',
                     'Payment Channels Summary Count': 'payment_channel',
                     'All tickets reports': 'all_report',
+                    'Client Summary Count': 'client'
                 };
                 const currentTitle = $('.card-header-title').text().trim();
                 const exportType = titleMap[currentTitle];

@@ -8,6 +8,7 @@
             ['route' => 'backend.report.by_topic', 'title' => __('Report by Topics & summary count'), 'class' => 'text-success'],
             ['route' => 'backend.report.by_mno', 'title' => __('Report by Mobile Operators & summary count'), 'class' => 'text-warning'],
             ['route' => 'backend.report.by_payment_channel', 'title' => __('Report by Payment Channels & summary count'), 'class' => 'text-dark'],
+            ['route' => 'backend.report.by_client', 'title' => __('Report by Clients & summary count'), 'class' => 'text-info'],
             ['route' => 'backend.report.by_filter', 'title' => __('Report Filter'), 'class' => 'text-info'],
         ];
     @endphp
