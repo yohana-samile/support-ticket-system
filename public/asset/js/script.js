@@ -356,42 +356,45 @@ document.addEventListener('DOMContentLoaded', function() {
                     ticketsToShow.forEach(ticket => {
                         const priorityClass = ticket.priority?.toLowerCase() || 'low';
                         const statusClass = ticket.status?.toLowerCase() || 'open';
+                        const timeAgoResult = ticket.created_at ? timeAgo(ticket.created_at) : '';
+                        const timeBadgeClass = getTimeBadgeClass(ticket.created_at);
 
                         let categoryPath = ticket.topic?.name || 'No topic';
                         if (ticket.subtopic?.name) categoryPath += ` › ${ticket.subtopic.name}`;
                         if (ticket.tertiary_topic?.name) categoryPath += ` › ${ticket.tertiary_topic.name}`;
 
                         const item = document.createElement('div');
-                        item.className = 'ticket-item';
+                        item.className = `ticket-item ${isTicketRecent(ticket.created_at) ? 'recent-ticket' : ''}`;
+
                         item.innerHTML = `
-                        <div class="ticket-main-info">
-                            <h4 class="ticket-title">${ticket.title || 'No title'}</h4>
-                            <span class="ticket-status ${statusClass}">${ticket.status || 'Unknown'}</span>
-                        </div>
-                        <div class="ticket-meta">
-                            <span class="ticket-category">${categoryPath}</span>
-                            <span class="ticket-assignee">
-                                <i class="bi bi-person"></i> ${ticket.assigned_to?.name || 'Unassigned'}
-                            </span>
-                            <span class="ticket-date">
-                                <i class="bi bi-calendar"></i> ${ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'Unknown date'}
-                            </span>
-                            <span class="ticket-number">
-                                <i class="bi bi-tag"></i> ${ticket.ticket_number || ''}
-                            </span>
-                        </div>
-                        ${ticket.description ? `
-                        <div class="ticket-description">
-                            ${ticket.description}
-                        </div>
-                        ` : ''}
-                        <div class="ticket-footer">
-                            <span class="ticket-priority ${priorityClass}">${ticket.priority || 'Unknown'}</span>
-                            <span class="ticket-time">
-                                <i class="bi bi-clock"></i> ${ticket.created_at ? timeAgo(ticket.created_at) : ''}
-                            </span>
-                        </div>
-                    `;
+                            <div class="ticket-main-info">
+                                <h4 class="ticket-title">${ticket.title || 'No title'}</h4>
+                                <span class="ticket-status ${statusClass}">${ticket.status || 'Unknown'}</span>
+                            </div>
+                            <div class="ticket-meta">
+                                <span class="ticket-category">${categoryPath}</span>
+                                <span class="ticket-assignee">
+                                    <i class="bi bi-person"></i> ${ticket.assigned_to?.name || 'Unassigned'}
+                                </span>
+                                <span class="ticket-date">
+                                    <i class="bi bi-calendar"></i> ${formatTicketDate(ticket.created_at)}
+                                </span>
+                                <span class="ticket-number">
+                                    <i class="bi bi-tag"></i> ${ticket.ticket_number || ''}
+                                </span>
+                            </div>
+                            ${ticket.description ? `
+                            <div class="ticket-description">
+                                ${ticket.description}
+                            </div>
+                            ` : ''}
+                            <div class="ticket-footer">
+                                <span class="ticket-priority ${priorityClass}">${ticket.priority || 'Unknown'}</span>
+                                <span class="ticket-time text-white badge ${timeBadgeClass}">
+                                    <i class="bi bi-clock"></i> ${timeAgoResult}
+                                </span>
+                            </div>
+                        `;
                         list.appendChild(item);
                     });
 
@@ -432,27 +435,95 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    function formatTicketDate(dateString) {
+        if (!dateString) return 'Unknown date';
+
+        const now = new Date();
+        const ticketDate = new Date(dateString);
+        const diffInHours = Math.abs(now - ticketDate) / 36e5;
+
+        if (ticketDate.toDateString() === now.toDateString()) {
+            // Today
+            if (diffInHours < 1) {
+                const mins = Math.floor(diffInHours * 60);
+                return `<span class="date-today recent-highlight">${mins}m ago</span>`;
+            }
+            return `<span class="date-today">Today at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+        }
+
+        // Yesterday
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (ticketDate.toDateString() === yesterday.toDateString()) {
+            return `<span class="date-yesterday">Yesterday at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+        }
+
+        // Older than yesterday
+        return ticketDate.toLocaleDateString([], {month: 'short', day: 'numeric', year: 'numeric'});
+    }
+
+    function getTimeBadgeClass(dateString) {
+        if (!dateString) return 'bg-dark';
+
+        const now = new Date();
+        const ticketDate = new Date(dateString);
+        const diffInDays = Math.abs(now - ticketDate) / (24 * 60 * 60 * 1000);
+
+        if (diffInDays < 1) {
+            return 'bg-danger'; // Less than 1 day - red
+        } else if (diffInDays < 7) {
+            return 'bg-primary'; // 1-7 days - blue
+        } else {
+            return 'bg-dark'; // More than 7 days - dark
+        }
+    }
+
+    function isTicketRecent(dateString) {
+        if (!dateString) return false;
+        const now = new Date();
+        const ticketDate = new Date(dateString);
+        const diffInHours = Math.abs(now - ticketDate) / 36e5;
+        return diffInHours < 24; // Consider recent if within last 24 hours
+    }
+
     function timeAgo(dateString) {
+        if (!dateString) return '';
+
         const date = new Date(dateString);
         const now = new Date();
         const seconds = Math.floor((now - date) / 1000);
 
-        let interval = Math.floor(seconds / 31536000);
-        if (interval >= 1) return interval + "y";
+        if (seconds < 60) {
+            return `${seconds} second${seconds === 1 ? '' : 's'} ago`;
+        }
 
-        interval = Math.floor(seconds / 2592000);
-        if (interval >= 1) return interval + "mo";
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) {
+            return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+        }
 
-        interval = Math.floor(seconds / 86400);
-        if (interval >= 1) return interval + "d";
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) {
+            return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+        }
 
-        interval = Math.floor(seconds / 3600);
-        if (interval >= 1) return interval + "h";
+        const days = Math.floor(hours / 24);
+        if (days < 7) {
+            return `${days} day${days === 1 ? '' : 's'} ago`;
+        }
 
-        interval = Math.floor(seconds / 60);
-        if (interval >= 1) return interval + "m";
+        const weeks = Math.floor(days / 7);
+        if (weeks < 4) {
+            return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+        }
 
-        return Math.floor(seconds) + "s";
+        const months = Math.floor(days / 30);
+        if (months < 12) {
+            return `${months} month${months === 1 ? '' : 's'} ago`;
+        }
+
+        const years = Math.floor(days / 365);
+        return `${years} year${years === 1 ? '' : 's'} ago`;
     }
 
     // When topic is selected, load subtopics or special fields

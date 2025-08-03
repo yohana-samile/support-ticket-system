@@ -29,14 +29,46 @@ trait SendSmsTrait
         $topicLine = implode(' -> ', array_filter([$topic, $subtopic, $tertiary]));
         $message = "{$ticket->ticket_number}\n{$ticket->title}\n{$topicLine}\n{$ticket->description}";
 
-        $smsPayload = [
-            'from' => 'REMINDER',
-            'to' => $user->phone,
-            'text' => $message,
-            'reference' => 'xaefcgt'
-        ];
-//        Log::info('SMS Payload:', $smsPayload);
+        $this->sendSms($this->buildSmsPayload('REMINDER', $user->phone, $message));
+    }
 
+    public function notifyForTicketReassign($user, $ticket, $type)
+    {
+        $topic = optional($ticket->topic)->name;
+        $subtopic = optional($ticket->subtopic)->name;
+        $tertiary = optional($ticket->tertiaryTopic)->name;
+        $assignTitle = "You have been assigned new ticket";
+        $unAssignTitle = "You have been unassigned this ticket";
+
+        $topicLine = implode(' -> ', array_filter([$topic, $subtopic, $tertiary]));
+
+
+        switch ($type) {
+            case 'new_assign':
+                $message = "{$assignTitle}\n{$ticket->ticket_number}\n{$ticket->title}\n{$topicLine}\n{$ticket->description}";
+                $this->sendSms($this->buildSmsPayload('REMINDER', $user->phone, $message));
+                break;
+            case 'previous_assign':
+                $message = "{$unAssignTitle}\n{$ticket->ticket_number}\n{$ticket->title}\n{$topicLine}\n{$ticket->description}";
+                $this->sendSms($this->buildSmsPayload('REMINDER', $user->phone, $message));
+                break;
+            default:
+                abort("no service");
+        }
+    }
+
+    private function buildSmsPayload($from, $to, $text, $reference = 'xaefcgt')
+    {
+        return [
+            'from' => $from,
+            'to' => $to,
+            'text' => $text,
+            'reference' => $reference
+        ];
+    }
+
+    protected function sendSms($smsPayload): void
+    {
         $response = Http::withHeaders([
             'Authorization' => 'Basic TmFuYWg6bmFuYWhAMjUxMg==',
         ])->post('https://messaging-service.co.tz/api/sms/v1/text/single', $smsPayload);

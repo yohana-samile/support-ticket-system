@@ -151,7 +151,7 @@ class TicketRepository extends  BaseRepository {
         if ($status === 'resolved') {
             $updateData = array_merge($updateData, [
                 'time_solved' => now(),
-                'response_time' => $this->calculateResponseTime($ticket),
+                'response_time' => (int) round($this->calculateResponseTime($ticket)),
             ]);
         }
 
@@ -192,11 +192,12 @@ class TicketRepository extends  BaseRepository {
     public function reassign(Ticket $ticket, ?int $assigneeId, User $reassignedBy)
     {
         return DB::transaction(function () use ($ticket, $assigneeId, $reassignedBy) {
-            $previousAssignee = $ticket->assignee;
-            $newAssignee = $assigneeId ? User::find($assigneeId) : null;
+            $previousAssignee = $ticket->assignedTo;
 
             $ticket->update(['assigned_to' => $assigneeId]);
+            $ticket->refresh();
 
+            $newAssignee = $ticket->assignedTo;
             $this->logReassignment($ticket, $reassignedBy, $previousAssignee, $newAssignee);
             $this->handleReassignmentNotifications($ticket, $previousAssignee, $newAssignee);
 
@@ -222,6 +223,7 @@ class TicketRepository extends  BaseRepository {
          */
         if ($newAssignee && (!$previousAssignee || $newAssignee->id !== $previousAssignee->id)) {
             $newAssignee->notify(new TicketReassignedNotification($ticket));
+            $this->notifyForTicketReassign($newAssignee, $ticket, 'new_assign');
         }
 
         /**
@@ -229,6 +231,7 @@ class TicketRepository extends  BaseRepository {
          */
         if ($previousAssignee && (!$newAssignee || $newAssignee->id !== $previousAssignee->id)) {
             $previousAssignee->notify(new TicketUnassignedNotification($ticket));
+            $this->notifyForTicketReassign($previousAssignee, $ticket, 'previous_assign');
         }
     }
 

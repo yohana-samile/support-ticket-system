@@ -39,7 +39,7 @@ class TicketUnassignedNotification extends Notification implements ShouldQueue
             'ticket_id' => $this->ticket->id,
             'title' => $this->ticket->title,
             'message' => 'You have been unassigned from a ticket',
-            'url' => route('tickets.show', $this->ticket->id),
+            'url' => route('ticket.show', $this->ticket->id),
         ];
     }
 }

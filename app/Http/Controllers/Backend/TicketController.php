@@ -54,6 +54,9 @@ class TicketController extends Controller
 
     public function show($ticketUid)
     {
+        $codeStatusId = Code::query()->where('name', 'Ticket Status')->value('id');
+
+        $data['statuses'] = CodeValue::getCodeValueByCodeId($codeStatusId);
         $data['ticket'] = Ticket::with([
             'attachments',
             'comments.user',
@@ -101,7 +104,7 @@ class TicketController extends Controller
 
     public function updateStatus(Request $request, $ticketUid)
     {
-        $request->validate(['status' => 'required|in:open,in_progress,resolved,closed']);
+        $request->validate(['status' => 'required|in:open,reopen,escalated,in_progress,resolved,closed']);
 
         $this->ticketRepository->updateStatus($ticketUid, $request->status);
         return back()->with('success', 'Ticket status updated!');
@@ -128,7 +131,7 @@ class TicketController extends Controller
     public function reassign(Request $request, $ticketUid)
     {
         $request->validate([
-            'assigned_to' => 'nullable|exists:users,id'
+            'assigned_to' => 'required|exists:users,id'
         ]);
 
         $ticket = $this->ticketRepository->find($ticketUid);
@@ -139,8 +142,7 @@ class TicketController extends Controller
             user()
         );
 
-        return redirect()->back()
-            ->with('success', 'Ticket has been reassigned successfully');
+        return redirect()->back()->with('success', 'Ticket has been reassigned successfully');
     }
 
     public function getClientHistory($clientId)

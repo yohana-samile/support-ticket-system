@@ -48,8 +48,12 @@ class TicketObserver
         }
     }
 
-    private function isNegativeReply(string $message): bool
+    private function isNegativeReply(?string $message): bool
     {
+        if (empty(trim($message))) {
+            return false;
+        }
+
         $keywords = [
             'not fixed', 'still an issue', 'reopen', 'unsolved', 'not satisfied',
             'not resolved', 'still broken', 'does not work',
