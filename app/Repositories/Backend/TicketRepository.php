@@ -64,7 +64,7 @@ class TicketRepository extends  BaseRepository {
                 auth()->user()
             );
 
-            $this->notifyTicketCreated(auth()->user(), $ticket);
+            $this->notifyTicketCreated($data['client_id'], $ticket);
 
             if (!empty($data['assigned_to'])) {
                 $this->notifyAssignedUser(

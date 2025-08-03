@@ -20,11 +20,11 @@ class TicketRequest extends FormRequest
             'attachments.*' => 'nullable|file|max:2048|mimes:jpg,jpeg,png,pdf,doc,docx',
 
             'assigned_to' => 'required|exists:users,id',
-            'client_id' => 'nullable|exists:clients,id',
+            'client_id' => 'required|exists:clients,id',
 
             'saas_app_id' => 'required|exists:saas_apps,id',
-            'topic_id' => 'nullable|exists:topics,id',
-            'sub_topic_id' => 'nullable|exists:sub_topics,id',
+            'topic_id' => 'required|exists:topics,id',
+            'sub_topic_id' => 'required|exists:sub_topics,id',
             'tertiary_topic_id' => 'nullable|exists:tertiary_topics,id',
             'payment_channel_id' => 'nullable|exists:payment_channels,id',
             'sender_id' => 'nullable|exists:sender_ids,id',

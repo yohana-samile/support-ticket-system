@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const subjectField = document.getElementById('subject');
     const descriptionField = document.getElementById('description');
     const priorityField = document.getElementById('priority');
+    let selectedChannels = [];
+    let isCriticalPriority = false;
 
     // State to track selected values
     let selectedServiceId = null;
@@ -41,10 +43,75 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize the form
     loadServices(preSelectedServiceId);
 
+    function autoSelectChannel() {
+        selectedChannels = [];
+        $('.channel-card').removeClass('border border-primary');
+
+        // Always select email and WhatsApp
+        selectedChannels.push('mail', 'whatsapp', 'database');
+
+        // Add SMS for critical priority
+        if (isCriticalPriority) {
+            selectedChannels.push('sms');
+        }
+
+        // Update UI to reflect selections
+        updateChannelSelectionUI();
+        updateChannelSelectionSummary();
+    }
+
+    function updateChannelSelectionUI() {
+        $('.channel-card').each(function() {
+            const channel = $(this).data('channel');
+            if (selectedChannels.includes(channel)) {
+                $(this).addClass('border border-primary');
+            } else {
+                $(this).removeClass('border border-primary');
+            }
+        });
+
+        // Update hidden inputs
+        $('#notification_channels_wrapper').html('');
+        selectedChannels.forEach(channel => {
+            $('#notification_channels_wrapper').append(
+                `<input type="hidden" name="notification_channels[]" value="${channel}">`
+            );
+        });
+    }
+
+    // Update the channel card click handler to allow user modifications
+    $('.channel-card').on('click', function() {
+        const channel = $(this).data('channel');
+
+        // Don't allow removing email for critical tickets
+        if (isCriticalPriority && channel === 'sms') {
+            toastr.warning('SMS is required for critical priority tickets');
+            return;
+        }
+
+        // Toggle selection
+        if (selectedChannels.includes(channel)) {
+            selectedChannels = selectedChannels.filter(c => c !== channel);
+        } else {
+            selectedChannels.push(channel);
+        }
+
+        // Update UI
+        $(this).toggleClass('border border-primary');
+        updateChannelSelectionSummary();
+
+        // Update hidden inputs
+        $('#notification_channels_wrapper').html('');
+        selectedChannels.forEach(channel => {
+            $('#notification_channels_wrapper').append(
+                `<input type="hidden" name="notification_channels[]" value="${channel}">`
+            );
+        });
+    });
+
     managerSelect.addEventListener('change', function() {
         if (this.value) {
-            resetChannelSelections();
-            showChannelModal();
+            autoSelectChannel();
         } else {
             resetChannelSelections();
         }
@@ -67,6 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function resetChannelSelections() {
         selectedChannels = [];
+        isCriticalPriority = false;
         $('.channel-card').removeClass('border border-primary');
         $('#notification_channels_wrapper').html('');
         updateChannelSelectionSummary();
@@ -89,33 +157,23 @@ document.addEventListener('DOMContentLoaded', function() {
             summaryElement.innerHTML = `
                 <small class="text-muted">Notification channels:</small>
                 <div>${channelBadges}</div>
+                <small class="text-muted click-to-edit" style="cursor: pointer; color: #0d6efd !important;">
+                    <i class="bi bi-pencil-square"></i> Click to edit
+                </small>
             `;
+
+            // Add click handler to show modal for editing
+            $('.click-to-edit').on('click', function() {
+                $('#channelModal').modal('show');
+            });
         } else {
             summaryElement.innerHTML = `
-                <small class="text-muted">No notification channels selected</small>
-            `;
+            <small class="text-muted">No notification channels selected</small>
+        `;
         }
     }
-    $('.channel-card').on('click', function() {
-        const channel = $(this).data('channel');
-        $(this).toggleClass('border border-primary');
 
-        if (selectedChannels.includes(channel)) {
-            selectedChannels = selectedChannels.filter(c => c !== channel);
-        } else {
-            selectedChannels.push(channel);
-        }
-
-        // Update hidden inputs and summary
-        $('#notification_channels_wrapper').html('');
-        selectedChannels.forEach(channel => {
-            $('#notification_channels_wrapper').append(
-                `<input type="hidden" name="notification_channels[]" value="${channel}">`
-            );
-        });
-    });
     $('#channelModal .btn-primary').on('click', function() {
-        updateChannelSelectionSummary();
         $('#channelModal').modal('hide');
     });
 
@@ -766,8 +824,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle priority change - NEW FUNCTION
     function handlePriorityChange() {
         if (this.value) {
+            isCriticalPriority = this.value === 'critical';
             showSection('managerSection');
             loadManagers();
+
+            //auto select channel
+            autoSelectChannel();
         } else {
             hideSection('managerSection');
         }
