@@ -70,9 +70,6 @@ trait UserAccess
      * @return bool
      */
     public function allow($nameOrId) {
-
-
-
         foreach ($this->roles as $role) {
             // Validate against the Permission table
             foreach ($role->permissions as $perm) {
@@ -118,9 +115,6 @@ trait UserAccess
      * @return bool
      */
     public function allowOnly($nameOrId) {
-
-
-
         foreach ($this->roles as $role) {
 
             // Validate against the Permission table

@@ -1,7 +1,7 @@
 <div class="row">
     <div class="col-md-6">
         <div class="card shadow-sm">
-            <div class="card-header bg-success text-white">
+            <div class="card-header bg-light text-dark">
                 <i class="fas fa-sync-alt mr-1"></i> {{ __('label.update_status') }}
             </div>
             <div class="card-body">
@@ -36,7 +36,7 @@
     @if(!in_array($ticket->status, ['resolved', 'closed']))
         <div class="col-md-6">
             <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-light text-dark">
                     <i class="fas fa-user-edit mr-1"></i> {{ __('label.reassign_to') }}
                 </div>
                 <div class="card-body">

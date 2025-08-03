@@ -154,9 +154,11 @@
                                     <div class="border p-3 bg-light rounded">
                                         @if($ticket->payment_channel_id)
                                             <p class="mb-1"><strong>Payment Channel:</strong> {{ $ticket->paymentChannel->name }}</p>
+                                            <p class="mb-1"><strong>Date Occurred:</strong> {{ $ticket->issue_date ?? ''}}</p>
                                         @endif
                                         @if($ticket->sender_id)
                                             <p class="mb-1"><strong>Sender ID:</strong> {{ $ticket->sender->sender_id }}</p>
+                                            <p class="mb-1"><strong>Date Occurred:</strong> {{ $ticket->issue_date ?? ''}}</p>
                                         @endif
                                         @if($ticket->operators->isNotEmpty())
                                             <p class="mb-1"><strong>Mobile Operator:</strong> {{ $ticket->operators->pluck('name')->join(', ') }}</p>

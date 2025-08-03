@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Repositories\Backend;
+use App\Models\Access\Client;
 use App\Models\Access\User;
 use App\Models\System\CodeValue;
 use App\Models\Ticket\Ticket;
@@ -49,6 +50,7 @@ class TicketRepository extends  BaseRepository {
                 'tertiary_topic_id' => $data['tertiary_topic_id'],
                 'payment_channel_id' => $data['payment_channel_id'] ?? null,
                 'sender_id' => $data['sender_id'] ?? null,
+                'issue_date' => $data['issue_date'] ?? null,
                 'priority' => $data['priority'],
                 'status' => $status,
                 'user_id' => auth()->id(),
@@ -64,7 +66,7 @@ class TicketRepository extends  BaseRepository {
                 auth()->user()
             );
 
-            $this->notifyTicketCreated($data['client_id'], $ticket);
+            $this->notifyTicketCreated(Client::find($data['client_id']), $ticket);
 
             if (!empty($data['assigned_to'])) {
                 $this->notifyAssignedUser(
@@ -270,9 +272,9 @@ class TicketRepository extends  BaseRepository {
         }
     }
 
-    protected function notifyTicketCreated(User $user, Ticket $ticket)
+    protected function notifyTicketCreated(Client $client, Ticket $ticket)
     {
-        $user->notify(new TicketCreatedNotification($ticket));
+        $client->notify(new TicketCreatedNotification($ticket));
     }
 
     public function getUserTickets($userId)

@@ -44,6 +44,13 @@
                     </div>
 
                     <!-- SMS Specific Fields -->
+                    <div class="mb-3 form-section hidden-section" id="dateSection">
+                        <label for="issueDate" class="form-label">Issue Date</label>
+                        <input type="date" class="form-control" id="issueDate" max="{{ date('Y-m-d') }}">
+                        <div class="form-text">Please specify when the issue occurred</div>
+                    </div>
+
+                    <!-- SMS Specific Fields -->
                     <div class="mb-3 form-section hidden-section" id="senderIdSection">
                         <label for="senderId" class="form-label">Sender ID <span class="text-danger">*</span></label>
                         <select class="form-select select2" id="senderId" required >

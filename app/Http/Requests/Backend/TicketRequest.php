@@ -28,6 +28,7 @@ class TicketRequest extends FormRequest
             'tertiary_topic_id' => 'nullable|exists:tertiary_topics,id',
             'payment_channel_id' => 'nullable|exists:payment_channels,id',
             'sender_id' => 'nullable|exists:sender_ids,id',
+            'issue_date' => 'nullable|date|before_or_equal:today',
 
             'operator' => 'nullable|array',
             'operator.*' => 'exists:operators,id',

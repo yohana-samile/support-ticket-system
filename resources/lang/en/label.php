@@ -103,7 +103,11 @@ return [
     "all_tickets_reports" => "All Tickets Reports",
     "title" => "Title",
     "by_client" => "By Client",
-    "list_by_client" => "List by client"
+    "list_by_client" => "List by client",
+    "update_status" => "Update Status",
+    "reassign_to" => "Reassign To",
+    "reassign" => "Reassign",
+    "select_status" => "Select Status"
 
 
 

@@ -604,6 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
         hideSection('prioritySection');
         hideSection('attachmentsSection');
         hideSection('submitSection');
+        hideSection('dateSection');
 
         if (isSmsTopic) {
             showSection('senderIdSection');
@@ -633,6 +634,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
             senderIdSelect.addEventListener('change', handleSenderIdChange);
+
+            // Show date section for SMS issues
+            showDateSection('When did the SMS fail to deliver?');
         }
         else if (isPaymentTopic) {
             showSection('paymentChannelSection');
@@ -658,10 +662,35 @@ document.addEventListener('DOMContentLoaded', function() {
                     loadSubtopics();
                 }
             });
+
+            // Show date section for payment issues
+            showDateSection('When was the payment made?');
         }
         else {
             loadSubtopics();
         }
+    }
+
+    function showDateSection(labelText) {
+        // Create or update the date section
+        let dateSection = document.getElementById('dateSection');
+        if (!dateSection) {
+            dateSection = document.createElement('div');
+            dateSection.id = 'dateSection';
+            dateSection.className = 'mb-3 form-section';
+            dateSection.innerHTML = `
+            <label for="issueDate" class="form-label">${labelText}</label>
+            <input type="date" class="form-control" id="issueDate" max="${new Date().toISOString().split('T')[0]}">
+            <div class="form-text">Please specify the date when the issue occurred</div>
+        `;
+            // Insert after the topic section
+            document.getElementById('topicSection').after(dateSection);
+        } else {
+            // Update the label if it already exists
+            dateSection.querySelector('label').textContent = labelText;
+        }
+
+        showSection('dateSection');
     }
 
     function handleSenderIdChange() {
@@ -1049,6 +1078,11 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('description', descriptionField.value);
         formData.append('priority', priorityField.value);
         formData.append('assigned_to', managerSelect.value);
+
+        const issueDate = document.getElementById('issueDate');
+        if (issueDate && issueDate.value) {
+            formData.append('issue_date', issueDate.value);
+        }
 
         if (tertiaryTopicSelect.value) {
             formData.append('tertiary_topic_id', tertiaryTopicSelect.value);
