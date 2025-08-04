@@ -42,6 +42,16 @@ class TicketRepository extends  BaseRepository {
     public function store(array $data) {
         return DB::transaction(function() use($data) {
             $status = CodeValue::query()->where('reference', 'STATUS01')->value('name');
+            if (isset($data['customer_name'])) {
+                $client = Client::query()->create([
+                    "name" =>  $data['customer_name'],
+                   "email" =>  fake()->email,
+                   "saas_app_id" =>  $data['saas_app_id'],
+                ]);
+               $clientId = $client->id;
+            } else {
+                $clientId = $data['client_id'];
+            }
             $ticket = $this->query()->create([
                 'title' => $data['title'],
                 'description' => $data['description'],
@@ -55,7 +65,7 @@ class TicketRepository extends  BaseRepository {
                 'status' => $status,
                 'user_id' => auth()->id(),
                 'saas_app_id' => $data['saas_app_id'],
-                'client_id' => $data['client_id'],
+                'client_id' => $clientId,
                 'ticket_number' => Ticket::generateTicketNumber(),
                 'assigned_to' => $data['assigned_to'] ?? null,
             ]);
@@ -66,7 +76,7 @@ class TicketRepository extends  BaseRepository {
                 auth()->user()
             );
 
-            $this->notifyTicketCreated(Client::find($data['client_id']), $ticket);
+            $this->notifyTicketCreated(Client::find($clientId), $ticket);
 
             if (!empty($data['assigned_to'])) {
                 $this->notifyAssignedUser(
@@ -79,9 +89,7 @@ class TicketRepository extends  BaseRepository {
             }
 
             if (!empty($data['operator'])) {
-                foreach ($data['operator'] as $operatorId) {
-                    $ticket->operators()->syncWithoutDetaching($data['operator']);
-                }
+                $ticket->operators()->syncWithoutDetaching($data['operator']);
             }
 
             if (isset($data['attachments'])) {
@@ -265,8 +273,7 @@ class TicketRepository extends  BaseRepository {
                     $this->notifyForNewTicket($user, $ticket);
                     break;
                 case 'whatsapp':
-                    //TODO Implement whatsapp notification
-                    //$this->sendTicketNotification($user, $ticket);
+                    $this->sendTicketNotification($user, $ticket);
                     break;
             }
         }

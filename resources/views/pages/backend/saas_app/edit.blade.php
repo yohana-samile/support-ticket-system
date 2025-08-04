@@ -33,6 +33,14 @@
                             </div>
 
                             <div class="form-group">
+                                <label for="client_endpoint">{{__('label.client_endpoint')}} <span class="text-danger">*</span></label>
+                                <input type="url" class="form-control @error('client_endpoint') is-invalid @enderror" id="client_endpoint" name="client_endpoint" value="{{ old('client_endpoint', $saasApp->client_endpoint) }}" required>
+                                @error('client_endpoint')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save"></i> {{__('label.update')}}
                                 </button>

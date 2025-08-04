@@ -20,7 +20,9 @@ class TicketRequest extends FormRequest
             'attachments.*' => 'nullable|file|max:2048|mimes:jpg,jpeg,png,pdf,doc,docx',
 
             'assigned_to' => 'required|exists:users,id',
-            'client_id' => 'required|exists:clients,id',
+
+            'client_id' => 'required_without:customer_name|nullable|exists:clients,id',
+            'customer_name' => 'required_without:client_id|string',
 
             'saas_app_id' => 'required|exists:saas_apps,id',
             'topic_id' => 'required|exists:topics,id',
@@ -47,6 +49,8 @@ class TicketRequest extends FormRequest
             'priority.required' => 'Please select a priority level.',
             'assigned_to.required' => 'Please assign a user.',
             'saas_app_id.required' => 'Please select the SaaS application.',
+            'client_id.required_without' => 'Please select a client or enter a customer name.',
+            'customer_name.required_without' => 'Please enter a customer name or select a client.',
             'attachments.*.max' => 'Each attachment must be less than 2MB.',
             'attachments.*.mimes' => 'Allowed file types: jpg, jpeg, png, pdf, doc, docx.',
         ];

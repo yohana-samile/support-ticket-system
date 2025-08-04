@@ -24,23 +24,23 @@
 
 //for saas_app
 // {
-//     "name": "MyBrand",
-//     "abbreviation": "MyBrand"
+//     "name": "nextsms",
+//     "abbreviation": "nextsms"
 // }
 
 {
     "apps": [
         {
-            "name": "Customer Relationship Management",
-            "abbreviation": "CRM"
+            "name": "Bulk sms solution",
+            "abbreviation": "nextsms"
         },
         {
-            "name": "Enterprise Resource Planning",
-            "abbreviation": "ERP"
+            "name": "accounting software",
+            "abbreviation": "nextaccounting"
         },
         {
-            "name": "Human Resource Management",
-            "abbreviation": "HRM"
+            "name": "pepe",
+            "abbreviation": "pepe"
         }
     ]
 }
@@ -52,14 +52,14 @@
         {
             "name": "Alice Smith",
             "email": "alice@example.com",
-            "saas_app_name": "MyBrand",
-            "sender_ids": ["ALERTS", "ERPMAIN"]
+            "saas_app_name": "Bulk sms solution",
+            "sender_ids": ["nextsms", "harusi"]
         },
         {
             "name": "Bob Johnson",
             "email": "bob@example.com",
             "phone": "9876543210",
-            "saas_app_name": "MyBrand",
+            "saas_app_name": "accounting software",
             "is_active": false
         }
     ]
@@ -68,5 +68,5 @@
 //   {
 //             "name": "Alice Smith",
 //             "email": "alice@example.com",
-//             "saas_app_name": "MyBrand"
+//             "saas_app_name": "accounting software"
 //         }

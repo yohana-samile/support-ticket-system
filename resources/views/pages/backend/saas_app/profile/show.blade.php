@@ -38,6 +38,19 @@
                                         </div>
                                     </div>
                                 </div>
+                                @if($saasApp->client_endpoint)
+                                    <div class="detail-item my-4">
+                                        <label class="detail-label">{{ __('label.client_endpoint') }}</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                        <span id="client-endpoint-text" class="badge bg-light text-primary border px-2 py-1" style="font-family: monospace;">
+                                            {{ $saasApp->client_endpoint }}
+                                        </span>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('#client-endpoint-text')" title="Copy endpoint">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -85,8 +98,9 @@
             </div>
         </div>
     </div>
+@endsection
 
-
+@push('styles')
     <style>
         .detail-card {
             border: 1px solid #e3e6f0;
@@ -122,8 +136,15 @@
             min-height: 100px;
         }
     </style>
-@endsection
+@endpush
 
-@push('style')
-
+@push('scripts')
+    <script>
+        function copyToClipboard(selector) {
+            const text = document.querySelector(selector).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                toastr.success('Link Copied to clipboard');
+            })
+        }
+    </script>
 @endpush

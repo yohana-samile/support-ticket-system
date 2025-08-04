@@ -18,6 +18,7 @@ class SaasAppTableSeeder extends Seeder
             ['name' => 'NextHost Reliable Web Hosting', 'abbreviation' => 'NextHost'],
             ['name' => 'NextCrm', 'abbreviation' => 'NextCrm'],
             ['name' => 'RafikiSite', 'abbreviation' => 'RafikiSite'],
+            ['name' => 'Working Customer', 'abbreviation' => 'Working Customer'],
         ];
 
         foreach ($saasApps as $saasApp) {

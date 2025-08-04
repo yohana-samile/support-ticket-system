@@ -16,6 +16,7 @@ class SaasAppRequest extends FormRequest
         $rules = [
             'abbreviation' => 'required|string|max:50',
             'name' => 'required|string|max:150',
+            'client_endpoint' => 'required|string|url|max:255',
         ];
 
         if ($this->isMethod('POST')) {
@@ -44,6 +45,7 @@ class SaasAppRequest extends FormRequest
             'name.string' => 'The name must be a string.',
             'name.max' => 'The name may not be greater than 150 characters.',
             'name.unique' => __('validation.name_unique'),
+            'client_endpoint.required' => __('validation.name_required'),
         ];
     }
 

@@ -73,9 +73,7 @@ trait SendSmsTrait
             'Authorization' => 'Basic TmFuYWg6bmFuYWhAMjUxMg==',
         ])->post('https://messaging-service.co.tz/api/sms/v1/text/single', $smsPayload);
 
-        if ($response->successful()) {
-            Log::info('SMS sent successfully.');
-        } else {
+        if (!$response->successful()) {
             Log::error('Failed to send SMS.', [
                 'status' => $response->status(),
                 'body' => $response->body(),

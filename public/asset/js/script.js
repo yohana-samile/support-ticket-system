@@ -299,9 +299,63 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedServiceId = serviceSelect.value;
         if (!selectedServiceId) return;
 
-        // Show client section
-        showSection('clientSection');
-        clientSelect.innerHTML = '<option value="" selected disabled>Loading clients...</option>';
+        const selectedServiceText = serviceSelect.options[serviceSelect.selectedIndex].text;
+
+        if (selectedServiceText.toLowerCase() === 'working customer') {
+            // Create or show customer name input field
+            let customerNameInput = document.getElementById('customerNameInput');
+            if (!customerNameInput) {
+                customerNameInput = document.createElement('input');
+                customerNameInput.id = 'customerNameInput';
+                customerNameInput.type = 'text';
+                customerNameInput.className = 'form-control mt-2';
+                customerNameInput.placeholder = 'Enter customer full name';
+                customerNameInput.required = true;
+                clientSelect.parentNode.insertBefore(customerNameInput, clientSelect.nextSibling);
+
+                // Add event listener for customer name input
+                customerNameInput.addEventListener('input', function() {
+                    if (this.value.trim() !== '') {
+                        // Show topic section when customer name is entered
+                        showSection('topicSection');
+                        topicSelect.innerHTML = '<option value="" selected disabled>Loading topics...</option>';
+
+                        // Load topics for the selected service
+                        fetch(`/backend/topic/get_by_service/${selectedServiceId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                resetSelect(topicSelect, 'Select a topic');
+                                data.data.forEach(topic => {
+                                    const option = document.createElement('option');
+                                    option.value = topic.id;
+                                    option.textContent = topic.name;
+                                    topicSelect.appendChild(option);
+                                });
+                            })
+                            .catch(error => {
+                                topicSelect.innerHTML = '<option value="" selected disabled>Error loading topics</option>';
+                            });
+                    } else {
+                        // Hide topic section if customer name is cleared
+                        hideSection('topicSection');
+                    }
+                });
+            }
+            // Hide the client select dropdown
+            clientSelect.style.display = 'none';
+            customerNameInput.style.display = 'block';
+        } else {
+            // Show client section with normal behavior
+            showSection('clientSection');
+            // Hide customer name input if it exists
+            const customerNameInput = document.getElementById('customerNameInput');
+            if (customerNameInput) {
+                customerNameInput.style.display = 'none';
+            }
+            // Show client select dropdown
+            clientSelect.style.display = 'block';
+            clientSelect.innerHTML = '<option value="" selected disabled>Loading clients...</option>';
+        }
 
         // Hide dependent sections
         hideSection('topicSection');
@@ -330,18 +384,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     option.value = client.id;
                     option.textContent = client.name;
 
-                    // Pre-select if this is the client from URL parameters
                     if (preSelectedClientId && client.id == preSelectedClientId) {
                         option.selected = true;
                         selectedClientId = client.id;
 
-                        // Trigger client change handler immediately
                         setTimeout(() => {
                             handleClientChange();
                             $(clientSelect).trigger('change');
                         }, 100);
                     }
-
                     clientSelect.appendChild(option);
                 });
             })
@@ -1053,6 +1104,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleFormSubmit(event) {
         event.preventDefault();
 
+        // Check if we're in "Working Customer" mode
+        const selectedServiceText = serviceSelect.options[serviceSelect.selectedIndex].text;
+        const isWorkingCustomer = selectedServiceText.toLowerCase() === 'working customer';
+        const customerNameInput = document.getElementById('customerNameInput');
+
+        if (isWorkingCustomer && (!customerNameInput || !customerNameInput.value)) {
+            toastr.error('Please enter customer full name');
+            return;
+        }
+
         const submitBtn = document.getElementById('submitBtn');
         const submitText = document.getElementById('submitText');
         const submitSpinner = document.getElementById('submitSpinner');
@@ -1068,6 +1129,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Prepare form data
         const formData = new FormData();
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+        if (isWorkingCustomer) {
+            formData.append('customer_name', customerNameInput.value);
+        } else {
+            // Normal client selection
+            formData.append('client_id', clientSelect.value);
+        }
 
         // required fields
         formData.append('saas_app_id', serviceSelect.value);
@@ -1155,6 +1223,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function resetForm() {
         form.reset();
 
+        const customerNameInput = document.getElementById('customerNameInput');
+        if (customerNameInput) {
+            customerNameInput.value = '';
+            customerNameInput.style.display = 'none';
+        }
+        clientSelect.style.display = 'block';
+
         // Reset all selects
         resetSelect(serviceSelect, 'Select a Saas App');
         resetSelect(clientSelect, 'Select a client');
@@ -1193,9 +1268,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function validateForm() {
+        const selectedServiceText = serviceSelect.options[serviceSelect.selectedIndex].text;
+        const isWorkingCustomer = selectedServiceText.toLowerCase() === 'working customer';
+        const customerNameInput = document.getElementById('customerNameInput');
+
+        if (isWorkingCustomer && (!customerNameInput || !customerNameInput.value.trim())) {
+            toastr.error('Please enter customer full name');
+            return false;
+        }
+
         const requiredFields = [
             { element: serviceSelect, name: 'Service' },
-            { element: clientSelect, name: 'Client' },
+            { element: isWorkingCustomer ? customerNameInput : clientSelect, name: isWorkingCustomer ? 'Customer Name' : 'Client' },
             { element: topicSelect, name: 'Topic' },
             { element: subtopicSelect, name: 'Subtopic' },
             { element: subjectField, name: 'Subject' },
@@ -1205,9 +1289,9 @@ document.addEventListener('DOMContentLoaded', function() {
         ];
 
         for (const field of requiredFields) {
-            if (!field.element.value) {
-                toastr.error(`Please select a ${field.name}`);
-                field.element.focus();
+            if (!field.element || !field.element.value) {
+                toastr.error(`Please ${field.name === 'Customer Name' ? 'enter' : 'select'} a ${field.name}`);
+                if (field.element) field.element.focus();
                 return false;
             }
         }
