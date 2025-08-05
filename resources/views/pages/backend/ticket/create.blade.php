@@ -205,346 +205,816 @@
     </div>
 @endsection
 
-
 @push('styles')
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/styles/choices.min.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
     <style>
-        .hidden-section .select2-container {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            height: 0 !important;
-            width: 0 !important;
-            overflow: hidden !important;
-            position: absolute !important;
-        }
-        .select2-container {
-            z-index: 1051 !important; /* Higher than Bootstrap modal (1050) */
-        }
-        .select2-selection {
-            height: calc(1.5em + 0.75rem + 2px) !important;
-            padding: 0.375rem 0.75rem !important;
+        /**
+        notifications channels
+         */
+        .channel-card.locked {
+            cursor: not-allowed;
+            opacity: 0.8;
+            border-color: #6c757d !important;
+            background-color: rgba(108, 117, 125, 0.1) !important;
         }
 
-        /* Add to your existing styles */
-        #attachmentPreviews {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+        .channel-card.locked i {
+            color: #6c757d !important;
         }
 
-        .attachment-preview-container {
+        .channel-summary {
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 0.25rem;
+        }
+
+        .channel-summary .badge {
+            font-size: 0.75rem;
+            padding: 0.35em 0.65em;
+        }
+
+        .click-to-edit:hover {
+            text-decoration: underline;
+        }
+
+        .form-section {
+            transition: all 0.3s ease;
+        }
+
+        .hidden-section {
+            display: none;
+        }
+
+        .ticket-history-container {
             border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 8px;
-            width: 120px;
-            position: relative;
+            border-radius: 0.25rem;
+            padding: 1rem;
+            background: #f8f9fa;
         }
 
-        .file-icon {
-            font-size: 2rem;
+        .ticket-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .ticket-history-item {
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            background: white;
+            border-radius: 0.25rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .ticket-history-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .ticket-history-item-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .file-preview {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 0.25rem;
+        }
+
+        .file-preview-thumbnail {
+            margin-right: 1rem;
+            width: 60px;
+            text-align: center;
+        }
+
+        .file-preview-info {
+            flex-grow: 1;
+        }
+
+        .file-name, .file-size {
             display: block;
-            margin-bottom: 5px;
         }
 
-        .file-info {
-            font-size: 0.8rem;
-            word-break: break-all;
-        }
-
-        #addMoreFiles {
+        .channel-card {
             cursor: pointer;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+
+        .channel-card.selected {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.1);
         }
 
         .loading-spinner {
             display: inline-block;
             width: 1rem;
             height: 1rem;
-            border: 2px solid rgba(0,0,0,.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            border-top-color: #0d6efd;
+            border-top-color: #fff;
             animation: spin 1s ease-in-out infinite;
         }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
-        }
-        .attachment-preview {
-            max-width: 100px;
-            max-height: 100px;
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
-        .form-section {
-            transition: all 0.3s ease;
-        }
-        .hidden-section {
-            display: none;
-            opacity: 0;
-            height: 0;
-            overflow: hidden;
-        }
-        .visible-section {
-            display: block;
-            opacity: 1;
-            height: auto;
-        }
-        .ticket-history-container {
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-            border: 1px solid #eaeaea;
-        }
-
-        .ticket-history-header {
-            background: #f8fafc;
-            padding: 16px 20px;
-            border-bottom: 1px solid #eaeaea;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .ticket-history-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1e293b;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .client-badge {
-            font-size: 13px;
-            font-weight: 500;
-            padding: 4px 10px;
-            border-radius: 12px;
-            background: #3b82f6;
-            color: white;
-        }
-        .ticket-history-count {
-            font-size: 13px;
-            color: #64748b;
-            background: #f1f5f9;
-            padding: 4px 8px;
-            border-radius: 12px;
-        }
-
-        .ticket-history-list {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .ticket-item {
-            padding: 16px 20px;
-            border-bottom: 1px solid #f1f5f9;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .ticket-item:hover {
-            background: #f8fafc;
-        }
-
-        .ticket-item:last-child {
-            border-bottom: none;
-        }
-
-        .ticket-main-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 8px;
-        }
-
-        .ticket-title {
-            font-size: 15px;
-            font-weight: 500;
-            color: #1e293b;
-            margin: 0;
-            flex: 1;
-        }
-
-        .ticket-status {
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 12px;
-            margin-left: 8px;
-        }
-
-        .ticket-status.open {
-            background: #e0f2fe;
-            color: #0369a1;
-        }
-
-        .ticket-status.closed {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .ticket-status.pending {
-            background: #fef9c3;
-            color: #854d0e;
-        }
-
-        .ticket-meta {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 8px;
-        }
-
-        .ticket-category {
-            font-size: 12px;
-            color: #475569;
-            background: #f1f5f9;
-            padding: 4px 8px;
-            border-radius: 6px;
-        }
-
-        .ticket-assignee {
-            display: flex;
-            align-items: center;
-            font-size: 12px;
-            color: #64748b;
-        }
-
-        .ticket-assignee i {
-            margin-right: 4px;
-        }
-
-        .ticket-date {
-            font-size: 12px;
-            color: #64748b;
-            display: flex;
-            align-items: center;
-        }
-
-        .ticket-date i {
-            margin-right: 4px;
-        }
-
-        .ticket-number {
-            font-size: 12px;
-            color: #64748b;
-            display: flex;
-            align-items: center;
-        }
-
-        .ticket-number i {
-            margin-right: 4px;
-        }
-
-        .ticket-description {
-            font-size: 13px;
-            color: #64748b;
-            line-height: 1.4;
-            margin-top: 8px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .ticket-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 12px;
-        }
-
-        .ticket-priority {
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 12px;
-        }
-
-        .ticket-priority.low {
-            background: #ecfdf5;
-            color: #059669;
-        }
-
-        .ticket-priority.medium {
-            background: #fef3c7;
-            color: #b45309;
-        }
-
-        .ticket-priority.high {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-
-        .ticket-priority.critical {
-            background: #b91c1c;
-            color: white;
-        }
-
-        .ticket-time {
-            font-size: 11px;
-            color: #94a3b8;
-        }
-
-        .view-all-tickets {
-            text-align: center;
-            padding: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #3b82f6;
-            background: #f8fafc;
-            border-top: 1px solid #eaeaea;
-            transition: all 0.2s ease;
-        }
-
-        .view-all-tickets:hover {
-            background: #f1f5f9;
-            color: #2563eb;
-        }
-
-        .empty-state {
-            padding: 40px 20px;
-            text-align: center;
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            color: #cbd5e1;
-            margin-bottom: 16px;
-        }
-
-        .empty-state-text {
-            font-size: 14px;
-            color: #64748b;
-            margin: 0;
-        }
-        .channel-card {
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .channel-card:hover {
-            transform: scale(1.05);
-        }
-        .channel-card.border-primary {
-            background-color: #f0f8ff;
-        }
-
-        .select2-container {
-            width: 100% !important;
         }
     </style>
 @endpush
 
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/scripts/choices.min.js"></script>
-    <script src="{{ asset('asset/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('asset/js/script.js') }}"></script>
+    <script>
+        // Ticket System Script
+        $(document).ready(function () {
+            let currentFiles = [];
+            let selectedChannels = [];
+            let isCriticalPriority = false;
+            const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+            const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const preSelectedServiceId = urlParams.get('saas_app_id');
+
+            initialize();
+
+            if (preSelectedServiceId) $('#service').trigger('change');
+
+            function initialize() {
+                initializeSelect2();
+                bindServiceChange();
+                bindClientChange();
+                bindTopicChange();
+                bindSubtopicChange();
+                initializeFileUpload();
+                initializeNotificationChannels();
+                bindFormSubmit();
+            }
+
+            function initializeSelect2() {
+                $('.select2').select2({ width: '100%' });
+                $('.select2-ajax').select2({
+                    width: '100%',
+                    ajax: {
+                        url: $('#service').data('ajax-url'),
+                        dataType: 'json',
+                        delay: 250,
+                        data: params => ({ search: params.term, page: params.page }),
+                        processResults: (data) => ({
+                            results: data.data,
+                            pagination: { more: data.next_page_url !== null }
+                        }),
+                        cache: true
+                    },
+                    minimumInputLength: 1,
+                    templateResult: d => d.loading ? d.text : $('<div>').text(d.name),
+                    templateSelection: d => d.name || d.text
+                });
+            }
+
+            function bindServiceChange() {
+                $('#service').on('change', function () {
+                    const serviceId = $(this).val();
+                    if (serviceId) {
+                        loadClients(serviceId);
+                        showSection('#clientSection');
+                        clearError('#serviceSection');
+                    } else {
+                        hideSections(['#clientSection', '#topicSection']);
+                    }
+                });
+            }
+
+            function loadClients(serviceId) {
+                const preSelectedClientId = urlParams.get('client_id');
+                $.get(`/backend/client/client_by_services/${serviceId}`)
+                    .done(({ data }) => {
+                        const $client = $('#client').empty().append('<option value="">Select a client</option>');
+                        data.forEach(client => {
+                            const selected = preSelectedClientId == client.id ? 'selected' : '';
+                            $client.append(`<option value="${client.id}" ${selected}>${client.name}</option>`);
+                        });
+                        if (preSelectedClientId) $('#client').trigger('change');
+                    })
+                    .fail(() => $('#client').html('<option>Error loading clients</option>'));
+            }
+
+            function bindClientChange() {
+                $('#client').on('change', function () {
+                    const clientId = $(this).val();
+                    if (clientId) {
+                        loadClientTicketHistory(clientId);
+                        loadTopics($('#service').val());
+                        clearError('#clientSection');
+                    } else {
+                        hideSections(['#topicSection', '#ticketHistorySection']);
+                    }
+                });
+            }
+
+            async function loadClientTicketHistory(clientId) {
+                try {
+                    const response = await fetch(`/backend/ticket/client_ticket_history/${clientId}`);
+                    const responseData = await response.json();
+                    const ticketHistoryDiv = document.getElementById('ticketHistory');
+
+                    if (!responseData?.data || !Array.isArray(responseData.data)) {
+                        throw new Error('Invalid data format received from server');
+                    }
+
+                    showSection('#ticketHistorySection');
+                    if (ticketHistoryDiv) {
+                        renderTicketHistory(responseData.data, clientId);
+                    }
+                } catch (error) {
+                    const ticketHistoryDiv = document.getElementById('ticketHistory');
+                    if (ticketHistoryDiv) {
+                        ticketHistoryDiv.innerHTML = `
+                            <div class="alert alert-danger m-3">
+                                <i class="bi bi-exclamation-triangle-fill"></i> Failed to load ticket history: ${error.message}
+                            </div>
+                        `;
+                    }
+                    hideSection('#ticketHistorySection');
+                }
+            }
+
+            function renderTicketHistory(tickets, clientId) {
+                const ticketHistoryDiv = document.getElementById('ticketHistory');
+
+                if (!ticketHistoryDiv) return;
+
+                if (tickets.length === 0) {
+                    ticketHistoryDiv.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-inbox empty-state-icon"></i>
+                        <p class="empty-state-text">No previous tickets found for this client.</p>
+                      </div>
+                    `;
+                    return;
+                }
+
+                const clientName = tickets[0]?.client?.name || 'Client';
+                const ticketsToShow = tickets.slice(0, 5);
+
+                ticketHistoryDiv.innerHTML = `
+                    <div class="ticket-history-header">
+                      <h3 class="ticket-history-title">
+                        <span class="badge bg-primary client-badge">${clientName}</span>
+                        Recent Tickets
+                      </h3>
+                      <span class="ticket-history-count">${Math.min(tickets.length, 5)} of ${tickets.length}</span>
+                    </div>
+                    <div id="ticketHistoryList"></div>
+                  `;
+
+                const list = document.getElementById('ticketHistoryList');
+                ticketsToShow.forEach(ticket => {
+                    list.appendChild(createTicketItem(ticket));
+                });
+
+                if (tickets.length > 5) {
+                    const viewAll = document.createElement('a');
+                    viewAll.href = `/backend/ticket/client_ticket_history/${clientId}`;
+                    viewAll.className = 'btn btn-sm btn-outline-primary mt-2';
+                    viewAll.innerHTML = 'View all tickets <i class="bi bi-chevron-right"></i>';
+                    ticketHistoryDiv.appendChild(viewAll);
+                }
+            }
+
+            function createTicketItem(ticket) {
+                const priorityClass = ticket.priority?.toLowerCase() || 'low';
+                const statusClass = ticket.status?.toLowerCase() || 'open';
+                const createdDate = ticket.created_at ? new Date(ticket.created_at) : new Date();
+
+                let categoryPath = ticket.topic?.name || 'No topic';
+                if (ticket.subtopic?.name) categoryPath += ` › ${ticket.subtopic.name}`;
+                if (ticket.tertiary_topic?.name) categoryPath += ` › ${ticket.tertiary_topic.name}`;
+
+                const item = document.createElement('div');
+                item.className = 'ticket-history-item mb-3 p-3 rounded border';
+
+                item.innerHTML = `
+                    <div class="ticket-history-item-header d-flex justify-content-between mb-2">
+                        <span class="ticket-number fw-bold">${ticket.ticket_number || 'N/A'}</span>
+                        <span class="ticket-status badge bg-${getStatusColor(ticket.status)}">
+                            ${ticket.status || 'Unknown'}
+                        </span>
+                    </div>
+                    <h5 class="ticket-title mb-2">${ticket.title || 'No title'}</h5>
+                    <div class="ticket-meta d-flex flex-wrap gap-2 mb-2 small text-muted">
+                        <span class="ticket-category">
+                            <i class="bi bi-tag"></i> ${categoryPath}
+                        </span>
+                        <span class="ticket-assignee">
+                            <i class="bi bi-person"></i> ${ticket.assigned_to?.name || 'Unassigned'}
+                        </span>
+                        <span class="ticket-date">
+                            <i class="bi bi-calendar"></i> ${createdDate.toLocaleDateString()}
+                        </span>
+                    </div>
+                    <div class="ticket-description mb-2">
+                        ${ticket.description ? ticket.description : 'No description provided'}
+                    </div>
+                    <div class="ticket-footer d-flex justify-content-between align-items-center">
+                        <span class="ticket-priority badge bg-${priorityClass === 'high' ? 'danger' : priorityClass === 'medium' ? 'warning' : 'secondary'}">
+                            ${ticket.priority || 'Unknown'}
+                        </span>
+                        <span class="ticket-time small text-muted">
+                            Created ${timeAgo(createdDate)}
+                        </span>
+                    </div>
+                `;
+
+                return item;
+            }
+
+
+            function bindTopicChange() {
+                $('#topic').on('change', function () {
+                    const topicId = $(this).val();
+                    if (!topicId) return hideSections(['#subtopicSection', '#dateSection']);
+
+                    loadSubtopics(topicId);
+
+                    const topicName = $(this).find('option:selected').text().toLowerCase();
+                    if (topicName.includes('sms')) {
+                        loadSenderIds($('#client').val());
+                        loadOperators();
+                        showSections(['#senderIdSection', '#operatorSection', '#dateSection']);
+                        hideSection('#paymentChannelSection');
+                        updateDateLabels('SMS Issue Date', 'Please specify when the SMS issue occurred');
+                    } else if (topicName.includes('payment')) {
+                        loadPaymentChannels();
+                        showSections(['#paymentChannelSection', '#dateSection']);
+                        hideSections(['#senderIdSection', '#operatorSection']);
+                        updateDateLabels('Payment Date', 'Please specify when the payment was made');
+                    } else {
+                        hideSections(['#senderIdSection', '#operatorSection', '#dateSection', '#paymentChannelSection']);
+                    }
+
+                    clearError('#topicSection');
+                });
+            }
+
+            function loadTopics(serviceId) {
+                $.get(`/backend/topic/get_by_service/${serviceId}`)
+                    .done(({ data }) => {
+                        const $topic = $('#topic').empty().append('<option value="">Select a topic</option>');
+                        data.forEach(t => $topic.append(`<option value="${t.id}">${t.name}</option>`));
+                        showSection('#topicSection');
+                    })
+                    .fail(() => showAlert('error', 'Failed to load topics'));
+            }
+
+            function bindSubtopicChange() {
+                $('#subtopic').on('change', function () {
+                    const subtopicId = $(this).val();
+                    if (!subtopicId) return hideSections(['#subjectSection']);
+
+                    loadTertiaryTopics(subtopicId);
+                    $('#priority').val('low').trigger('change');
+                    showAlert("info", 'Priority automatically set to "low"');
+                    showSections(['#subjectSection', '#descriptionSection', '#prioritySection', '#attachmentsSection', '#submitSection']);
+                    loadManagers();
+                    clearError('#subtopicSection');
+                });
+            }
+
+            function loadSubtopics(topicId) {
+                $.get(`/backend/subtopic/get_by_topic_id/${topicId}`)
+                    .done(({ data }) => {
+                        const $sub = $('#subtopic').empty().append('<option value="">Select a subtopic</option>');
+                        data.forEach(st => $sub.append(`<option value="${st.id}">${st.name}</option>`));
+                        showSection('#subtopicSection');
+                    })
+                    .fail(() => showAlert('error', 'Failed to load subtopics'));
+            }
+
+            function loadTertiaryTopics(subtopicId) {
+                $.get(`/backend/tertiary/tertiary_topic_by_subtopic_id/${subtopicId}`)
+                    .done(({ data }) => {
+                        const $ter = $('#tertiaryTopic').empty().append('<option value="">Select a tertiary topic (optional)</option>');
+                        data.forEach(t => $ter.append(`<option value="${t.id}">${t.name}</option>`));
+                        showSection('#tertiaryTopicSection');
+                    })
+                    .fail(() => showAlert('error', 'Failed to load tertiary topics'));
+            }
+
+            function loadSenderIds(clientId) {
+                $.get(`/backend/sender_id/active_sender_ids/${clientId}`)
+                    .done(({ data }) => {
+                        const $sel = $('#senderId').empty().append('<option value="">Select sender ID</option>');
+                        data.forEach(s => $sel.append(`<option value="${s.id}">${s.sender_id}</option>`));
+                    });
+            }
+
+            function loadOperators() {
+                $.get('/backend/operator/get_all_operator')
+                    .done(({ data }) => {
+                        const $op = $('#operator').empty().append('<option value="">Select mobile operator(s)</option>');
+                        data.forEach(o => $op.append(`<option value="${o.id}">${o.name}</option>`));
+                    });
+            }
+
+            function loadPaymentChannels() {
+                $.get('/backend/payment_channel/active_payment_channels')
+                    .done(({ data }) => {
+                        const $ch = $('#paymentChannel').empty().append('<option value="">Select a payment channel</option>');
+                        data.forEach(c => $ch.append(`<option value="${c.id}">${c.name}</option>`));
+                    });
+            }
+
+            function loadManagers() {
+                const $manager = $('#manager');
+                $manager.empty().append('<option value="">Loading managers...</option>');
+
+                showSection('#managerSection');
+
+                $.get('/backend/user/active_manager')
+                    .done(({ data }) => {
+                        $manager.empty().append('<option value="">Select a manager</option>');
+
+                        if (data.length > 0) {
+                            // Sort managers by favorite count (most experienced first)
+                            const sortedManagers = data.sort((a, b) => (b.favorite_count || 0) - (a.favorite_count || 0));
+
+                            sortedManagers.forEach(manager => {
+                                $manager.append(
+                                    `<option value="${manager.id}">
+                                        ${manager.name}
+                                        ${manager.favorite_count > 0 ? `(${manager.favorite_count} similar tickets)` : ''}
+                                    </option>`
+                                );
+                            });
+                        } else {
+                            $manager.append('<option value="">No managers available</option>');
+                        }
+                    })
+                    .fail(() => {
+                        $manager.empty().append('<option value="">Error loading managers</option>');
+                        showAlert('error', 'Failed to load managers');
+                    });
+            }
+
+            function initializeFileUpload() {
+                const attachmentsInput = document.getElementById('attachments');
+                const addMoreBtn = document.getElementById('addMoreFiles');
+                const fileCountDisplay = document.getElementById('fileCount');
+                const attachmentPreviews = document.getElementById('attachmentPreviews');
+
+                // Handle file selection
+                attachmentsInput.addEventListener('change', function(event) {
+                    const newFiles = Array.from(event.target.files);
+
+                    // Validate files before adding
+                    const validFiles = newFiles.filter(file => {
+                        if (file.size > MAX_FILE_SIZE) {
+                            showAlert('error', `File "${file.name}" exceeds 2MB limit`);
+                            return false;
+                        }
+                        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+                            showAlert('error', `File type not supported for "${file.name}"`);
+                            return false;
+                        }
+                        return true;
+                    });
+
+                    // Check for duplicates
+                    const uniqueFiles = validFiles.filter(newFile =>
+                        !currentFiles.some(
+                            file => file.name === newFile.name &&
+                                file.size === newFile.size &&
+                                file.lastModified === newFile.lastModified
+                        )
+                    );
+
+                    currentFiles = [...currentFiles, ...uniqueFiles];
+                    updateFileInput();
+                    updateFileDisplay();
+                });
+
+                // Handle "Add More" button click
+                addMoreBtn.addEventListener('click', function() {
+                    const tempInput = document.createElement('input');
+                    tempInput.type = 'file';
+                    tempInput.multiple = true;
+                    tempInput.accept = ALLOWED_FILE_TYPES.join(',');
+
+                    tempInput.addEventListener('change', (e) => {
+                        if (e.target.files.length > 0) {
+                            const event = new Event('change');
+                            Object.defineProperty(event, 'target', {
+                                value: { files: e.target.files },
+                                enumerable: true
+                            });
+                            attachmentsInput.dispatchEvent(event);
+                        }
+                    });
+
+                    tempInput.click();
+                });
+
+                function updateFileInput() {
+                    const dataTransfer = new DataTransfer();
+                    currentFiles.forEach(file => dataTransfer.items.add(file));
+                    attachmentsInput.files = dataTransfer.files;
+                }
+
+                function updateFileDisplay() {
+                    updateFileCount();
+                    renderFilePreviews();
+                }
+
+                function updateFileCount() {
+                    fileCountDisplay.textContent = currentFiles.length;
+                }
+
+                function renderFilePreviews() {
+                    if (currentFiles.length === 0) {
+                        attachmentPreviews.innerHTML = '<p class="text-muted small">No files selected</p>';
+                        return;
+                    }
+
+                    attachmentPreviews.innerHTML = '';
+                    currentFiles.forEach((file, index) => {
+                        const previewDiv = document.createElement('div');
+                        previewDiv.className = 'file-preview d-flex align-items-center border rounded p-2 mb-2 bg-light';
+                        previewDiv.dataset.fileIndex = index;
+
+                        // File icon/thumbnail
+                        const previewIcon = document.createElement('div');
+                        previewIcon.className = 'file-icon me-2';
+
+                        if (file.type.startsWith('image/')) {
+                            const img = document.createElement('img');
+                            img.src = URL.createObjectURL(file);
+                            img.className = 'img-thumbnail';
+                            img.style.maxWidth = '60px';
+                            img.style.maxHeight = '60px';
+                            previewIcon.appendChild(img);
+                        } else {
+                            const icon = document.createElement('i');
+                            icon.className = `bi ${getFileIconClass(file)} fs-3`;
+                            previewIcon.appendChild(icon);
+                        }
+
+                        // File info
+                        const fileInfo = document.createElement('div');
+                        fileInfo.className = 'file-info flex-grow-1';
+                        fileInfo.innerHTML = `
+                            <div class="file-name text-truncate" style="max-width: 200px">${file.name}</div>
+                            <div class="file-size small text-muted">${formatFileSize(file.size)}</div>
+                        `;
+
+                        // Remove button
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'btn btn-sm btn-outline-danger ms-2';
+                        removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                        removeBtn.onclick = (e) => {
+                            e.preventDefault();
+                            currentFiles.splice(index, 1);
+                            updateFileInput();
+                            updateFileDisplay();
+                        };
+
+                        previewDiv.appendChild(previewIcon);
+                        previewDiv.appendChild(fileInfo);
+                        previewDiv.appendChild(removeBtn);
+                        attachmentPreviews.appendChild(previewDiv);
+                    });
+                }
+
+                function getFileIconClass(file) {
+                    if (file.type.startsWith('image/')) return 'bi-file-image text-primary';
+
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    switch (ext) {
+                        case 'pdf': return 'bi-file-earmark-pdf text-danger';
+                        case 'doc':
+                        case 'docx': return 'bi-file-earmark-word text-primary';
+                        case 'xls':
+                        case 'xlsx': return 'bi-file-earmark-excel text-success';
+                        default: return 'bi-file-earmark text-secondary';
+                    }
+                }
+
+                function formatFileSize(bytes) {
+                    if (bytes === 0) return '0 Bytes';
+                    const k = 1024;
+                    const sizes = ['Bytes', 'KB', 'MB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                }
+            }
+
+            function updateDateLabels(label, description) {
+                $('#dateLabel').text(label);
+                $('#dateDescription').text(description);
+            }
+
+            /**
+             * notification channels
+             */
+            function initializeNotificationChannels() {
+                // Initialize channel selection when priority changes
+                $('#priority').on('change', handlePriorityChange);
+
+                // Set up channel card click handlers
+                $('.channel-card').on('click', function() {
+                    if (isCriticalPriority && $(this).data('channel') === 'sms') {
+                        showAlert('warning', 'SMS channel is required for critical priority tickets');
+                        return;
+                    }
+
+                    const channel = $(this).data('channel');
+                    const index = selectedChannels.indexOf(channel);
+
+                    if (index === -1) {
+                        selectedChannels.push(channel);
+                    } else {
+                        selectedChannels.splice(index, 1);
+                    }
+
+                    updateChannelSelectionUI();
+                    updateChannelSelectionSummary();
+                });
+
+                // Set up modal confirm button
+                $('.modal-footer .btn-primary').on('click', function() {
+                    updateChannelSelectionUI();
+                    updateChannelSelectionSummary();
+                });
+            }
+
+            function handlePriorityChange() {
+                const priority = $(this).val();
+                isCriticalPriority = priority === 'critical';
+
+                // Auto-select default channels
+                selectedChannels = ['mail', 'whatsapp', 'database'];
+                if (isCriticalPriority) {
+                    selectedChannels.push('sms');
+                }
+
+                updateChannelSelectionUI();
+                updateChannelSelectionSummary();
+            }
+
+            function updateChannelSelectionUI() {
+                $('.channel-card').each(function() {
+                    const channel = $(this).data('channel');
+                    const isSelected = selectedChannels.includes(channel);
+                    const isLocked = isCriticalPriority && channel === 'sms';
+
+                    $(this).toggleClass('selected', isSelected);
+                    $(this).find('i').toggleClass('text-muted', !isSelected);
+
+                    if (isLocked) {
+                        $(this).addClass('locked');
+                        $(this).find('i').removeClass('text-muted');
+                    } else {
+                        $(this).removeClass('locked');
+                    }
+                });
+
+                // Update hidden input fields for form submission
+                $('#notification_channels_wrapper').html(
+                    selectedChannels.map(channel =>
+                        `<input type="hidden" name="notification_channels[]" value="${channel}">`
+                    ).join('')
+                );
+            }
+
+            function updateChannelSelectionSummary() {
+                let summaryContainer = $('#channelSelectionSummary');
+
+                if (summaryContainer.length === 0) {
+                    summaryContainer = $(`
+                        <div id="channelSelectionSummary" class="mt-2 channel-summary">
+                            <small class="text-muted">Notification channels will be selected automatically</small>
+                        </div>
+                    `);
+                    $('#managerSection').append(summaryContainer);
+                }
+
+                if (selectedChannels.length > 0) {
+                    const channelBadges = selectedChannels.map(channel => {
+                        const isLocked = isCriticalPriority && channel === 'sms';
+                        return `<span class="badge text-white ${isLocked ? 'bg-secondary' : 'bg-primary'} me-1">
+                            ${channel} ${isLocked ? '<i class="bi bi-lock-fill ms-1"></i>' : ''}
+                        </span>`;
+                    }).join('');
+
+                    summaryContainer.html(`
+                        <small class="text-muted">Notification channels:</small>
+                        <div>${channelBadges}</div>
+                        <small class="text-muted click-to-edit" style="cursor: pointer; color: #0d6efd !important;">
+                            <i class="bi bi-pencil-square"></i> Click to edit
+                        </small>
+                    `);
+
+                    $('.click-to-edit').on('click', function() {
+                        $('#channelModal').modal('show');
+                    });
+                } else {
+                    summaryContainer.html('<small class="text-muted">No notification channels selected</small>');
+                }
+            }
+
+
+            function showSection(id) {
+                $(id).removeClass('hidden-section');
+            }
+
+            function hideSection(id) {
+                $(id).addClass('hidden-section');
+            }
+
+            function showSections(ids) {
+                ids.forEach(id => showSection(id));
+            }
+
+            function hideSections(ids) {
+                ids.forEach(id => hideSection(id));
+            }
+
+            function clearError(id) {
+                $(id).removeClass('has-error').find('.error-message').remove();
+            }
+
+            function timeAgo(dateString) {
+                if (!dateString) return '';
+
+                const date = new Date(dateString);
+                const now = new Date();
+                const seconds = Math.floor((now - date) / 1000);
+
+                const intervals = [
+                    { unit: 'year', divisor: 31536000 },
+                    { unit: 'month', divisor: 2592000 },
+                    { unit: 'week', divisor: 604800 },
+                    { unit: 'day', divisor: 86400 },
+                    { unit: 'hour', divisor: 3600 },
+                    { unit: 'minute', divisor: 60 },
+                    { unit: 'second', divisor: 1 }
+                ];
+
+                for (const { unit, divisor } of intervals) {
+                    const interval = Math.floor(seconds / divisor);
+                    if (interval >= 1) {
+                        return `${interval} ${unit}${interval === 1 ? '' : 's'} ago`;
+                    }
+                }
+
+                return 'Just now';
+            }
+
+            function getStatusColor(status) {
+                switch ((status || '').toLowerCase()) {
+                    case 'open': return 'primary';
+                    case 'escalated': return 'danger';
+                    case 'reopen': return 'warning';
+                    case 'resolved': return 'success';
+                    case 'closed': return 'secondary';
+                    default: return 'info';
+                }
+            }
+
+            function showAlert(type = "info", message) {
+                const toastOptions = {
+                    timeOut: 3000,
+                    positionClass: 'toast-bottom-right',
+                    closeButton: true
+                };
+                switch (type) {
+                    case 'success':
+                        toastr.success(message, '', toastOptions);
+                        break;
+                    case 'error':
+                        toastr.error(message, '', toastOptions);
+                        break;
+                    case 'warning':
+                        toastr.warning(message, '', toastOptions);
+                        break;
+                    default:
+                        toastr.info(message, '', toastOptions);
+                }
+            }
+
+            function bindFormSubmit() {
+                // Bind form submission if needed
+            }
+        });
+
+    </script>
 @endpush
