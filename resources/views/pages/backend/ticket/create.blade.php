@@ -1,5 +1,5 @@
 @extends('layouts.backend.app')
-@section('title', 'Add Ticket')
+@section('title', __('label.add_ticket'))
 
 @section('content')
     <div class="container py-5 bg-white">
@@ -10,7 +10,7 @@
 
                     <!-- Service Selection -->
                     <div class="mb-3 form-section visible-section" id="serviceSection">
-                        <label for="service" class="form-label">SaaS App <span class="text-danger">*</span></label>
+                        <label for="service" class="form-label">{{__('label.saas_app')}} <span class="text-danger">*</span></label>
                         <select class="form-control select2-ajax" id="service" name="service"
                                 data-placeholder="Search for a SaaS app..."
                                 data-ajax-url="{{ route('backend.saas_app.search') }}" required>
@@ -24,7 +24,7 @@
 
                     <!-- Client Selection -->
                     <div class="mb-3 form-section hidden-section" id="clientSection">
-                        <label for="client" class="form-label">Client <span class="text-danger">*</span></label>
+                        <label for="client" class="form-label">{{__('label.client')}} <span class="text-danger">*</span></label>
                         <select class="form-select form-control select2" id="client" required >
                             <option value="" >Select a client</option>
                             @if(isset($preSelectedClient))
@@ -33,7 +33,6 @@
                         </select>
                         <div class="form-text" id="clientHistoryText"></div>
                     </div>
-
 
                     <!-- Topic Selection -->
                     <div class="mb-3 form-section hidden-section" id="topicSection">
@@ -78,7 +77,7 @@
 
                     <!-- Subtopic Selection -->
                     <div class="mb-3 form-section hidden-section" id="subtopicSection">
-                        <label for="subtopic" class="form-label">Subtopic <span class="text-danger">*</span></label>
+                        <label for="subtopic" class="form-label">{{__('label.subtopic')}} <span class="text-danger">*</span></label>
                         <select class="form-select select2" id="subtopic" required >
                             <option value="" >Select a subtopic</option>
                         </select>
@@ -94,12 +93,12 @@
 
                     <!-- Ticket Details -->
                     <div class="mb-3 form-section hidden-section" id="subjectSection">
-                        <label for="subject" class="form-label">Subject <span class="text-danger">*</span></label>
+                        <label for="subject" class="form-label">{{__('label.subject')}} </label>
                         <input type="text" class="form-control" id="subject" required>
                     </div>
 
                     <div class="mb-3 form-section hidden-section" id="descriptionSection">
-                        <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                        <label for="description" class="form-label">{{__('label.description')}} </label>
                         <textarea class="form-control" id="description" rows="4" required></textarea>
                     </div>
 
@@ -197,8 +196,8 @@
                         <div id="notification_channels_wrapper"></div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Skip</button>
-                        <button type="button" class="btn btn-primary" data-dismiss="modal">Confirm</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{__('label.skip')}}</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">{{__('label.confirm')}}</button>
                     </div>
                 </div>
             </div>

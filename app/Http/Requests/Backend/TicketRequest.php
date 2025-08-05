@@ -14,8 +14,8 @@ class TicketRequest extends FormRequest
     public function rules()
     {
         $rules = [
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:255',
             'priority' => 'required|in:low,medium,high,critical',
             'attachments.*' => 'nullable|file|max:2048|mimes:jpg,jpeg,png,pdf,doc,docx',
 
@@ -44,8 +44,6 @@ class TicketRequest extends FormRequest
     public function messages()
     {
         return [
-            'title.required' => 'A ticket title is required.',
-            'description.required' => 'A detailed description is required.',
             'priority.required' => 'Please select a priority level.',
             'assigned_to.required' => 'Please assign a user.',
             'saas_app_id.required' => 'Please select the SaaS application.',

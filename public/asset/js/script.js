@@ -822,6 +822,22 @@ document.addEventListener('DOMContentLoaded', function() {
         showSection('tertiaryTopicSection');
         tertiaryTopicSelect.innerHTML = '<option value="" selected disabled>Loading tertiary topics...</option>';
 
+        showSection('subjectSection');
+        showSection('descriptionSection');
+        showSection('prioritySection');
+        showSection('managerSection');
+        showSection('attachmentsSection');
+        showSection('submitSection');
+
+        // Automatically set priority to "low"
+        priorityField.value = "low";
+        toastr.info('Priority automatically set to "low"', '', {
+            timeOut: 3000,
+            positionClass: 'toast-bottom-right'
+        });
+        // Load managers since we're showing the manager section
+        loadManagers();
+
         // Load tertiary topics
         fetch(`/backend/tertiary/tertiary_topic_by_subtopic_id/${selectedSubtopicId}`)
             .then(response => response.json())
@@ -1142,8 +1158,6 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('client_id', clientSelect.value);
         formData.append('topic_id', topicSelect.value);
         formData.append('sub_topic_id', subtopicSelect.value);
-        formData.append('title', subjectField.value);
-        formData.append('description', descriptionField.value);
         formData.append('priority', priorityField.value);
         formData.append('assigned_to', managerSelect.value);
 
@@ -1282,8 +1296,6 @@ document.addEventListener('DOMContentLoaded', function() {
             { element: isWorkingCustomer ? customerNameInput : clientSelect, name: isWorkingCustomer ? 'Customer Name' : 'Client' },
             { element: topicSelect, name: 'Topic' },
             { element: subtopicSelect, name: 'Subtopic' },
-            { element: subjectField, name: 'Subject' },
-            { element: descriptionField, name: 'Description' },
             { element: priorityField, name: 'Priority' },
             { element: managerSelect, name: 'Manager' }
         ];

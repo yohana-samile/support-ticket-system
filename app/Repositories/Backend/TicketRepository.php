@@ -3,9 +3,12 @@
 namespace App\Repositories\Backend;
 use App\Models\Access\Client;
 use App\Models\Access\User;
+use App\Models\SubTopic;
 use App\Models\System\CodeValue;
+use App\Models\TertiaryTopic;
 use App\Models\Ticket\Ticket;
 use App\Models\TicketStatusHistory;
+use App\Models\Topic;
 use App\Notifications\TicketAssignedNotification;
 use App\Notifications\TicketCreatedNotification;
 use App\Notifications\TicketReassignedNotification;
@@ -52,12 +55,30 @@ class TicketRepository extends  BaseRepository {
             } else {
                 $clientId = $data['client_id'];
             }
+
+            $topicName = optional(Topic::query()->find($data['topic_id']))->name;
+            $subtopicName = optional(SubTopic::query()->find($data['sub_topic_id']))->name;
+            if (isset($data['tertiary_topic_id'])) {
+                $tertiaryTopicName = optional(TertiaryTopic::query()->find($data['tertiary_topic_id']))->name;
+            }
+
+            if (empty($data['title'])) {
+                $data['title'] = "Issues regarding {$topicName}"
+                    . (!empty($subtopicName) ? " - {$subtopicName}" : '')
+                    . (!empty($tertiaryTopicName) ? " - {$tertiaryTopicName}" : '');
+            }
+            if (empty($data['description'])) {
+                $data['description'] = "This ticket was created to address an issue related to {$topicName}"
+                    . (!empty($subtopicName) ? ", specifically about {$subtopicName}" : '')
+                    . (!empty($tertiaryTopicName) ? ", and more specifically on {$tertiaryTopicName}" : '') . ".";
+            }
+
             $ticket = $this->query()->create([
                 'title' => $data['title'],
                 'description' => $data['description'],
                 'topic_id' => $data['topic_id'],
                 'sub_topic_id' => $data['sub_topic_id'],
-                'tertiary_topic_id' => $data['tertiary_topic_id'],
+                'tertiary_topic_id' => $data['tertiary_topic_id'] ?? null,
                 'payment_channel_id' => $data['payment_channel_id'] ?? null,
                 'sender_id' => $data['sender_id'] ?? null,
                 'issue_date' => $data['issue_date'] ?? null,
