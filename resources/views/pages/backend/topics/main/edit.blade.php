@@ -13,7 +13,7 @@
                             @csrf
                             @method('PUT')
                             <div class="form-group">
-                                <label for="saas_app_id" class="form-label">{{__('label.saas_application')}}</label>
+                                <label for="saas_app_id" class="form-label">{{__('label.saas_app')}}</label>
                                 <select class="form-control select2-ajax" id="saas_app_id" name="saas_app_id"
                                         data-placeholder="Search for a SaaS app..."
                                         data-ajax-url="{{ route('backend.saas_app.search') }}">
@@ -55,7 +55,7 @@
 
                             <div class="form-group">
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> {{__('label.update_topic')}}
+                                    <i class="fas fa-save"></i> {{__('label.update')}}
                                 </button>
                                 <a href="{{ route('backend.topic.index') }}" class="btn btn-secondary">
                                     <i class="fas fa-times"></i> {{__('label.cancel')}}
@@ -73,11 +73,11 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <strong>{{__('label.saas_application')}}:</strong>
+                            <strong>{{__('label.saas_app')}}:</strong>
                             <span class="text-muted">{{ $topic->saasApp->name ?? 'Not assigned' }}</span>
                         </div>
                         <div class="mb-3">
-                            <strong>{{__('created_at')}}:</strong>
+                            <strong>{{__('label.created_at')}}:</strong>
                             <span class="text-muted">{{ $topic->created_at->format('M d, Y h:i A') }}</span>
                         </div>
                         <div class="mb-3">
@@ -85,7 +85,7 @@
                             <span class="text-muted">{{ $topic->updated_at->format('M d, Y h:i A') }}</span>
                         </div>
                         <div class="mb-3">
-                            <strong>{{__('label.current_status')}}:</strong>
+                            <strong>{{__('label.status')}}:</strong>
                             <span class="badge badge-{{ $topic->is_active ? 'success' : 'danger' }}">
                                 {{ $topic->is_active ? 'Active' : 'Inactive' }}
                             </span>

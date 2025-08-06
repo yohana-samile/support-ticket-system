@@ -56,7 +56,7 @@
                             <span class="text-muted">{{ $sender->sender_id }}</span>
                         </div>
                         <div class="mb-3">
-                            <strong>{{__('created_at')}}:</strong>
+                            <strong>{{__('label.created_at')}}:</strong>
                             <span class="text-muted">{{ $sender->created_at->format('M d, Y h:i A') }}</span>
                         </div>
                         <div class="mb-3">

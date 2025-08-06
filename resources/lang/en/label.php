@@ -107,7 +107,12 @@ return [
     "update_status" => "Update Status",
     "reassign_to" => "Reassign To",
     "reassign" => "Reassign",
-    "select_status" => "Select Status"
+    "select_status" => "Select Status",
+    "topic_information" => "Topic Information",
+    "image_preview" => "Image Preview",
+    "close" => "close",
+    "skip" => "Skip",
+    "confirm" => "Confirm"
 
 
 

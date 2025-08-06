@@ -11,6 +11,33 @@
                 </button>
                 <div class="dropdown-menu dropdown-menu-right p-3" style="width: 300px;" aria-labelledby="filterDropdown">
                     <form id="filterForm" method="GET" action="{{ route('home') }}">
+                        <!-- SaaS App Filter -->
+                        <div class="form-group">
+                            <label for="saas_app">SaaS Application</label>
+                            <select class="form-control select2" id="saas_app" name="saas_app">
+                                <option value="">All Applications</option>
+                                @foreach($saasApps as $app)
+                                    <option value="{{ $app->id }}"
+                                        {{ request('saas_app') == $app->id ? 'selected' : '' }}>
+                                        {{ $app->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="form-group">
+                            <label for="status">Ticket Status</label>
+                            <select class="form-control select2" id="status" name="status">
+                                <option value="">All Statuses</option>
+                                @foreach($statuses as $slug => $status)
+                                    <option value="{{ $slug }}"
+                                        {{ request('status') == $slug ? 'selected' : '' }}>{{ $status['name'] }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <!-- Payment Channel Filter -->
                         <div class="form-group">
                             <label for="payment_channel">Payment Channel</label>
@@ -34,33 +61,6 @@
                                     <option value="{{ $operator->id }}"
                                         {{ request('mobile_operator') == $operator->id ? 'selected' : '' }}>
                                         {{ $operator->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <!-- SaaS App Filter -->
-                        <div class="form-group">
-                            <label for="saas_app">SaaS Application</label>
-                            <select class="form-control select2" id="saas_app" name="saas_app">
-                                <option value="">All Applications</option>
-                                @foreach($saasApps as $app)
-                                    <option value="{{ $app->id }}"
-                                        {{ request('saas_app') == $app->id ? 'selected' : '' }}>
-                                        {{ $app->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <!-- Status Filter -->
-                        <div class="form-group">
-                            <label for="status">Ticket Status</label>
-                            <select class="form-control select2" id="status" name="status">
-                                <option value="">All Statuses</option>
-                                @foreach($statuses as $slug => $status)
-                                    <option value="{{ $slug }}"
-                                        {{ request('status') == $slug ? 'selected' : '' }}>{{ $status['name'] }}
                                     </option>
                                 @endforeach
                             </select>
