@@ -151,9 +151,9 @@
                 <div class="mb-3 form-section hidden-section" id="ticketHistorySection">
                     <div class="ticket-history-container">
                         <div class="ticket-history-header">
-                            <h3 class="ticket-history-title">
-                                Client's Previous Tickets
-                            </h3>
+                            <h4 class="ticket-history-title">
+                                Recent Tickets
+                            </h4>
                             <span class="ticket-history-count">Loading...</span>
                         </div>
                         <div id="ticketHistory" class="ticket-history-list">
@@ -243,7 +243,9 @@
         .hidden-section {
             display: none;
         }
-
+        /**
+        ticket history
+         */
         .ticket-history-container {
             border: 1px solid #dee2e6;
             border-radius: 0.25rem;
@@ -427,13 +429,15 @@
                     const responseData = await response.json();
                     const ticketHistoryDiv = document.getElementById('ticketHistory');
 
-                    if (!responseData?.data || !Array.isArray(responseData.data)) {
+                    const tickets = responseData?.data?.data;
+                    if (!Array.isArray(tickets)) {
                         throw new Error('Invalid data format received from server');
                     }
 
                     showSection('#ticketHistorySection');
+
                     if (ticketHistoryDiv) {
-                        renderTicketHistory(responseData.data, clientId);
+                        renderTicketHistory(tickets, clientId);
                     }
                 } catch (error) {
                     const ticketHistoryDiv = document.getElementById('ticketHistory');
@@ -450,16 +454,16 @@
 
             function renderTicketHistory(tickets, clientId) {
                 const ticketHistoryDiv = document.getElementById('ticketHistory');
-
                 if (!ticketHistoryDiv) return;
 
                 if (tickets.length === 0) {
                     ticketHistoryDiv.innerHTML = `
-                    <div class="empty-state">
-                        <i class="bi bi-inbox empty-state-icon"></i>
-                        <p class="empty-state-text">No previous tickets found for this client.</p>
-                      </div>
-                    `;
+                        <div class="empty-state text-center py-5">
+                            <i class="bi bi-inbox-fill empty-state-icon fs-1 text-muted"></i>
+                            <h4 class="empty-state-title mt-3">No Previous Tickets</h4>
+                            <p class="empty-state-text text-muted">This client hasn't submitted any tickets yet.</p>
+                        </div>
+                        `;
                     return;
                 }
 
@@ -467,15 +471,18 @@
                 const ticketsToShow = tickets.slice(0, 5);
 
                 ticketHistoryDiv.innerHTML = `
-                    <div class="ticket-history-header">
-                      <h3 class="ticket-history-title">
-                        <span class="badge bg-primary client-badge">${clientName}</span>
-                        Recent Tickets
-                      </h3>
-                      <span class="ticket-history-count">${Math.min(tickets.length, 5)} of ${tickets.length}</span>
+                    <div class="ticket-history-header d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="ticket-history-title mb-0 d-flex align-items-center gap-2">
+                            <span class="badge bg-primary-subtle text-primary-emphasis client-badge">
+                                <i class="bi bi-person-circle me-1"></i> ${clientName}
+                            </span>
+                        </h4>
+                        <span class="ticket-history-count badge bg-light text-dark">
+                            ${Math.min(tickets.length, 5)}/${tickets.length}
+                        </span>
                     </div>
-                    <div id="ticketHistoryList"></div>
-                  `;
+                    <div id="ticketHistoryList" class="ticket-list"></div>
+                `;
 
                 const list = document.getElementById('ticketHistoryList');
                 ticketsToShow.forEach(ticket => {
@@ -484,58 +491,128 @@
 
                 if (tickets.length > 5) {
                     const viewAll = document.createElement('a');
-                    viewAll.href = `/backend/ticket/client_ticket_history/${clientId}`;
-                    viewAll.className = 'btn btn-sm btn-outline-primary mt-2';
-                    viewAll.innerHTML = 'View all tickets <i class="bi bi-chevron-right"></i>';
+                    viewAll.href = `/backend/ticket/client_ticket_history/${client?.uid}`;
+                    viewAll.target = '_blank';
+                    viewAll.className = 'btn btn-outline-primary w-100 mt-3 d-flex align-items-center justify-content-center gap-2';
+                    viewAll.innerHTML = 'View All Tickets <i class="bi bi-arrow-right"></i>';
                     ticketHistoryDiv.appendChild(viewAll);
                 }
             }
 
             function createTicketItem(ticket) {
-                const priorityClass = ticket.priority?.toLowerCase() || 'low';
-                const statusClass = ticket.status?.toLowerCase() || 'open';
                 const createdDate = ticket.created_at ? new Date(ticket.created_at) : new Date();
+                const isResolved = ticket.status?.toLowerCase() === 'resolved';
 
-                let categoryPath = ticket.topic?.name || 'No topic';
+                let categoryPath = ticket.topic?.name;
                 if (ticket.subtopic?.name) categoryPath += ` › ${ticket.subtopic.name}`;
                 if (ticket.tertiary_topic?.name) categoryPath += ` › ${ticket.tertiary_topic.name}`;
 
                 const item = document.createElement('div');
-                item.className = 'ticket-history-item mb-3 p-3 rounded border';
+                item.className = `ticket-history-item mb-3 p-3 rounded-3 border ${isResolved ? 'bg-light' : 'bg-white'} shadow-sm`;
+                item.style.transition = 'all 0.2s ease';
+                item.style.cursor = 'pointer';
+
+                // hover effect
+                item.onmouseenter = () => item.style.transform = 'translateY(-2px)';
+                item.onmouseleave = () => item.style.transform = '';
 
                 item.innerHTML = `
-                    <div class="ticket-history-item-header d-flex justify-content-between mb-2">
-                        <span class="ticket-number fw-bold">${ticket.ticket_number || 'N/A'}</span>
-                        <span class="ticket-status badge bg-${getStatusColor(ticket.status)}">
-                            ${ticket.status || 'Unknown'}
+                    <div class="ticket-history-item-header d-flex justify-content-between align-items-center mb-2">
+                        <span class="ticket-number fw-semibold text-primary">
+                            <i class="bi bi-ticket-detailed me-1"></i> ${ticket.ticket_number}
+                        </span>
+                        <span class="ticket-status badge ${getStatusColor(ticket.status)}">
+                            ${ticket.status}
                         </span>
                     </div>
-                    <h5 class="ticket-title mb-2">${ticket.title || 'No title'}</h5>
-                    <div class="ticket-meta d-flex flex-wrap gap-2 mb-2 small text-muted">
-                        <span class="ticket-category">
-                            <i class="bi bi-tag"></i> ${categoryPath}
-                        </span>
-                        <span class="ticket-assignee">
-                            <i class="bi bi-person"></i> ${ticket.assigned_to?.name || 'Unassigned'}
-                        </span>
-                        <span class="ticket-date">
-                            <i class="bi bi-calendar"></i> ${createdDate.toLocaleDateString()}
+
+                    <h5 class="ticket-title mb-2 text-truncate" title="${ticket.title || 'No subject'}">
+                        ${ticket.title || 'No subject provided'}
+                    </h5>
+
+                    <div class="ticket-meta d-flex flex-wrap gap-2 mb-3 text-muted small">
+                        <span class="ticket-category d-flex align-items-center">
+                            <i class="bi bi-folder me-1"></i> ${categoryPath || 'Uncategorized'}
                         </span>
                     </div>
-                    <div class="ticket-description mb-2">
-                        ${ticket.description ? ticket.description : 'No description provided'}
-                    </div>
-                    <div class="ticket-footer d-flex justify-content-between align-items-center">
-                        <span class="ticket-priority badge bg-${priorityClass === 'high' ? 'danger' : priorityClass === 'medium' ? 'warning' : 'secondary'}">
-                            ${ticket.priority || 'Unknown'}
+                    <p class="d-flex align-items-center gap-3 flex-wrap mb-0">
+                        <span class="ticket-assignee d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-person"></i>
+                            ${ticket.assigned_to?.name || 'Unassigned'}
                         </span>
-                        <span class="ticket-time small text-muted">
-                            Created ${timeAgo(createdDate)}
+                        <span class="ticket-date d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-calendar"></i>
+                            ${formatTicketDate(ticket.created_at)}
+                        </span>
+                    </p>
+
+                    <div class="ticket-description mb-3 text-muted">
+                        ${ticket.description ? truncateText(ticket.description, 100) : 'No description provided'}
+                    </div>
+
+                    <div class="ticket-footer d-flex justify-content-between align-items-center text-white">
+                        <span class="ticket-priority badge ${getPriorityBadgeClass(ticket.priority)}">
+                            <i class="bi bi-exclamation-circle me-1"></i> ${ticket.priority}
+                        </span>
+                        <span class="ticket-time text-white badge ${getTimeBadgeClass(ticket.created_at)}">
+                            <i class="bi bi-clock me-1"></i> ${timeAgo(createdDate)}
                         </span>
                     </div>
                 `;
 
+                // click handler to view ticket details
+                item.addEventListener('click', () => {
+                    window.location.href = `/backend/ticket/view/${ticket.uid}`;
+                });
+
                 return item;
+            }
+            function truncateText(text, maxLength) {
+                return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+            }
+            function getPriorityBadgeClass(priority) {
+                const priorityLower = priority?.toLowerCase() || '';
+                switch(priorityLower) {
+                    case 'high': return 'bg-danger text-danger-fg';
+                    case 'medium': return 'bg-warning text-warning-fg';
+                    case 'low': return 'bg-success text-success-fg';
+                    case 'critical': return 'bg-danger text-white-fg';
+                    default: return 'bg-light text-dark';
+                }
+            }
+            function getTimeBadgeClass(dateString) {
+                if (!dateString) return 'bg-dark';
+
+                const now = new Date();
+                const ticketDate = new Date(dateString);
+                const diffInDays = Math.abs(now - ticketDate) / (24 * 60 * 60 * 1000);
+
+                if (diffInDays < 1) return 'bg-danger';
+                if (diffInDays < 7) return 'bg-primary';
+                return 'bg-dark';
+            }
+            function formatTicketDate(dateString) {
+                if (!dateString) return 'Unknown date';
+
+                const now = new Date();
+                const ticketDate = new Date(dateString);
+                const diffInHours = Math.abs(now - ticketDate) / 36e5;
+
+                if (ticketDate.toDateString() === now.toDateString()) {
+                    if (diffInHours < 1) {
+                        const mins = Math.floor(diffInHours * 60);
+                        return `<span class="date-today recent-highlight">${mins}m ago</span>`;
+                    }
+                    return `<span class="date-today">Today at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+                }
+
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                if (ticketDate.toDateString() === yesterday.toDateString()) {
+                    return `<span class="date-yesterday">Yesterday at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+                }
+
+                return ticketDate.toLocaleDateString([], {month: 'short', day: 'numeric', year: 'numeric'});
             }
 
 
