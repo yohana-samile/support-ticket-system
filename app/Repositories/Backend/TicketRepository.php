@@ -45,9 +45,9 @@ class TicketRepository extends  BaseRepository {
     public function store(array $data) {
         return DB::transaction(function() use($data) {
             $status = CodeValue::query()->where('reference', 'STATUS01')->value('name');
-            if (isset($data['customer_name'])) {
+            if (isset($data['client_name'])) {
                 $client = Client::query()->create([
-                    "name" =>  $data['customer_name'],
+                    "name" =>  $data['client_name'],
                    "email" =>  fake()->email,
                    "saas_app_id" =>  $data['saas_app_id'],
                 ]);
@@ -294,7 +294,7 @@ class TicketRepository extends  BaseRepository {
                     $this->notifyForNewTicket($user, $ticket);
                     break;
                 case 'whatsapp':
-                    $this->sendTicketNotification($user, $ticket);
+                    //$this->sendTicketNotification($user, $ticket);
                     break;
             }
         }

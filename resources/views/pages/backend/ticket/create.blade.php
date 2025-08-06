@@ -410,14 +410,20 @@
             // Core Functions
             function initialize() {
                 initializeSelect2();
-                bindEventHandlers();
+                elements.service.off('change.ticket').on('change.ticket', handleServiceChange);
+                elements.client.off('change.ticket').on('change.ticket', handleClientChange);
+                elements.topic.off('change.ticket').on('change.ticket', handleTopicChange);
+                elements.subtopic.off('change.ticket').on('change.ticket', handleSubtopicChange);
+                elements.priority.off('change.ticket').on('change.ticket', handlePriorityChange);
+
                 initializeFileUpload();
                 initializeNotificationChannels();
+                bindFormSubmit();
                 $('#clientName').on('input', handleClientNameInput);
 
                 if (state.preSelectedServiceId) {
-                    loadClients(state.preSelectedServiceId);
-                    loadServices(state.preSelectedServiceId);
+                    // Load without triggering change
+                    fetchPreselectedService(state.preSelectedServiceId);
                 }
             }
 
@@ -533,18 +539,14 @@
 
                     // Toggle between client select and client name input
                     if (state.isWorkingCustomer) {
-                        // Hide Select2 properly
                         $('#client').next('.select2-container').hide();
                         $('#client').addClass('hidden-section').prop('required', false);
                         $('#clientNameInputSection').removeClass('hidden-section');
-                        // Clear any existing topic selection
                         hideSections(['#topicSection', '#ticketHistorySection']);
                     } else {
-                        // Show Select2 properly
                         $('#client').next('.select2-container').show();
                         $('#client').removeClass('hidden-section').prop('required', true);
                         $('#clientNameInputSection').addClass('hidden-section');
-                        // Clear the client name input
                         $('#clientName').val('');
                     }
                 } else {
@@ -1338,6 +1340,232 @@
 
                 const spinner = document.getElementById(`${el.id}-spinner`);
                 if (spinner) spinner.remove();
+            }
+
+            /**
+             * ticket data submission
+             */
+            function bindFormSubmit() {
+                $('#ticketForm').on('submit', function (e) {
+                    e.preventDefault();
+                    const form = this;
+
+                    const submitBtn = document.getElementById('submitBtn');
+                    const submitText = document.getElementById('submitText');
+                    const submitSpinner = document.getElementById('submitSpinner');
+
+                    if (!validateForm()) {
+                        return;
+                    }
+
+                    submitBtn.disabled = true;
+                    submitText.textContent = 'Creating Ticket...';
+                    submitSpinner.style.display = 'inline-block';
+
+                    // Prepare form data
+                    const formData = new FormData();
+                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+                    // Get all values properly
+                    formData.append('saas_app_id', $('#service').val());
+                    formData.append('topic_id', $('#topic').val());
+                    formData.append('sub_topic_id', $('#subtopic').val());
+                    formData.append('priority', $('#priority').val());
+                    formData.append('title', $('#subject').val());
+                    formData.append('description', $('#description').val());
+                    formData.append('assigned_to', $('#manager').val());
+
+                    // Handle client differently based on service type
+                    if (state.isWorkingCustomer) {
+                        const clientName = $('#clientName').val().trim();
+                        formData.append('client_name', clientName);
+                    } else {
+                        const clientId = $('#client').val();
+                        formData.append('client_id', clientId);
+                    }
+
+                    // Add conditional fields
+                    const issueDate = $('#issueDate').val();
+                    if (issueDate) {
+                        formData.append('issue_date', issueDate);
+                    }
+
+                    const tertiaryTopic = $('#tertiaryTopic').val();
+                    if (tertiaryTopic) {
+                        formData.append('tertiary_topic_id', tertiaryTopic);
+                    }
+
+                    if (!document.getElementById('senderIdSection').classList.contains('hidden-section')) {
+                        formData.append('sender_id', $('#senderId').val());
+
+                        const selectedOperators = $('#operator').val() || [];
+                        selectedOperators.forEach(operatorId => {
+                            formData.append('operator[]', operatorId);
+                        });
+                    }
+
+                    if (!document.getElementById('paymentChannelSection').classList.contains('hidden-section')) {
+                        formData.append('payment_channel_id', $('#paymentChannel').val());
+                    }
+
+                    // Add notification channels
+                    state.selectedChannels.forEach((channel, index) => {
+                        formData.append(`notification_channels[${index}]`, channel);
+                    });
+
+                    // Add attachments
+                    const files = elements.attachments.files;
+                    for (let i = 0; i < files.length; i++) {
+                        formData.append('attachments[]', files[i]);
+                    }
+
+                    fetch('/backend/ticket/store', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                        .then(async response => {
+                            const data = await response.json();
+                            if (!response.ok) {
+                                if (data.errors) {
+                                    const errorMessages = Object.values(data.errors).flat().join('<br>');
+                                    throw new Error(errorMessages);
+                                }
+                                throw new Error(data.message || 'Network response was not ok');
+                            }
+                            return data;
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                showAlert("success", data.message || 'Ticket created successfully!');
+                                resetForm(form);
+                            } else {
+                                throw new Error(data.message || 'Failed to create ticket');
+                            }
+                        })
+                        .catch(error => {
+                            const errors = error.message.split('<br>');
+                            if (errors.length > 1) {
+                                errors.forEach(err => toastr.error(err));
+                            } else {
+                                showAlert("error", error.message || 'Error creating ticket');
+                            }
+                        })
+                        .finally(() => {
+                            submitBtn.disabled = false;
+                            submitText.textContent = 'Create Ticket';
+                            submitSpinner.style.display = 'none';
+                        });
+                });
+            }
+
+
+            function validateForm() {
+                let isValid = true;
+
+                // Validate service
+                if (!$('#service').val()) {
+                    showAlert('error', 'Please select a service');
+                    $('#service').focus();
+                    isValid = false;
+                }
+
+                // Validate client based on service type
+                if (state.isWorkingCustomer) {
+                    if (!$('#clientName').val().trim()) {
+                        showAlert('error', 'Please enter client name for Working Customer');
+                        $('#clientName').focus();
+                        isValid = false;
+                    }
+                } else if (!$('#client').val()) {
+                    showAlert('error', 'Please select a client');
+                    $('#client').focus();
+                    isValid = false;
+                }
+
+                // Validate other required fields
+                const requiredFields = [
+                    { element: $('#topic'), name: 'Topic' },
+                    { element: $('#subtopic'), name: 'Subtopic' },
+                    { element: $('#priority'), name: 'Priority' },
+                    { element: $('#manager'), name: 'Manager' },
+                ];
+
+                requiredFields.forEach(field => {
+                    if (!field.element.val()) {
+                        showAlert('error', `Please provide ${field.name}`);
+                        if (isValid) field.element.focus(); // Only focus first invalid field
+                        isValid = false;
+                    }
+                });
+
+                return isValid;
+            }
+
+            /**
+             * Clear form after successful submission
+             */
+            function resetForm(form) {
+                // Prevent any recursive triggers
+                $('.select2').off('change');
+
+                // Reset the basic form
+                form.reset();
+
+                // Reset state
+                state.currentFiles = [];
+                state.selectedChannels = ['mail', 'whatsapp', 'database'];
+                state.isCriticalPriority = false;
+                state.isWorkingCustomer = false;
+
+                // Reset UI elements
+                updateFileDisplay();
+                updateChannelSelection();
+
+                // Clear inputs
+                $('#clientName').val('');
+                $('#subject').val('');
+                $('#description').val('');
+
+                // Reset Select2 dropdowns carefully
+                $('.select2').each(function() {
+                    const $el = $(this);
+                    if ($el.attr('id') !== 'service' || !state.preSelectedServiceId) {
+                        $el.val(null).trigger('change.select2');
+                    }
+                });
+
+                // Reset priority
+                $('#priority').val('low').trigger('change');
+
+                hideSections([
+                    '#clientSection',
+                    '#topicSection',
+                    '#subtopicSection',
+                    '#tertiaryTopicSection',
+                    '#subjectSection',
+                    '#descriptionSection',
+                    '#prioritySection',
+                    '#attachmentsSection',
+                    '#ticketHistorySection',
+                    '#senderIdSection',
+                    '#operatorSection',
+                    '#paymentChannelSection',
+                    '#dateSection',
+                    '#managerSection',
+                    '#submitSection'
+                ]);
+
+                showSection('#serviceSection');
+
+                // Rebind event handlers
+                setTimeout(() => {
+                    elements.service.off('change').on('change', handleServiceChange);
+                    elements.client.off('change').on('change', handleClientChange);
+                }, 100);
             }
         });
     </script>
