@@ -31,7 +31,7 @@
 <body id="page-top">
 
 <div id="wrapper">
-    <ul id="sidebar" class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion">
+    <ul id="sidebar" class="navbar-nav bg-white text-dark sidebar-light accordion border-end sidebar">
         <a  href="{{ route('home') }}" class="sidebar-brand d-flex align-items-center justify-content-center">
             <div class="sidebar-brand-text mx-3">Ticketing System</div>
         </a>

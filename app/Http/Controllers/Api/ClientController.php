@@ -28,8 +28,9 @@ class ClientController extends Controller
         $rules = $isBulk ? [
             // Bulk insertion rules
             'clients' => 'required|array',
+            'clients.*.external_id' => 'required|max:255',
             'clients.*.name' => 'required|string|max:255',
-            'clients.*.email' => 'required|email|unique:clients,email',
+            'clients.*.email' => 'required|email|distinct',
             'clients.*.phone' => 'nullable|string|max:20',
             'clients.*.saas_app_name' => 'required|exists:saas_apps,name',
             'clients.*.is_active' => 'nullable|boolean',
@@ -38,6 +39,7 @@ class ClientController extends Controller
         ] : [
             // Single insertion rules
             'name' => 'required|string|max:255',
+            'external_id' => 'required|max:255',
             'email' => 'required|email|unique:clients,email',
             'phone' => 'nullable|string|max:20',
             'saas_app_name' => 'required|exists:saas_apps,name',
@@ -49,6 +51,7 @@ class ClientController extends Controller
         $messages = [
             'name.required' => __('validation.name_required'),
             'name.string' => 'The name must be a string.',
+            'external_id.required' => 'External id is required',
             'name.max' => 'The name may not be greater than 255 characters.',
             'email.required' => 'The email field is required.',
             'email.email' => 'The email must be a valid email address.',
@@ -86,7 +89,13 @@ class ClientController extends Controller
 
                 $password = $this->clientRepo->generatePassword();
 
-                $client = Client::create([
+                $client = Client::updateOrCreate(
+                    [
+                        'external_id' => $item['external_id'],
+                        'email' => $item['email'],
+                        'saas_app_id' => $saasApp->id,
+                    ],
+                    [
                     'name' => $item['name'],
                     'email' => $item['email'],
                     'phone' => $item['phone'] ?? null,

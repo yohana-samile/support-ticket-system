@@ -1,228 +1,120 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const operatorChoices = new Choices('#operator', {
-        removeItemButton: true,
-        placeholder: true,
-        searchEnabled: true,
-        shouldSort: false,
-        duplicateItemsAllowed: false
-    });
-    const form = document.getElementById('ticketForm');
-    const serviceSelect = document.getElementById('service');
-    const clientSelect = document.getElementById('client');
-    const topicSelect = document.getElementById('topic');
-    const subtopicSelect = document.getElementById('subtopic');
-    const tertiaryTopicSelect = document.getElementById('tertiaryTopic');
-    const managerSelect = document.getElementById('manager');
-    const ticketHistoryDiv = document.getElementById('ticketHistory');
-    const attachmentsInput = document.getElementById('attachments');
-    const attachmentPreviews = document.getElementById('attachmentPreviews');
-    const senderIdSelect = document.getElementById('senderId');
-    const operatorSelect = document.getElementById('operator');
-    const paymentChannelSelect = document.getElementById('paymentChannel');
-    const subjectField = document.getElementById('subject');
-    const descriptionField = document.getElementById('description');
-    const priorityField = document.getElementById('priority');
-    let selectedChannels = [];
-    let isCriticalPriority = false;
+$(document).ready(function () {
+    // Constants and Configuration
+    const config = {
+        MAX_FILE_SIZE: 2 * 1024 * 1024, // 2MB
+        ALLOWED_FILE_TYPES: [
+            'image/jpeg',
+            'image/png',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ]
+    };
 
-    // State to track selected values
-    let selectedServiceId = null;
-    let selectedClientId = null;
-    let selectedTopicId = null;
-    let selectedSubtopicId = null;
+    // State Management
+    const state = {
+        currentFiles: [],
+        selectedChannels: [],
+        isCriticalPriority: false,
+        preSelectedServiceId: new URLSearchParams(window.location.search).get('saas_app_id'),
+        preSelectedClientId: new URLSearchParams(window.location.search).get('client_id'),
+        isWorkingCustomer: false
+    };
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const preSelectedServiceId = urlParams.get('saas_app_id');
-    if (preSelectedServiceId) {
-        // Trigger the service change handler immediately
-        serviceSelect.value = preSelectedServiceId;
-        handleServiceChange();
-        $(serviceSelect).trigger('change');
+    // DOM Elements
+    const elements = {
+        service: $('#service'),
+        client: $('#client'),
+        clientName: $('#clientName'),
+        topic: $('#topic'),
+        subtopic: $('#subtopic'),
+        tertiaryTopic: $('#tertiaryTopic'),
+        priority: $('#priority'),
+        attachments: document.getElementById('attachments'),
+        addMoreBtn: document.getElementById('addMoreFiles'),
+        fileCountDisplay: document.getElementById('fileCount'),
+        attachmentPreviews: document.getElementById('attachmentPreviews'),
+        ticketHistory: document.getElementById('ticketHistory')
+    };
+
+    // Initialize the application
+    initialize();
+
+    if (state.preSelectedServiceId) {
+        elements.service.val(state.preSelectedServiceId).trigger('change');
     }
 
-    // Initialize the form
-    loadServices(preSelectedServiceId);
+    // Core Functions
+    function initialize() {
+        initializeSelect2();
+        elements.service.off('change.ticket').on('change.ticket', handleServiceChange);
+        elements.client.off('change.ticket').on('change.ticket', handleClientChange);
+        elements.topic.off('change.ticket').on('change.ticket', handleTopicChange);
+        elements.subtopic.off('change.ticket').on('change.ticket', handleSubtopicChange);
+        elements.priority.off('change.ticket').on('change.ticket', handlePriorityChange);
 
-    function autoSelectChannel() {
-        selectedChannels = [];
-        $('.channel-card').removeClass('border border-primary');
+        initializeFileUpload();
+        initializeNotificationChannels();
+        bindFormSubmit();
+        $('#clientName').on('input', handleClientNameInput);
 
-        // Always select email and WhatsApp
-        selectedChannels.push('mail', 'whatsapp', 'database');
-
-        // Add SMS for critical priority
-        if (isCriticalPriority) {
-            selectedChannels.push('sms');
-        }
-
-        // Update UI to reflect selections
-        updateChannelSelectionUI();
-        updateChannelSelectionSummary();
-    }
-
-    function updateChannelSelectionUI() {
-        $('.channel-card').each(function() {
-            const channel = $(this).data('channel');
-            if (selectedChannels.includes(channel)) {
-                $(this).addClass('border border-primary');
-            } else {
-                $(this).removeClass('border border-primary');
-            }
-        });
-
-        // Update hidden inputs
-        $('#notification_channels_wrapper').html('');
-        selectedChannels.forEach(channel => {
-            $('#notification_channels_wrapper').append(
-                `<input type="hidden" name="notification_channels[]" value="${channel}">`
-            );
-        });
-    }
-
-    // Update the channel card click handler to allow user modifications
-    $('.channel-card').on('click', function() {
-        const channel = $(this).data('channel');
-
-        // Don't allow removing email for critical tickets
-        if (isCriticalPriority && channel === 'sms') {
-            toastr.warning('SMS is required for critical priority tickets');
-            return;
-        }
-
-        // Toggle selection
-        if (selectedChannels.includes(channel)) {
-            selectedChannels = selectedChannels.filter(c => c !== channel);
-        } else {
-            selectedChannels.push(channel);
-        }
-
-        // Update UI
-        $(this).toggleClass('border border-primary');
-        updateChannelSelectionSummary();
-
-        // Update hidden inputs
-        $('#notification_channels_wrapper').html('');
-        selectedChannels.forEach(channel => {
-            $('#notification_channels_wrapper').append(
-                `<input type="hidden" name="notification_channels[]" value="${channel}">`
-            );
-        });
-    });
-
-    managerSelect.addEventListener('change', function() {
-        if (this.value) {
-            autoSelectChannel();
-        } else {
-            resetChannelSelections();
-        }
-    });
-
-    // Event listeners
-    serviceSelect.addEventListener('change', handleServiceChange);
-    clientSelect.addEventListener('change', handleClientChange);
-    topicSelect.addEventListener('change', handleTopicChange);
-    subtopicSelect.addEventListener('change', handleSubtopicChange);
-    form.addEventListener('submit', handleFormSubmit);
-    attachmentsInput.addEventListener('change', handleFileSelect);
-    tertiaryTopicSelect.addEventListener('change', handleTertiaryTopicChange);
-    subjectField.addEventListener('input', handleSubjectInput);
-    descriptionField.addEventListener('input', handleDescriptionInput);
-    priorityField.addEventListener('change', handlePriorityChange);
-
-    function showChannelModal() {
-        $('#channelModal').modal('show');
-    }
-    function resetChannelSelections() {
-        selectedChannels = [];
-        isCriticalPriority = false;
-        $('.channel-card').removeClass('border border-primary');
-        $('#notification_channels_wrapper').html('');
-        updateChannelSelectionSummary();
-    }
-    function updateChannelSelectionSummary() {
-        const summaryContainer = document.getElementById('channelSelectionSummary');
-        if (!summaryContainer) {
-            const managerSection = document.getElementById('managerSection');
-            const summaryDiv = document.createElement('div');
-            summaryDiv.id = 'channelSelectionSummary';
-            summaryDiv.className = 'mt-2 channel-summary';
-            managerSection.appendChild(summaryDiv);
-        }
-
-        const summaryElement = document.getElementById('channelSelectionSummary');
-        if (selectedChannels.length > 0) {
-            const channelBadges = selectedChannels.map(channel =>
-                `<span class="badge bg-primary me-1">${channel}</span>`
-            ).join('');
-            summaryElement.innerHTML = `
-                <small class="text-muted">Notification channels:</small>
-                <div>${channelBadges}</div>
-                <small class="text-muted click-to-edit" style="cursor: pointer; color: #0d6efd !important;">
-                    <i class="bi bi-pencil-square"></i> Click to edit
-                </small>
-            `;
-
-            // Add click handler to show modal for editing
-            $('.click-to-edit').on('click', function() {
-                $('#channelModal').modal('show');
-            });
-        } else {
-            summaryElement.innerHTML = `
-            <small class="text-muted">No notification channels selected</small>
-        `;
+        if (state.preSelectedServiceId) {
+            // Load without triggering change
+            fetchPreselectedService(state.preSelectedServiceId);
         }
     }
 
-    $('#channelModal .btn-primary').on('click', function() {
-        $('#channelModal').modal('hide');
-    });
-
-    // Helper functions for section visibility
-    function showSection(sectionId) {
-        const section = document.getElementById(sectionId);
-        section.classList.remove('hidden-section');
-        section.classList.add('visible-section');
+    function bindEventHandlers() {
+        elements.service.on('change', handleServiceChange);
+        elements.client.on('change', handleClientChange);
+        elements.topic.on('change', handleTopicChange);
+        elements.subtopic.on('change', handleSubtopicChange);
+        elements.priority.on('change', handlePriorityChange);
     }
 
-    function hideSection(sectionId) {
-        const section = document.getElementById(sectionId);
-        section.classList.remove('visible-section');
-        section.classList.add('hidden-section');
-    }
+    // Select2 Initialization
+    function initializeSelect2() {
+        $('.select2').select2({ width: '100%' });
 
-    function resetSelect(selectElement, placeholder = 'Select an option') {
-        selectElement.innerHTML = `<option value="" selected disabled>${placeholder}</option>`;
-    }
-    // Load services
-    function loadServices(preSelectedId = null) {
-        const serviceSelect = $('#service');
-        const serviceSelectElement = serviceSelect[0];
-        showLoading(serviceSelectElement);
-
-        // Destroy existing Select2 instance if it exists
-        if (serviceSelect.hasClass('select2-hidden-accessible')) {
-            serviceSelect.select2('destroy');
-        }
-
-        // Clear any existing options
-        serviceSelect.empty().append('<option value=""></option>');
-
-        // Initialize Select2
-        serviceSelect.select2({
+        $('.select2-ajax').select2({
+            width: '100%',
             ajax: {
-                url: serviceSelect.data('ajax-url'),
+                url: elements.service.data('ajax-url'),
+                dataType: 'json',
+                delay: 250,
+                data: params => ({ search: params.term, page: params.page }),
+                processResults: (data) => ({
+                    results: data.data,
+                    pagination: { more: data.next_page_url !== null }
+                }),
+                cache: true
+            },
+            minimumInputLength: 1,
+            templateResult: d => d.loading ? d.text : $('<div>').text(d.name),
+            templateSelection: d => d.name || d.text
+        });
+    }
+
+    // Service Related Functions
+    function loadServices(preSelectedServiceId = null) {
+        showLoading(elements.service[0]);
+        elements.service.empty().append('<option value=""></option>');
+
+        elements.service.select2({
+            ajax: {
+                url: elements.service.data('ajax-url'),
                 dataType: 'json',
                 delay: 250,
                 data: function(params) {
                     return {
                         search: params.term,
                         page: params.page || 1,
-                        id: preSelectedId // Include the preselected ID in requests
+                        id: preSelectedServiceId
                     };
                 },
                 processResults: function(data, params) {
                     params.page = params.page || 1;
-                    hideLoading(serviceSelectElement);
+                    hideLoading(elements.service[0]);
                     return {
                         results: data.data.map(item => ({
                             id: item.id,
@@ -236,695 +128,505 @@ document.addEventListener('DOMContentLoaded', function() {
                 cache: true
             },
             minimumInputLength: 2,
-            placeholder: serviceSelect.data('placeholder'),
+            placeholder: elements.service.data('placeholder'),
             allowClear: true,
-            escapeMarkup: function(markup) { return markup; }
-        }).on('select2:select', function(e) {
-            handleServiceChange();
-        });
+            escapeMarkup: markup => markup
+        }).on('select2:select', handleServiceChange);
 
-        // Handle preselected service
-        if (preSelectedId) {
-            // console.log("preSelectedServiceId ", preSelectedId);
-
-            // First try to find if the option already exists
-            if (serviceSelect.find(`option[value="${preSelectedId}"]`).length) {
-                serviceSelect.val(preSelectedId).trigger('change');
-                handleServiceChange();
-                hideLoading(serviceSelectElement);
-            } else {
-                // Fetch the specific service
-                $.ajax({
-                    url: serviceSelect.data('ajax-url'),
-                    data: {
-                        search: '',
-                        id: preSelectedId,
-                        specific: true // Add this to ensure you get exactly what you requested
-                    },
-                    dataType: 'json'
-                }).done(function(data) {
-                    if (data.data && data.data.length) {
-                        const service = data.data.find(item => item.id == preSelectedId);
-
-                        if (!service) {
-                            // console.error('Requested service not found in response', {
-                            //     requestedId: preSelectedId,
-                            //     returnedData: data.data
-                            // });
-                            hideLoading(serviceSelectElement);
-                            return;
-                        }
-
-                        // console.log("Creating option for service:", service);
-                        const option = new Option(service.name, service.id, true, true);
-                        serviceSelect.append(option).trigger('change');
-                        handleServiceChange();
-                    }
-                    hideLoading(serviceSelectElement);
-                }).fail(function(error) {
-                    // console.error('Failed to load preselected service:', error);
-                    hideLoading(serviceSelectElement);
-                });
-            }
+        if (preSelectedServiceId) {
+            fetchPreselectedService(preSelectedServiceId);
         } else {
-            setTimeout(() => {
-                hideLoading(serviceSelectElement);
-            }, 500);
+            setTimeout(() => hideLoading(elements.service[0]), 500);
         }
     }
 
-    // When service is selected, load clients
+    function fetchPreselectedService(serviceId) {
+        if (elements.service.find(`option[value="${serviceId}"]`).length) {
+            elements.service.val(serviceId).trigger('change');
+            hideLoading(elements.service[0]);
+            return;
+        }
+
+        $.ajax({
+            url: elements.service.data('ajax-url'),
+            data: { search: '', id: serviceId, specific: true },
+            dataType: 'json'
+        }).done(function(data) {
+            if (data.data?.length) {
+                const service = data.data.find(item => item.id == serviceId);
+                if (service) {
+                    const option = new Option(service.name, service.id, true, true);
+                    elements.service.append(option).trigger('change');
+                }
+            }
+            hideLoading(elements.service[0]);
+        }).fail(() => hideLoading(elements.service[0]));
+    }
+
     function handleServiceChange() {
-        selectedServiceId = serviceSelect.value;
-        if (!selectedServiceId) return;
+        const serviceId = $(this).val();
+        const serviceName = $(this).find('option:selected').text().toLowerCase();
 
-        // Show client section
-        showSection('clientSection');
-        clientSelect.innerHTML = '<option value="" selected disabled>Loading clients...</option>';
+        state.isWorkingCustomer = serviceName.includes('working customer');
 
-        // Hide dependent sections
-        hideSection('topicSection');
-        hideSection('subtopicSection');
-        hideSection('tertiaryTopicSection');
-        hideSection('managerSection');
-        hideSection('ticketHistorySection');
-        hideSection('senderIdSection');
-        hideSection('operatorSection');
-        hideSection('paymentChannelSection');
-        hideSection('subjectSection');
-        hideSection('descriptionSection');
-        hideSection('prioritySection');
-        hideSection('attachmentsSection');
-        hideSection('submitSection');
+        if (serviceId) {
+            loadClients(serviceId);
+            showSection('#clientSection');
+            clearError('#serviceSection');
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const preSelectedClientId = urlParams.get('client_id');
-
-        fetch(`/backend/client/client_by_services/${selectedServiceId}`)
-            .then(response => response.json())
-            .then(data => {
-                resetSelect(clientSelect, 'Select a client');
-                data.data.forEach(client => {
-                    const option = document.createElement('option');
-                    option.value = client.id;
-                    option.textContent = client.name;
-
-                    // Pre-select if this is the client from URL parameters
-                    if (preSelectedClientId && client.id == preSelectedClientId) {
-                        option.selected = true;
-                        selectedClientId = client.id;
-
-                        // Trigger client change handler immediately
-                        setTimeout(() => {
-                            handleClientChange();
-                            $(clientSelect).trigger('change');
-                        }, 100);
-                    }
-
-                    clientSelect.appendChild(option);
-                });
-            })
-            .catch(error => {
-                clientSelect.innerHTML = '<option value="" selected disabled>Error loading clients</option>';
-            });
-    }
-
-    // When client is selected, load ticket history and topics
-    function handleClientChange() {
-        selectedClientId = clientSelect.value;
-        if (!selectedClientId) return;
-
-        showLoading(clientSelect);
-        showSection('topicSection');
-        topicSelect.innerHTML = '<option value="" selected disabled>Loading topics...</option>';
-
-        const ticketHistoryDiv = document.getElementById('ticketHistory');
-        ticketHistoryDiv.innerHTML = `
-            <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status"></div>
-                <p class="mt-2 mb-0">Loading ticket history...</p>
-            </div>
-        `;
-
-        fetch(`/backend/ticket/client_ticket_history/${selectedClientId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(responseData => {
-                showSection('ticketHistorySection');
-
-                if (!responseData || !responseData.data || !responseData.data.data || !Array.isArray(responseData.data.data)) {
-                    throw new Error('Invalid data format received from server');
-                }
-
-                const tickets = responseData.data.data;
-                const paginationInfo = responseData.data;
-                const clientName = tickets[0]?.client?.name || 'Client';
-
-                if (tickets.length === 0) {
-                    ticketHistoryDiv.innerHTML = `
-                    <div class="empty-state">
-                        <i class="bi bi-inbox empty-state-icon"></i>
-                        <p class="empty-state-text">No previous tickets found for this client.</p>
-                    </div>
-                `;
-                } else {
-                    ticketHistoryDiv.innerHTML = `
-                        <div class="ticket-history-header">
-                            <h3 class="ticket-history-title">
-                                <span class="badge bg-primary client-badge">${clientName}</span>
-                                Recent Tickets
-                            </h3>
-                            <span class="ticket-history-count">${Math.min(tickets.length, 5)} of ${paginationInfo.total}</span>
-                        </div>
-                        <div id="ticketHistoryList"></div>
-                    `;
-
-                    const list = document.getElementById('ticketHistoryList');
-                    if (!list) {
-                        console.error('ticketHistoryList not found in DOM');
-                        return;
-                    }
-                    const ticketsToShow = tickets.slice(0, 5);
-
-                    ticketsToShow.forEach(ticket => {
-                        const priorityClass = ticket.priority?.toLowerCase() || 'low';
-                        const statusClass = ticket.status?.toLowerCase() || 'open';
-                        const timeAgoResult = ticket.created_at ? timeAgo(ticket.created_at) : '';
-                        const timeBadgeClass = getTimeBadgeClass(ticket.created_at);
-
-                        let categoryPath = ticket.topic?.name || 'No topic';
-                        if (ticket.subtopic?.name) categoryPath += ` › ${ticket.subtopic.name}`;
-                        if (ticket.tertiary_topic?.name) categoryPath += ` › ${ticket.tertiary_topic.name}`;
-
-                        const item = document.createElement('div');
-                        item.className = `ticket-item ${isTicketRecent(ticket.created_at) ? 'recent-ticket' : ''}`;
-
-                        item.innerHTML = `
-                            <div class="ticket-main-info">
-                                <h4 class="ticket-title">${ticket.title || 'No title'}</h4>
-                                <span class="ticket-status ${statusClass}">${ticket.status || 'Unknown'}</span>
-                            </div>
-                            <div class="ticket-meta">
-                                <span class="ticket-category">${categoryPath}</span>
-                                <span class="ticket-assignee">
-                                    <i class="bi bi-person"></i> ${ticket.assigned_to?.name || 'Unassigned'}
-                                </span>
-                                <span class="ticket-date">
-                                    <i class="bi bi-calendar"></i> ${formatTicketDate(ticket.created_at)}
-                                </span>
-                                <span class="ticket-number">
-                                    <i class="bi bi-tag"></i> ${ticket.ticket_number || ''}
-                                </span>
-                            </div>
-                            ${ticket.description ? `
-                            <div class="ticket-description">
-                                ${ticket.description}
-                            </div>
-                            ` : ''}
-                            <div class="ticket-footer">
-                                <span class="ticket-priority ${priorityClass}">${ticket.priority || 'Unknown'}</span>
-                                <span class="ticket-time text-white badge ${timeBadgeClass}">
-                                    <i class="bi bi-clock"></i> ${timeAgoResult}
-                                </span>
-                            </div>
-                        `;
-                        list.appendChild(item);
-                    });
-
-                    if (tickets.length > 5) {
-                        const firstTicketUid = tickets[0]?.uid || '';
-                        const viewAll = document.createElement('a');
-                        viewAll.href = `/backend/ticket/client_ticket_history/${selectedClientId}`;
-                        viewAll.className = 'view-all-tickets';
-                        viewAll.innerHTML = 'View all tickets <i class="bi bi-chevron-right"></i>';
-                        list.appendChild(viewAll);
-                    }
-                }
-            })
-            .catch(error => {
-                ticketHistoryDiv.innerHTML = `
-                    <div class="alert alert-danger m-3">
-                        <i class="bi bi-exclamation-triangle-fill"></i> Failed to load ticket history: ${error.message}
-                    </div>
-                `;
-                hideSection('ticketHistorySection');
-            });
-
-        fetch(`/backend/topic/get_by_service/${selectedServiceId}`)
-            .then(response => response.json())
-            .then(data => {
-                resetSelect(topicSelect, 'Select a topic');
-                data.data.forEach(topic => {
-                    const option = document.createElement('option');
-                    option.value = topic.id;
-                    option.textContent = topic.name;
-                    topicSelect.appendChild(option);
-                });
-                hideLoading(clientSelect);
-            })
-            .catch(error => {
-                topicSelect.innerHTML = '<option value="" selected disabled>Error loading topics</option>';
-                hideLoading(clientSelect);
-            });
-    }
-
-    function formatTicketDate(dateString) {
-        if (!dateString) return 'Unknown date';
-
-        const now = new Date();
-        const ticketDate = new Date(dateString);
-        const diffInHours = Math.abs(now - ticketDate) / 36e5;
-
-        if (ticketDate.toDateString() === now.toDateString()) {
-            // Today
-            if (diffInHours < 1) {
-                const mins = Math.floor(diffInHours * 60);
-                return `<span class="date-today recent-highlight">${mins}m ago</span>`;
+            // Toggle between client select and client name input
+            if (state.isWorkingCustomer) {
+                $('#client').next('.select2-container').hide();
+                $('#client').addClass('hidden-section').prop('required', false);
+                $('#clientNameInputSection').removeClass('hidden-section');
+                hideSections(['#topicSection', '#ticketHistorySection']);
+            } else {
+                $('#client').next('.select2-container').show();
+                $('#client').removeClass('hidden-section').prop('required', true);
+                $('#clientNameInputSection').addClass('hidden-section');
+                $('#clientName').val('');
             }
-            return `<span class="date-today">Today at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
-        }
-
-        // Yesterday
-        const yesterday = new Date(now);
-        yesterday.setDate(yesterday.getDate() - 1);
-        if (ticketDate.toDateString() === yesterday.toDateString()) {
-            return `<span class="date-yesterday">Yesterday at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
-        }
-
-        // Older than yesterday
-        return ticketDate.toLocaleDateString([], {month: 'short', day: 'numeric', year: 'numeric'});
-    }
-
-    function getTimeBadgeClass(dateString) {
-        if (!dateString) return 'bg-dark';
-
-        const now = new Date();
-        const ticketDate = new Date(dateString);
-        const diffInDays = Math.abs(now - ticketDate) / (24 * 60 * 60 * 1000);
-
-        if (diffInDays < 1) {
-            return 'bg-danger'; // Less than 1 day - red
-        } else if (diffInDays < 7) {
-            return 'bg-primary'; // 1-7 days - blue
         } else {
-            return 'bg-dark'; // More than 7 days - dark
+            hideSections(['#clientSection', '#topicSection']);
         }
     }
 
-    function isTicketRecent(dateString) {
-        if (!dateString) return false;
-        const now = new Date();
-        const ticketDate = new Date(dateString);
-        const diffInHours = Math.abs(now - ticketDate) / 36e5;
-        return diffInHours < 24; // Consider recent if within last 24 hours
+    function handleClientNameInput() {
+        const clientName = $(this).val().trim();
+        if (state.isWorkingCustomer && clientName.length > 0) {
+            // Only load topics if we haven't already shown the topic section
+            if ($('#topicSection').hasClass('hidden-section')) {
+                loadTopics(state.preSelectedServiceId);
+                clearError('#clientSection');
+            }
+        } else if (state.isWorkingCustomer) {
+            // Hide topic section if client name is empty
+            hideSections(['#topicSection', '#ticketHistorySection']);
+        }
     }
 
-    function timeAgo(dateString) {
-        if (!dateString) return '';
+    // Client Related Functions
+    function loadClients(serviceId) {
+        $.get(`/backend/client/client_by_services/${serviceId}`)
+            .done(({ data }) => {
+                const $client = elements.client.empty().append('<option value="">Select a client</option>');
 
-        const date = new Date(dateString);
-        const now = new Date();
-        const seconds = Math.floor((now - date) / 1000);
+                data.forEach(client => {
+                    const selected = state.preSelectedClientId == client.id ? 'selected' : '';
+                    $client.append(`<option value="${client.id}" ${selected}>${client.name}</option>`);
+                });
 
-        if (seconds < 60) {
-            return `${seconds} second${seconds === 1 ? '' : 's'} ago`;
-        }
-
-        const minutes = Math.floor(seconds / 60);
-        if (minutes < 60) {
-            return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-        }
-
-        const hours = Math.floor(minutes / 60);
-        if (hours < 24) {
-            return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-        }
-
-        const days = Math.floor(hours / 24);
-        if (days < 7) {
-            return `${days} day${days === 1 ? '' : 's'} ago`;
-        }
-
-        const weeks = Math.floor(days / 7);
-        if (weeks < 4) {
-            return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
-        }
-
-        const months = Math.floor(days / 30);
-        if (months < 12) {
-            return `${months} month${months === 1 ? '' : 's'} ago`;
-        }
-
-        const years = Math.floor(days / 365);
-        return `${years} year${years === 1 ? '' : 's'} ago`;
+                if (state.preSelectedClientId) {
+                    setTimeout(() => elements.client.trigger('change'), 100);
+                }
+            })
+            .fail(() => elements.client.html('<option>Error loading clients</option>'));
     }
 
-    // When topic is selected, load subtopics or special fields
-    function handleTopicChange() {
-        selectedTopicId = topicSelect.value;
-        if (!selectedTopicId) return;
-
-        const selectedTopicText = topicSelect.options[topicSelect.selectedIndex].text.toLowerCase();
-        const isPaymentTopic = selectedTopicText.includes('payment') || selectedTopicText.includes('billing') || selectedTopicText.includes('invoice');
-        const isSmsTopic = selectedTopicText.includes('sms') || selectedTopicText.includes('message') || selectedTopicText.includes('delivery');
-
-        hideSection('subtopicSection');
-        hideSection('tertiaryTopicSection');
-        hideSection('managerSection');
-        hideSection('senderIdSection');
-        hideSection('operatorSection');
-        hideSection('paymentChannelSection');
-        hideSection('subjectSection');
-        hideSection('descriptionSection');
-        hideSection('prioritySection');
-        hideSection('attachmentsSection');
-        hideSection('submitSection');
-        hideSection('dateSection');
-
-        if (isSmsTopic) {
-            showSection('senderIdSection');
-            senderIdSelect.innerHTML = '<option value="" selected disabled>Loading sender IDs...</option>';
-
-            const selectedClientId = clientSelect.value;
-
-            if (!selectedClientId) {
-                senderIdSelect.innerHTML = '<option value="" selected disabled>Please select a client first</option>';
+    function handleClientChange() {
+        if (state.isWorkingCustomer) {
+            const clientName = $('#clientName').val().trim();
+            if (!clientName) {
+                showAlert('error', 'Please enter the client full name for Working Customer');
                 return;
             }
-
-            fetch(`/backend/sender_id/active_sender_ids/${selectedClientId}`)
-                .then(response => response.json())
-                .then(data => {
-                    resetSelect(senderIdSelect, 'Select a sender ID');
-                    data.data.forEach(sender => {
-                        const option = document.createElement('option');
-                        option.value = sender.id;
-                        option.textContent = `${sender.sender_id}`;
-                        option.dataset.operators = JSON.stringify(sender.operators || []);
-                        senderIdSelect.appendChild(option);
-                    });
-                })
-                .catch(error => {
-                    senderIdSelect.innerHTML = '<option value="" selected disabled>Error loading sender IDs</option>';
-                });
-
-            senderIdSelect.addEventListener('change', handleSenderIdChange);
-
-            // Show date section for SMS issues
-            showDateSection('When did the SMS fail to deliver?');
-        }
-        else if (isPaymentTopic) {
-            showSection('paymentChannelSection');
-            paymentChannelSelect.innerHTML = '<option value="" selected disabled>Loading payment channels...</option>';
-
-            fetch('/backend/payment_channel/active_payment_channels')
-                .then(response => response.json())
-                .then(data => {
-                    resetSelect(paymentChannelSelect, 'Select a payment channel');
-                    data.data.forEach(channel => {
-                        const option = document.createElement('option');
-                        option.value = channel.id;
-                        option.textContent = channel.name;
-                        paymentChannelSelect.appendChild(option);
-                    });
-                })
-                .catch(error => {
-                    paymentChannelSelect.innerHTML = '<option value="" selected disabled>Error loading channels</option>';
-                });
-
-            paymentChannelSelect.addEventListener('change', function() {
-                if (this.value) {
-                    loadSubtopics();
-                }
-            });
-
-            // Show date section for payment issues
-            showDateSection('When was the payment made?');
+            // Proceed with the unregistered client flow
+            loadClientTicketHistory(null);
+            loadTopics(state.preSelectedServiceId);
+            clearError('#clientSection');
         }
         else {
-            loadSubtopics();
-        }
-    }
-
-    function showDateSection(labelText) {
-        // Create or update the date section
-        let dateSection = document.getElementById('dateSection');
-        if (!dateSection) {
-            dateSection = document.createElement('div');
-            dateSection.id = 'dateSection';
-            dateSection.className = 'mb-3 form-section';
-            dateSection.innerHTML = `
-            <label for="issueDate" class="form-label">${labelText}</label>
-            <input type="date" class="form-control" id="issueDate" max="${new Date().toISOString().split('T')[0]}">
-            <div class="form-text">Please specify the date when the issue occurred</div>
-        `;
-            // Insert after the topic section
-            document.getElementById('topicSection').after(dateSection);
-        } else {
-            // Update the label if it already exists
-            dateSection.querySelector('label').textContent = labelText;
-        }
-
-        showSection('dateSection');
-    }
-
-    function handleSenderIdChange() {
-        if (!this.value) {
-            hideSection('operatorSection');
-            hideSection('subtopicSection');
-            return;
-        }
-
-        showSection('operatorSection');
-
-        // Clear existing choices
-        operatorChoices.clearStore();
-        operatorChoices.setChoices([{value: '', label: 'Loading operators...', disabled: true}], 'value', 'label', true);
-
-        fetch('/backend/operator/get_all_operator')
-            .then(response => response.json())
-            .then(data => {
-                if (data.data && data.data.length > 0) {
-                    operatorChoices.setChoices(
-                        data.data.map(operator => ({
-                            value: operator.id,
-                            label: operator.name
-                        })),
-                        'value',
-                        'label',
-                        true
-                    );
-
-                    // Add event listener for operator selection changes
-                    operatorChoices.passedElement.element.addEventListener('change', function() {
-                        // Check if at least one operator is selected
-                        const selectedOperators = operatorChoices.getValue(true);
-                        if (selectedOperators && selectedOperators.length > 0) {
-                            loadSubtopics();
-                        } else {
-                            hideSection('subtopicSection');
-                        }
-                    }, false);
-                } else {
-                    operatorChoices.setChoices([{value: '', label: 'No operators available', disabled: true}], 'value', 'label', true);
-                }
-            })
-            .catch(error => {
-                operatorChoices.setChoices([{value: '', label: 'Error loading operators', disabled: true}], 'value', 'label', true);
-            });
-    }
-
-    function loadSubtopics() {
-        showSection('subtopicSection');
-        subtopicSelect.innerHTML = '<option value="" selected disabled>Loading subtopics...</option>';
-
-        fetch(`/backend/subtopic/get_by_topic_id/${selectedTopicId}`)
-            .then(response => response.json())
-            .then(data => {
-                resetSelect(subtopicSelect, 'Select a subtopic');
-                data.data.forEach(subtopic => {
-                    const option = document.createElement('option');
-                    option.value = subtopic.id;
-                    option.textContent = subtopic.name;
-                    subtopicSelect.appendChild(option);
-                });
-            })
-            .catch(error => {
-                subtopicSelect.innerHTML = '<option value="" selected disabled>Error loading subtopics</option>';
-            });
-    }
-
-    // When subtopic is selected, load tertiary topics
-    function handleSubtopicChange() {
-        selectedSubtopicId = subtopicSelect.value;
-        if (!selectedSubtopicId) {
-            hideSection('tertiaryTopicSection');
-            return;
-        }
-
-        // Show tertiary topic section
-        showSection('tertiaryTopicSection');
-        tertiaryTopicSelect.innerHTML = '<option value="" selected disabled>Loading tertiary topics...</option>';
-
-        // Load tertiary topics
-        fetch(`/backend/tertiary/tertiary_topic_by_subtopic_id/${selectedSubtopicId}`)
-            .then(response => response.json())
-            .then(data => {
-                resetSelect(tertiaryTopicSelect, 'Select a tertiary topic (optional)');
-                if (data.data.length > 0) {
-                    data.data.forEach(tertiaryTopic => {
-                        const option = document.createElement('option');
-                        option.value = tertiaryTopic.id;
-                        option.textContent = tertiaryTopic.name;
-                        tertiaryTopicSelect.appendChild(option);
-                    });
-                } else {
-                    tertiaryTopicSelect.innerHTML = '<option value="" selected disabled>No tertiary topics available</option>';
-                }
-            })
-            .catch(error => {
-                tertiaryTopicSelect.innerHTML = '<option value="" selected disabled>Error loading tertiary topics</option>';
-            });
-    }
-
-    // Handle tertiary topic selection
-    function handleTertiaryTopicChange() {
-        if (this.value) {
-            // Show subject field when tertiary topic is selected
-            showSection('subjectSection');
-        } else {
-            // Hide all subsequent fields if tertiary topic is cleared
-            hideSection('subjectSection');
-            hideSection('descriptionSection');
-            hideSection('prioritySection');
-            hideSection('managerSection');
-            hideSection('attachmentsSection');
-            hideSection('submitSection');
-        }
-    }
-
-    // Handle subject input
-    function handleSubjectInput() {
-        if (this.value.trim() !== '') {
-            // Show description and priority fields when subject is filled
-            showSection('descriptionSection');
-            //showSection('prioritySection');
-        } else {
-            // Hide all subsequent fields if subject is cleared
-            hideSection('descriptionSection');
-            hideSection('prioritySection');
-            hideSection('managerSection');
-            hideSection('attachmentsSection');
-            hideSection('submitSection');
-        }
-    }
-
-    // Handle description input
-    function handleDescriptionInput() {
-        if (this.value.trim() !== '') {
-            // Show attachments and submit button when description is filled
-            showSection('prioritySection');
-
-            if (!priorityField.value || priorityField.value === "") {
-                priorityField.value = "low";
-                toastr.info('Priority automatically set to "low"', '', {
-                    timeOut: 3000,
-                    positionClass: 'toast-bottom-right'
-                });
-                loadManagers();
-                showSection('managerSection');
+            const clientId = $('#client').val();
+            if (clientId) {
+                loadClientTicketHistory(clientId);
+                loadTopics(state.preSelectedServiceId);
+                clearError('#clientSection');
+            } else {
+                hideSections(['#topicSection', '#ticketHistorySection']);
+                // Reset Select2 if needed
+                $('#client').val('').trigger('change');
             }
-            showSection('attachmentsSection');
-            showSection('submitSection');
-        } else {
-            // Hide these fields if description is cleared
-            hideSection('prioritySection');
-            hideSection('managerSection');
-            hideSection('attachmentsSection');
-            hideSection('submitSection');
         }
     }
 
-    // Handle priority change - NEW FUNCTION
-    function handlePriorityChange() {
-        if (this.value) {
-            isCriticalPriority = this.value === 'critical';
-            showSection('managerSection');
-            loadManagers();
+    // Ticket History Functions
+    async function loadClientTicketHistory(clientId) {
+        try {
+            const response = await fetch(`/backend/ticket/client_ticket_history/${clientId}`);
+            const responseData = await response.json();
+            const tickets = responseData?.data?.data;
 
-            //auto select channel
-            autoSelectChannel();
-        } else {
-            hideSection('managerSection');
+            if (!Array.isArray(tickets)) {
+                throw new Error('Invalid data format received from server');
+            }
+
+            showSection('#ticketHistorySection');
+            renderTicketHistory(tickets);
+        } catch (error) {
+            renderTicketHistoryError(error.message);
         }
     }
 
-    // Load managers
-    function loadManagers() {
-        managerSelect.innerHTML = '<option value="" selected disabled>Loading managers...</option>';
+    function renderTicketHistory(tickets) {
+        if (!elements.ticketHistory) return;
 
-        fetch('/backend/user/active_manager')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
+        if (tickets.length === 0) {
+            elements.ticketHistory.innerHTML = `
+                        <div class="empty-state text-center py-5">
+                            <i class="bi bi-inbox-fill empty-state-icon fs-1 text-muted"></i>
+                            <h4 class="empty-state-title mt-3">No Previous Tickets</h4>
+                            <p class="empty-state-text text-muted">This client hasn't submitted any tickets yet.</p>
+                        </div>`;
+            return;
+        }
+
+        const clientName = tickets[0]?.client?.name || 'Client';
+        const ticketsToShow = tickets.slice(0, 5);
+
+        elements.ticketHistory.innerHTML = `
+                    <div class="ticket-history-header d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="ticket-history-title mb-0 d-flex align-items-center gap-2">
+                            <span class="badge bg-primary-subtle text-primary-emphasis client-badge">
+                                <i class="bi bi-person-circle me-1"></i> ${clientName}
+                            </span>
+                        </h4>
+                        <span class="ticket-history-count badge bg-light text-dark">
+                            ${Math.min(tickets.length, 5)}/${tickets.length}
+                        </span>
+                    </div>
+                    <div id="ticketHistoryList" class="ticket-list"></div>
+                `;
+
+        const list = document.getElementById('ticketHistoryList');
+        ticketsToShow.forEach(ticket => {
+            list.appendChild(createTicketItem(ticket));
+        });
+
+        if (tickets.length > 5) {
+            addViewAllButton(tickets[0]?.client?.uid);
+        }
+    }
+
+    function renderTicketHistoryError(errorMessage) {
+        if (elements.ticketHistory) {
+            elements.ticketHistory.innerHTML = `
+                        <div class="alert alert-danger m-3">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Failed to load ticket history: ${errorMessage}
+                        </div>`;
+        }
+        hideSection('#ticketHistorySection');
+    }
+
+    function createTicketItem(ticket) {
+        const createdDate = ticket.created_at ? new Date(ticket.created_at) : new Date();
+        const isResolved = ticket.status?.toLowerCase() === 'resolved';
+        const categoryPath = buildCategoryPath(ticket);
+
+        const item = document.createElement('div');
+        item.className = `ticket-history-item mb-3 p-3 rounded-3 border ${isResolved ? 'bg-light' : 'bg-white'} shadow-sm`;
+        item.style.transition = 'all 0.2s ease';
+        item.style.cursor = 'pointer';
+
+        item.onmouseenter = () => item.style.transform = 'translateY(-2px)';
+        item.onmouseleave = () => item.style.transform = '';
+
+        item.innerHTML = `
+                    <div class="ticket-history-item-header d-flex justify-content-between align-items-center mb-2">
+                        <span class="ticket-number fw-semibold text-primary">
+                            <i class="bi bi-ticket-detailed me-1"></i> ${ticket.ticket_number}
+                        </span>
+                        <span class="ticket-status badge ${getStatusColor(ticket.status)}">
+                            ${ticket.status}
+                        </span>
+                    </div>
+
+                    <h5 class="ticket-title mb-2 text-truncate" title="${ticket.title || 'No subject'}">
+                        ${ticket.title || 'No subject provided'}
+                    </h5>
+
+                    <div class="ticket-meta d-flex flex-wrap gap-2 mb-3 text-muted small">
+                        <span class="ticket-category d-flex align-items-center">
+                            <i class="bi bi-folder me-1"></i> ${categoryPath || 'Uncategorized'}
+                        </span>
+                    </div>
+                    <p class="d-flex align-items-center gap-3 flex-wrap mb-0">
+                        <span class="ticket-assignee d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-person"></i>
+                            ${ticket.assigned_to?.name || 'Unassigned'}
+                        </span>
+                        <span class="ticket-date d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-calendar"></i>
+                            ${formatTicketDate(ticket.created_at)}
+                        </span>
+                    </p>
+
+                    <div class="ticket-description mb-3 text-muted">
+                        ${ticket.description ? truncateText(ticket.description, 100) : 'No description provided'}
+                    </div>
+
+                    <div class="ticket-footer d-flex justify-content-between align-items-center text-white">
+                        <span class="ticket-priority badge ${getPriorityBadgeClass(ticket.priority)}">
+                            <i class="bi bi-exclamation-circle me-1"></i> ${ticket.priority}
+                        </span>
+                        <span class="ticket-time text-white badge ${getTimeBadgeClass(ticket.created_at)}">
+                            <i class="bi bi-clock me-1"></i> ${timeAgo(createdDate)}
+                        </span>
+                    </div>
+                `;
+
+        item.addEventListener('click', () => {
+            window.location.href = `/backend/ticket/view/${ticket.uid}`;
+        });
+
+        return item;
+    }
+
+    function buildCategoryPath(ticket) {
+        let path = ticket.topic?.name || '';
+        if (ticket.subtopic?.name) path += ` › ${ticket.subtopic.name}`;
+        if (ticket.tertiary_topic?.name) path += ` › ${ticket.tertiary_topic.name}`;
+        return path;
+    }
+
+    function addViewAllButton(clientUid) {
+        if (!clientUid || !elements.ticketHistory) return;
+
+        const viewAll = document.createElement('a');
+        viewAll.href = `/backend/ticket/client_ticket_history/${clientUid}`;
+        viewAll.target = '_blank';
+        viewAll.className = 'btn btn-outline-primary w-100 mt-3 d-flex align-items-center justify-content-center gap-2';
+        viewAll.innerHTML = 'View All Tickets <i class="bi bi-arrow-right"></i>';
+        elements.ticketHistory.appendChild(viewAll);
+    }
+
+    // Topic Related Functions
+    function handleTopicChange() {
+        const topicId = $(this).val();
+        if (!topicId) return hideSections(['#subtopicSection', '#dateSection']);
+
+        loadSubtopics(topicId);
+        const topicName = $(this).find('option:selected').text().toLowerCase();
+
+        if (topicName.includes('sms')) {
+            loadSenderIds(elements.client.val());
+            loadOperators();
+            showSections(['#senderIdSection', '#operatorSection', '#dateSection']);
+            hideSection('#paymentChannelSection');
+            updateDateLabels('SMS Issue Date', 'Please specify when the SMS issue occurred');
+        } else if (topicName.includes('payment')) {
+            loadPaymentChannels();
+            showSections(['#paymentChannelSection', '#dateSection']);
+            hideSections(['#senderIdSection', '#operatorSection']);
+            updateDateLabels('Payment Date', 'Please specify when the payment was made');
+        } else {
+            hideSections(['#senderIdSection', '#operatorSection', '#dateSection', '#paymentChannelSection']);
+        }
+
+        clearError('#topicSection');
+    }
+
+    function loadTopics(serviceId) {
+        $.get(`/backend/topic/get_by_service/${serviceId}`)
+            .done(({ data }) => {
+                elements.topic.empty().append('<option value="">Select a topic</option>');
+                data.forEach(t => elements.topic.append(`<option value="${t.id}">${t.name}</option>`));
+                showSection('#topicSection');
             })
-            .then(data => {
-                resetSelect(managerSelect, 'Select a manager');
+            .fail(() => showAlert('error', 'Failed to load topics'));
+    }
 
-                if (data.data && data.data.length > 0) {
-                    // Sort managers by favorite_count (descending)
-                    const sortedManagers = data.data.sort((a, b) => b.favorite_count - a.favorite_count);
+    // Subtopic Related Functions
+    function handleSubtopicChange() {
+        const subtopicId = $(this).val();
+        if (!subtopicId) return hideSections(['#subjectSection']);
+
+        loadTertiaryTopics(subtopicId);
+        elements.priority.val('low').trigger('change');
+        showAlert("info", 'Priority automatically set to "low"');
+        showSections(['#subjectSection', '#descriptionSection', '#prioritySection', '#attachmentsSection', '#submitSection']);
+        loadManagers();
+        clearError('#subtopicSection');
+    }
+
+    function loadSubtopics(topicId) {
+        $.get(`/backend/subtopic/get_by_topic_id/${topicId}`)
+            .done(({ data }) => {
+                elements.subtopic.empty().append('<option value="">Select a subtopic</option>');
+                data.forEach(st => elements.subtopic.append(`<option value="${st.id}">${st.name}</option>`));
+                showSection('#subtopicSection');
+            })
+            .fail(() => showAlert('error', 'Failed to load subtopics'));
+    }
+
+    function loadTertiaryTopics(subtopicId) {
+        $.get(`/backend/tertiary/tertiary_topic_by_subtopic_id/${subtopicId}`)
+            .done(({ data }) => {
+                elements.tertiaryTopic.empty().append('<option value="">Select a tertiary topic (optional)</option>');
+                data.forEach(t => elements.tertiaryTopic.append(`<option value="${t.id}">${t.name}</option>`));
+                showSection('#tertiaryTopicSection');
+            })
+            .fail(() => showAlert('error', 'Failed to load tertiary topics'));
+    }
+
+    function loadSenderIds(clientId) {
+        $.get(`/backend/sender_id/active_sender_ids/${clientId}`)
+            .done(({ data }) => {
+                const $sel = $('#senderId').empty().append('<option value="">Select sender ID</option>');
+                data.forEach(s => $sel.append(`<option value="${s.id}">${s.sender_id}</option>`));
+            });
+    }
+
+    function loadOperators() {
+        $.get('/backend/operator/get_all_operator')
+            .done(({ data }) => {
+                const $op = $('#operator').empty().append('<option value="">Select mobile operator(s)</option>');
+                data.forEach(o => $op.append(`<option value="${o.id}">${o.name}</option>`));
+            });
+    }
+
+    function loadPaymentChannels() {
+        $.get('/backend/payment_channel/active_payment_channels')
+            .done(({ data }) => {
+                const $ch = $('#paymentChannel').empty().append('<option value="">Select a payment channel</option>');
+                data.forEach(c => $ch.append(`<option value="${c.id}">${c.name}</option>`));
+            });
+    }
+
+    //load staffs users
+    function loadManagers() {
+        const $manager = $('#manager');
+        $manager.empty().append('<option value="">Loading managers...</option>');
+
+        showSection('#managerSection');
+
+        $.get('/backend/user/active_manager')
+            .done(({ data }) => {
+                $manager.empty().append('<option value="">Select a manager</option>');
+
+                if (data.length > 0) {
+                    // Sort managers by favorite count (most experienced first)
+                    const sortedManagers = data.sort((a, b) => (b.favorite_count || 0) - (a.favorite_count || 0));
 
                     sortedManagers.forEach(manager => {
-                        const option = document.createElement('option');
-                        option.value = manager.id;
-                        option.textContent = `${manager.name} ${manager.favorite_count > 0 ? `(${manager.favorite_count} similar tickets)` : ''}`;
-                        option.dataset.favorites = manager.favorite_count;
-                        managerSelect.appendChild(option);
+                        $manager.append(
+                            `<option value="${manager.id}">
+                                        ${manager.name}
+                                        ${manager.favorite_count > 0 ? `(${manager.favorite_count} similar tickets)` : ''}
+                                    </option>`
+                        );
                     });
                 } else {
-                    managerSelect.innerHTML = '<option value="" selected disabled>No managers available</option>';
+                    $manager.append('<option value="">No managers available</option>');
                 }
             })
-            .catch(error => {
-                managerSelect.innerHTML = '<option value="" selected disabled>Error loading managers</option>';
+            .fail(() => {
+                $manager.empty().append('<option value="">Error loading managers</option>');
+                showAlert('error', 'Failed to load managers');
             });
     }
 
-    const addMoreFilesBtn = document.getElementById('addMoreFiles');
-    const fileCountDisplay = document.getElementById('fileCount');
+    // File Upload Functions
+    function initializeFileUpload() {
+        elements.attachments.addEventListener('change', handleFileSelection);
+        elements.addMoreBtn.addEventListener('click', handleAddMoreFiles);
+    }
 
-    let currentFiles = [];
-    attachmentsInput.addEventListener('change', handleFileSelect);
-
-    function handleFileSelect(event) {
+    function handleFileSelection(event) {
         const newFiles = Array.from(event.target.files);
+        const validationResults = validateFiles(newFiles);
 
-        newFiles.forEach(newFile => {
-            const isDuplicate = currentFiles.some(
+        if (validationResults.invalidFiles.length > 0) {
+            showInvalidFilesAlert(validationResults.invalidFiles);
+        }
+
+        const uniqueValidFiles = validationResults.validFiles.filter(newFile =>
+            !state.currentFiles.some(
                 file => file.name === newFile.name &&
                     file.size === newFile.size &&
                     file.lastModified === newFile.lastModified
-            );
-            if (!isDuplicate) {
-                currentFiles.push(newFile);
+            )
+        );
+
+        if (uniqueValidFiles.length > 0) {
+            state.currentFiles = [...state.currentFiles, ...uniqueValidFiles];
+            updateFileInput();
+            updateFileDisplay();
+            showAlert('success', `Added ${uniqueValidFiles.length} file(s)`);
+        }
+    }
+
+    function validateFiles(files) {
+        const result = {
+            validFiles: [],
+            invalidFiles: []
+        };
+
+        files.forEach(file => {
+            const validation = {
+                file,
+                errors: []
+            };
+
+            // Size validation
+            if (file.size > config.MAX_FILE_SIZE) {
+                validation.errors.push(`Size exceeds ${formatFileSize(config.MAX_FILE_SIZE)} limit`);
+            }
+
+            // Type validation
+            if (!config.ALLOWED_FILE_TYPES.includes(file.type)) {
+                const allowedTypes = config.ALLOWED_FILE_TYPES.map(t => t.split('/')[1]).join(', ');
+                validation.errors.push(`Type not allowed (allowed: ${allowedTypes})`);
+            }
+
+            // Virus scan simulation (would be async in real implementation)
+            if (file.name.toLowerCase().includes('virus')) {
+                validation.errors.push('File appears malicious');
+            }
+
+            if (validation.errors.length === 0) {
+                result.validFiles.push(file);
+            } else {
+                result.invalidFiles.push(validation);
             }
         });
 
-        updateFileInput();
-        updateFileDisplay();
+        return result;
+    }
+
+    function showInvalidFilesAlert(invalidFiles) {
+        // Combine all error messages into a single string
+        const errorMessages = invalidFiles.map(file => {
+            return `${file.file.name}: ${file.errors.join(', ')}`;
+        }).join('\n');
+
+        // Show as a single alert
+        showAlert('error', `failed validation:\n${errorMessages}`);
+    }
+
+    function handleAddMoreFiles() {
+        const tempInput = document.createElement('input');
+        tempInput.type = 'file';
+        tempInput.multiple = true;
+        tempInput.accept = config.ALLOWED_FILE_TYPES.join(',');
+
+        tempInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const event = new Event('change');
+                Object.defineProperty(event, 'target', {
+                    value: { files: e.target.files },
+                    enumerable: true
+                });
+                elements.attachments.dispatchEvent(event);
+            }
+        });
+
+        tempInput.click();
     }
 
     function updateFileInput() {
         const dataTransfer = new DataTransfer();
-        currentFiles.forEach(file => dataTransfer.items.add(file));
-        attachmentsInput.files = dataTransfer.files;
+        state.currentFiles.forEach(file => dataTransfer.items.add(file));
+        elements.attachments.files = dataTransfer.files;
     }
 
     function updateFileDisplay() {
@@ -933,58 +635,91 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateFileCount() {
-        fileCountDisplay.textContent = currentFiles.length;
+        elements.fileCountDisplay.textContent = state.currentFiles.length;
+        elements.fileCountDisplay.classList.toggle('text-danger', state.currentFiles.length >= 5);
     }
 
     function renderFilePreviews() {
-        attachmentPreviews.innerHTML = '';
-
-        if (currentFiles.length === 0) {
-            attachmentPreviews.innerHTML = '<p class="text-muted">No files selected</p>';
+        if (state.currentFiles.length === 0) {
+            elements.attachmentPreviews.innerHTML = `
+                        <div class="empty-state text-center py-3">
+                            <i class="bi bi-cloud-arrow-up fs-1 text-muted"></i>
+                            <p class="text-muted small mt-2">No files selected</p>
+                        </div>
+                    `;
             return;
         }
 
-        currentFiles.forEach((file, index) => {
+        elements.attachmentPreviews.innerHTML = '';
+        state.currentFiles.forEach((file, index) => {
             const previewDiv = document.createElement('div');
-            previewDiv.className = 'd-inline-block position-relative me-2 mb-2 border p-2 rounded';
+            previewDiv.className = 'file-preview d-flex align-items-center border rounded p-2 mb-2 bg-light';
             previewDiv.dataset.fileIndex = index;
 
+            // File type indicator
+            const fileTypeBadge = document.createElement('span');
+            fileTypeBadge.className = 'file-type-badge badge bg-secondary me-2 text-white';
+            fileTypeBadge.textContent = file.type.split('/')[1]?.toUpperCase() || 'FILE';
+
+            previewDiv.innerHTML = `
+                        <div class="file-icon me-2">
+                            ${file.type.startsWith('image/') ?
+                `<img src="${URL.createObjectURL(file)}" class="img-thumbnail" style="max-width: 60px; max-height: 60px">` :
+                `<i class="bi ${getFileIconClass(file)} fs-3"></i>`}
+                                </div>
+                                <div class="file-info flex-grow-1">
+                                    <div class="file-name text-truncate" style="max-width: 200px" title="${file.name}">
+                                        ${file.name}
+                                    </div>
+                                    <div class="file-meta d-flex justify-content-between small text-muted">
+                                        <span>${formatFileSize(file.size)}</span>
+                                        <span>${new Date(file.lastModified).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger ms-2">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            `;
+
+            // Insert type badge
+            previewDiv.insertBefore(fileTypeBadge, previewDiv.firstChild);
+
+            // Add click handler for removal
+            previewDiv.querySelector('button').onclick = (e) => {
+                e.preventDefault();
+                state.currentFiles.splice(index, 1);
+                updateFileInput();
+                updateFileDisplay();
+                showAlert('info', `Removed ${file.name}`);
+            };
+
+            // Add click handler for preview
             if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'img-thumbnail';
-                    img.style.maxWidth = '100px';
-                    img.style.maxHeight = '100px';
-                    previewDiv.appendChild(img);
-
-                    addFileInfo(previewDiv, file);
-                    addRemoveButton(previewDiv, index);
+                previewDiv.querySelector('.file-icon').style.cursor = 'pointer';
+                previewDiv.querySelector('.file-icon').onclick = (e) => {
+                    e.stopPropagation();
+                    showImagePreview(file);
                 };
-                reader.readAsDataURL(file);
-            } else {
-                const icon = document.createElement('i');
-                icon.className = 'bi ' + getFileIconClass(file);
-                icon.style.fontSize = '2rem';
-                previewDiv.appendChild(icon);
-
-                addFileInfo(previewDiv, file);
-                addRemoveButton(previewDiv, index);
             }
 
-            attachmentPreviews.appendChild(previewDiv);
+            elements.attachmentPreviews.appendChild(previewDiv);
         });
     }
 
-    function addFileInfo(container, file) {
-        const fileInfo = document.createElement('div');
-        fileInfo.className = 'small mt-1';
-        fileInfo.innerHTML = `
-            <strong class="d-block text-truncate" style="max-width: 120px">${file.name}</strong>
-            <small>${formatFileSize(file.size)}</small>
-        `;
-        container.appendChild(fileInfo);
+    function showImagePreview(file) {
+        // Still using modal for image preview as it's better UX
+        const modalContent = `
+                    <div class="text-center">
+                        <img src="${URL.createObjectURL(file)}" class="img-fluid" alt="Preview">
+                        <div class="mt-3">
+                            <span class="badge bg-dark text-white">${file.name}</span>
+                            <span class="badge bg-secondary ms-1 text-white">${formatFileSize(file.size)}</span>
+                        </div>
+                    </div>
+                `;
+
+        $('#imagePreviewModal .modal-body').html(modalContent);
+        $('#imagePreviewModal').modal('show');
     }
 
     function getFileIconClass(file) {
@@ -997,8 +732,137 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'docx': return 'bi-file-earmark-word text-primary';
             case 'xls':
             case 'xlsx': return 'bi-file-earmark-excel text-success';
-            default: return 'bi-file-earmark';
+            case 'ppt':
+            case 'pptx': return 'bi-file-earmark-ppt text-warning';
+            case 'zip':
+            case 'rar': return 'bi-file-earmark-zip text-secondary';
+            case 'txt': return 'bi-file-earmark-text text-info';
+            case 'csv': return 'bi-file-earmark-spreadsheet text-success';
+            default: return 'bi-file-earmark text-secondary';
         }
+    }
+
+    // Notification Channel Functions
+    function initializeNotificationChannels() {
+        $('.channel-card').on('click', handleChannelClick);
+        $('.modal-footer .btn-primary').on('click', updateChannelSelection);
+    }
+
+    function handlePriorityChange() {
+        const priority = $(this).val();
+        state.isCriticalPriority = priority === 'critical';
+
+        state.selectedChannels = ['mail', 'whatsapp', 'database'];
+        if (state.isCriticalPriority) {
+            state.selectedChannels.push('sms');
+        }
+
+        updateChannelSelection();
+    }
+
+    function handleChannelClick() {
+        if (state.isCriticalPriority && $(this).data('channel') === 'sms') {
+            showAlert('warning', 'SMS channel is required for critical priority tickets');
+            return;
+        }
+
+        const channel = $(this).data('channel');
+        const index = state.selectedChannels.indexOf(channel);
+
+        if (index === -1) {
+            state.selectedChannels.push(channel);
+        } else {
+            state.selectedChannels.splice(index, 1);
+        }
+
+        updateChannelSelection();
+    }
+
+    function updateChannelSelection() {
+        updateChannelSelectionUI();
+        updateChannelSelectionSummary();
+    }
+
+    function updateChannelSelectionUI() {
+        $('.channel-card').each(function() {
+            const channel = $(this).data('channel');
+            const isSelected = state.selectedChannels.includes(channel);
+            const isLocked = state.isCriticalPriority && channel === 'sms';
+
+            $(this).toggleClass('selected', isSelected)
+                .toggleClass('locked', isLocked)
+                .find('i').toggleClass('text-muted', !isSelected && !isLocked);
+        });
+
+        $('#notification_channels_wrapper').html(
+            state.selectedChannels.map(channel =>
+                `<input type="hidden" name="notification_channels[]" value="${channel}">`
+            ).join('')
+        );
+    }
+
+    function updateChannelSelectionSummary() {
+        let summaryContainer = $('#channelSelectionSummary');
+
+        if (summaryContainer.length === 0) {
+            summaryContainer = $(`
+                        <div id="channelSelectionSummary" class="mt-2 channel-summary">
+                            <small class="text-muted">Notification channels will be selected automatically</small>
+                        </div>
+                    `);
+            $('#managerSection').append(summaryContainer);
+        }
+
+        if (state.selectedChannels.length > 0) {
+            const channelBadges = state.selectedChannels.map(channel => {
+                const isLocked = state.isCriticalPriority && channel === 'sms';
+                return `<span class="badge text-white ${isLocked ? 'bg-secondary' : 'bg-primary'} me-1">
+                            ${channel} ${isLocked ? '<i class="bi bi-lock-fill ms-1"></i>' : ''}
+                        </span>`;
+            }).join('');
+
+            summaryContainer.html(`
+                        <small class="text-muted">Notification channels:</small>
+                        <div>${channelBadges}</div>
+                        <small class="text-muted click-to-edit" style="cursor: pointer; color: #0d6efd !important;">
+                            <i class="bi bi-pencil-square"></i> Click to edit
+                        </small>
+                    `);
+
+            $('.click-to-edit').on('click', () => $('#channelModal').modal('show'));
+        } else {
+            summaryContainer.html('<small class="text-muted">No notification channels selected</small>');
+        }
+    }
+
+    // Utility Functions
+    function updateDateLabels(label, description) {
+        $('#dateLabel').text(label);
+        $('#dateDescription').text(description);
+    }
+
+    function showSection(id) {
+        $(id).removeClass('hidden-section');
+    }
+
+    function hideSection(id) {
+        $(id).addClass('hidden-section');
+    }
+
+    function showSections(ids) {
+        ids.forEach(id => showSection(id));
+    }
+
+    function hideSections(ids) {
+        ids.forEach(id => hideSection(id));
+    }
+
+    function clearError(id) {
+        $(id).removeClass('has-error').find('.error-message').remove();
+    }
+
+    function truncateText(text, maxLength) {
+        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
     }
 
     function formatFileSize(bytes) {
@@ -1009,223 +873,97 @@ document.addEventListener('DOMContentLoaded', function() {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    function addRemoveButton(container, fileIndex) {
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'btn btn-sm btn-danger position-absolute top-0 end-0 p-0 rounded-circle';
-        removeBtn.style.width = '20px';
-        removeBtn.style.height = '20px';
-        removeBtn.style.transform = 'translate(30%, -30%)';
-        removeBtn.innerHTML = '<i class="bi bi-x" style="font-size: 0.75rem;"></i>';
-        removeBtn.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            // Remove the file from currentFiles
-            currentFiles.splice(fileIndex, 1);
-
-            // Update the UI and file input
-            updateFileInput();
-            updateFileDisplay();
-        };
-        container.appendChild(removeBtn);
-    }
-    addMoreFilesBtn.addEventListener('click', function() {
-        const tempInput = document.createElement('input');
-        tempInput.type = 'file';
-        tempInput.multiple = true;
-        tempInput.accept = '.jpg,.jpeg,.png,.pdf,.doc,.docx';
-
-        tempInput.addEventListener('change', function(e) {
-            if (e.target.files.length > 0) {
-                const event = new Event('change');
-                Object.defineProperty(event, 'target', {
-                    value: { files: e.target.files },
-                    enumerable: true
-                });
-                attachmentsInput.dispatchEvent(event);
-            }
-        });
-
-        tempInput.click();
-    });
-
-    function handleFormSubmit(event) {
-        event.preventDefault();
-
-        const submitBtn = document.getElementById('submitBtn');
-        const submitText = document.getElementById('submitText');
-        const submitSpinner = document.getElementById('submitSpinner');
-
-        if (!validateForm()) {
-            return;
-        }
-
-        submitBtn.disabled = true;
-        submitText.textContent = 'Creating Ticket...';
-        submitSpinner.style.display = 'inline-block';
-
-        // Prepare form data
-        const formData = new FormData();
-        formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-
-        // required fields
-        formData.append('saas_app_id', serviceSelect.value);
-        formData.append('client_id', clientSelect.value);
-        formData.append('topic_id', topicSelect.value);
-        formData.append('sub_topic_id', subtopicSelect.value);
-        formData.append('title', subjectField.value);
-        formData.append('description', descriptionField.value);
-        formData.append('priority', priorityField.value);
-        formData.append('assigned_to', managerSelect.value);
-
-        const issueDate = document.getElementById('issueDate');
-        if (issueDate && issueDate.value) {
-            formData.append('issue_date', issueDate.value);
-        }
-
-        if (tertiaryTopicSelect.value) {
-            formData.append('tertiary_topic_id', tertiaryTopicSelect.value);
-        }
-        if (!document.getElementById('senderIdSection').classList.contains('hidden-section')) {
-            formData.append('sender_id', senderIdSelect.value);
-
-            const selectedOperators = Array.from(operatorSelect.selectedOptions)
-                .map(option => option.value)
-                .filter(value => value);
-
-            selectedOperators.forEach(operatorId => {
-                formData.append('operator[]', operatorId);
-            });
-        }
-        if (!document.getElementById('paymentChannelSection').classList.contains('hidden-section')) {
-            formData.append('payment_channel_id', paymentChannelSelect.value);
-        }
-        selectedChannels.forEach((channel, index) => {
-            formData.append(`notification_channels[${index}]`, channel);
-        });
-
-        const files = attachmentsInput.files;
-        for (let i = 0; i < files.length; i++) {
-            formData.append('attachments[]', files[i]);
-        }
-
-        fetch('/backend/ticket/store', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-            .then(async response => {
-                const data = await response.json();
-                if (!response.ok) {
-                    if (data.errors) {
-                        const errorMessages = Object.values(data.errors).flat().join('<br>');
-                        throw new Error(errorMessages);
-                    }
-                    throw new Error(data.message || 'Network response was not ok');
-                }
-                return data;
-            })
-            .then(data => {
-                if (data.success) {
-                    toastr.success(data.message || 'Ticket created successfully!');
-                    resetForm();
-                } else {
-                    throw new Error(data.message || 'Failed to create ticket');
-                }
-            })
-            .catch(error => {
-                const errors = error.message.split('<br>');
-                if (errors.length > 1) {
-                    errors.forEach(err => toastr.error(err));
-                } else {
-                    toastr.error(error.message || 'Error creating ticket');
-                }
-            })
-            .finally(() => {
-                submitBtn.disabled = false;
-                submitText.textContent = 'Create Ticket';
-                submitSpinner.style.display = 'none';
-            });
-    }
-
-    function resetForm() {
-        form.reset();
-
-        // Reset all selects
-        resetSelect(serviceSelect, 'Select a Saas App');
-        resetSelect(clientSelect, 'Select a client');
-        resetSelect(topicSelect, 'Select a topic');
-        resetSelect(subtopicSelect, 'Select a subtopic');
-        resetSelect(tertiaryTopicSelect, 'Select a tertiary topic (optional)');
-        resetSelect(managerSelect, 'Select a manager');
-        resetSelect(senderIdSelect, 'Select sender ID');
-        resetSelect(operatorSelect, 'Select mobile operator');
-        resetSelect(paymentChannelSelect, 'Select a payment channel');
-
-        // Reset priority to Low
-        priorityField.value = ""; //"low"
-        $(priorityField).trigger('change');
-
-        // Hide all sections except service
-        hideSection('clientSection');
-        hideSection('topicSection');
-        hideSection('subtopicSection');
-        hideSection('tertiaryTopicSection');
-        hideSection('managerSection');
-        hideSection('ticketHistorySection');
-        hideSection('senderIdSection');
-        hideSection('operatorSection');
-        hideSection('paymentChannelSection');
-        hideSection('subjectSection');
-        hideSection('descriptionSection');
-        hideSection('prioritySection');
-        hideSection('attachmentsSection');
-        hideSection('submitSection');
-
-        // Clear previews
-        currentFiles = [];
-        updateFileInput();
-        updateFileDisplay();
-    }
-
-    function validateForm() {
-        const requiredFields = [
-            { element: serviceSelect, name: 'Service' },
-            { element: clientSelect, name: 'Client' },
-            { element: topicSelect, name: 'Topic' },
-            { element: subtopicSelect, name: 'Subtopic' },
-            { element: subjectField, name: 'Subject' },
-            { element: descriptionField, name: 'Description' },
-            { element: priorityField, name: 'Priority' },
-            { element: managerSelect, name: 'Manager' }
+    function timeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        const intervals = [
+            { unit: 'year', divisor: 31536000 },
+            { unit: 'month', divisor: 2592000 },
+            { unit: 'week', divisor: 604800 },
+            { unit: 'day', divisor: 86400 },
+            { unit: 'hour', divisor: 3600 },
+            { unit: 'minute', divisor: 60 },
+            { unit: 'second', divisor: 1 }
         ];
 
-        for (const field of requiredFields) {
-            if (!field.element.value) {
-                toastr.error(`Please select a ${field.name}`);
-                field.element.focus();
-                return false;
+        for (const { unit, divisor } of intervals) {
+            const interval = Math.floor(seconds / divisor);
+            if (interval >= 1) return `${interval} ${unit}${interval === 1 ? '' : 's'} ago`;
+        }
+        return 'Just now';
+    }
+
+    function formatTicketDate(dateString) {
+        if (!dateString) return 'Unknown date';
+        const now = new Date();
+        const ticketDate = new Date(dateString);
+        const diffInHours = Math.abs(now - ticketDate) / 36e5;
+
+        if (ticketDate.toDateString() === now.toDateString()) {
+            if (diffInHours < 1) {
+                const mins = Math.floor(diffInHours * 60);
+                return `<span class="date-today recent-highlight">${mins}m ago</span>`;
             }
+            return `<span class="date-today">Today at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
         }
 
-        return true;
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (ticketDate.toDateString() === yesterday.toDateString()) {
+            return `<span class="date-yesterday">Yesterday at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+        }
+
+        return ticketDate.toLocaleDateString([], {month: 'short', day: 'numeric', year: 'numeric'});
+    }
+
+    function getPriorityBadgeClass(priority) {
+        const priorityLower = priority?.toLowerCase() || '';
+        switch(priorityLower) {
+            case 'high': return 'bg-danger text-danger-fg';
+            case 'medium': return 'bg-warning text-warning-fg';
+            case 'low': return 'bg-success text-success-fg';
+            case 'critical': return 'bg-danger text-white-fg';
+            default: return 'bg-light text-dark';
+        }
+    }
+
+    function getTimeBadgeClass(dateString) {
+        if (!dateString) return 'bg-dark';
+        const now = new Date();
+        const ticketDate = new Date(dateString);
+        const diffInDays = Math.abs(now - ticketDate) / (24 * 60 * 60 * 1000);
+
+        if (diffInDays < 1) return 'bg-danger';
+        if (diffInDays < 7) return 'bg-primary';
+        return 'bg-dark';
+    }
+
+    function getStatusColor(status) {
+        switch ((status || '').toLowerCase()) {
+            case 'open': return 'primary';
+            case 'escalated': return 'danger';
+            case 'reopen': return 'warning';
+            case 'resolved': return 'success';
+            case 'closed': return 'secondary';
+            default: return 'info';
+        }
+    }
+
+    function showAlert(type = "info", message) {
+        const toastOptions = {
+            timeOut: 3000,
+            positionClass: 'toast-bottom-right',
+            closeButton: true
+        };
+
+        toastr[type](message, '', toastOptions);
     }
 
     function showLoading(element) {
         const el = element.jquery ? element[0] : element;
-
-        if (!el || !el.parentNode) {
-            console.error('Invalid element passed to showLoading');
-            return;
-        }
+        if (!el?.parentNode) return;
 
         const spinnerId = `${el.id}-spinner`;
-        if (document.getElementById(spinnerId)) {
-            return;
-        }
+        if (document.getElementById(spinnerId)) return;
 
         const spinner = document.createElement('span');
         spinner.className = 'loading-spinner ms-2';
@@ -1237,10 +975,233 @@ document.addEventListener('DOMContentLoaded', function() {
         const el = element.jquery ? element[0] : element;
         if (!el) return;
 
-        const spinnerId = `${el.id}-spinner`;
-        const spinner = document.getElementById(spinnerId);
-        if (spinner) {
-            spinner.remove();
+        const spinner = document.getElementById(`${el.id}-spinner`);
+        if (spinner) spinner.remove();
+    }
+
+    /**
+     * ticket data submission
+     */
+    function bindFormSubmit() {
+        $('#ticketForm').on('submit', function (e) {
+            e.preventDefault();
+            const form = this;
+
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const submitSpinner = document.getElementById('submitSpinner');
+
+            if (!validateForm()) {
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitText.textContent = 'Creating Ticket...';
+            submitSpinner.style.display = 'inline-block';
+
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+            // Get all values properly
+            formData.append('saas_app_id', $('#service').val());
+            formData.append('topic_id', $('#topic').val());
+            formData.append('sub_topic_id', $('#subtopic').val());
+            formData.append('priority', $('#priority').val());
+            formData.append('title', $('#subject').val());
+            formData.append('description', $('#description').val());
+            formData.append('assigned_to', $('#manager').val());
+
+            // Handle client differently based on service type
+            if (state.isWorkingCustomer) {
+                const clientName = $('#clientName').val().trim();
+                formData.append('client_name', clientName);
+            } else {
+                const clientId = $('#client').val();
+                formData.append('client_id', clientId);
+            }
+
+            // Add conditional fields
+            const issueDate = $('#issueDate').val();
+            if (issueDate) {
+                formData.append('issue_date', issueDate);
+            }
+
+            const tertiaryTopic = $('#tertiaryTopic').val();
+            if (tertiaryTopic) {
+                formData.append('tertiary_topic_id', tertiaryTopic);
+            }
+
+            if (!document.getElementById('senderIdSection').classList.contains('hidden-section')) {
+                formData.append('sender_id', $('#senderId').val());
+
+                const selectedOperators = $('#operator').val() || [];
+                selectedOperators.forEach(operatorId => {
+                    formData.append('operator[]', operatorId);
+                });
+            }
+
+            if (!document.getElementById('paymentChannelSection').classList.contains('hidden-section')) {
+                formData.append('payment_channel_id', $('#paymentChannel').val());
+            }
+
+            // Add notification channels
+            state.selectedChannels.forEach((channel, index) => {
+                formData.append(`notification_channels[${index}]`, channel);
+            });
+
+            // Add attachments
+            const files = elements.attachments.files;
+            for (let i = 0; i < files.length; i++) {
+                formData.append('attachments[]', files[i]);
+            }
+
+            fetch('/backend/ticket/store', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(async response => {
+                    const data = await response.json();
+                    if (!response.ok) {
+                        if (data.errors) {
+                            const errorMessages = Object.values(data.errors).flat().join('<br>');
+                            throw new Error(errorMessages);
+                        }
+                        throw new Error(data.message || 'Network response was not ok');
+                    }
+                    return data;
+                })
+                .then(data => {
+                    if (data.success) {
+                        showAlert("success", data.message || 'Ticket created successfully!');
+                        resetForm(form);
+                    } else {
+                        throw new Error(data.message || 'Failed to create ticket');
+                    }
+                })
+                .catch(error => {
+                    const errors = error.message.split('<br>');
+                    if (errors.length > 1) {
+                        errors.forEach(err => toastr.error(err));
+                    } else {
+                        showAlert("error", error.message || 'Error creating ticket');
+                    }
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitText.textContent = 'Create Ticket';
+                    submitSpinner.style.display = 'none';
+                });
+        });
+    }
+
+
+    function validateForm() {
+        let isValid = true;
+
+        // Validate service
+        if (!$('#service').val()) {
+            showAlert('error', 'Please select a service');
+            $('#service').focus();
+            isValid = false;
         }
+
+        // Validate client based on service type
+        if (state.isWorkingCustomer) {
+            if (!$('#clientName').val().trim()) {
+                showAlert('error', 'Please enter client name for Working Customer');
+                $('#clientName').focus();
+                isValid = false;
+            }
+        } else if (!$('#client').val()) {
+            showAlert('error', 'Please select a client');
+            $('#client').focus();
+            isValid = false;
+        }
+
+        // Validate other required fields
+        const requiredFields = [
+            { element: $('#topic'), name: 'Topic' },
+            { element: $('#subtopic'), name: 'Subtopic' },
+            { element: $('#priority'), name: 'Priority' },
+            { element: $('#manager'), name: 'Manager' },
+        ];
+
+        requiredFields.forEach(field => {
+            if (!field.element.val()) {
+                showAlert('error', `Please provide ${field.name}`);
+                if (isValid) field.element.focus(); // Only focus first invalid field
+                isValid = false;
+            }
+        });
+
+        return isValid;
+    }
+
+    /**
+     * Clear form after successful submission
+     */
+    function resetForm(form) {
+        // Prevent any recursive triggers
+        $('.select2').off('change');
+
+        // Reset the basic form
+        form.reset();
+
+        // Reset state
+        state.currentFiles = [];
+        state.selectedChannels = ['mail', 'whatsapp', 'database'];
+        state.isCriticalPriority = false;
+        state.isWorkingCustomer = false;
+
+        // Reset UI elements
+        updateFileDisplay();
+        updateChannelSelection();
+
+        // Clear inputs
+        $('#clientName').val('');
+        $('#subject').val('');
+        $('#description').val('');
+
+        // Reset Select2 dropdowns carefully
+        $('.select2').each(function() {
+            const $el = $(this);
+            if ($el.attr('id') !== 'service' || !state.preSelectedServiceId) {
+                $el.val(null).trigger('change.select2');
+            }
+        });
+
+        // Reset priority
+        $('#priority').val('low').trigger('change');
+
+        hideSections([
+            '#clientSection',
+            '#topicSection',
+            '#subtopicSection',
+            '#tertiaryTopicSection',
+            '#subjectSection',
+            '#descriptionSection',
+            '#prioritySection',
+            '#attachmentsSection',
+            '#ticketHistorySection',
+            '#senderIdSection',
+            '#operatorSection',
+            '#paymentChannelSection',
+            '#dateSection',
+            '#managerSection',
+            '#submitSection'
+        ]);
+
+        showSection('#serviceSection');
+
+        // Rebind event handlers
+        setTimeout(() => {
+            elements.service.off('change').on('change', handleServiceChange);
+            elements.client.off('change').on('change', handleClientChange);
+        }, 100);
     }
 });

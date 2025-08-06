@@ -1,6 +1,8 @@
+https://ticketing.nextbyte.co.tz/api/client/store
+
 //singe insert for senderIds
 // {
-//     "sender_id": "MyBrand",
+//     "sender_id": "harusi",
 //     "is_active": true
 // }
 
@@ -9,15 +11,15 @@
 {
     "sender_ids": [
         {
-            "sender_id": "COMPANY1",
+            "sender_id": "harusi",
             "is_active": true
         },
         {
-            "sender_id": "SALES",
+            "sender_id": "harusi",
             "is_active": false
         },
         {
-            "sender_id": "ALERTS"  // is_active will default to true
+            "sender_id": "harusi"  // is_active will default to true
         }
     ]
 }
@@ -31,11 +33,11 @@
 {
     "apps": [
         {
-            "name": "Bulk sms solution",
+            "name": "Bulk SMS Solution",
             "abbreviation": "nextsms"
         },
         {
-            "name": "accounting software",
+            "name": "NextAccounting Account Software",
             "abbreviation": "nextaccounting"
         },
         {
@@ -52,14 +54,16 @@
         {
             "name": "Alice Smith",
             "email": "alice@example.com",
-            "saas_app_name": "Bulk sms solution",
+            "saas_app_name": "Bulk SMS Solution",
+            "external_id": "10",
             "sender_ids": ["nextsms", "harusi"]
         },
         {
             "name": "Bob Johnson",
             "email": "bob@example.com",
             "phone": "9876543210",
-            "saas_app_name": "accounting software",
+            "saas_app_name": "NextAccounting Account Software",
+            "external_id": "11",
             "is_active": false
         }
     ]
@@ -68,5 +72,17 @@
 //   {
 //             "name": "Alice Smith",
 //             "email": "alice@example.com",
+//               "external_id": "9",
 //             "saas_app_name": "accounting software"
 //         }
+
+
+//SAAS APP NAMES
+
+//Bulk SMS Solution
+//NextAccounting Account Software
+//Petrol Station Management System
+//Email Manager
+//NextHost Reliable Web Hosting
+//NextCrm
+//RafikiSite

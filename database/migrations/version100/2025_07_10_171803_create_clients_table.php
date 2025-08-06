@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
+            $table->string('external_id')->nullable();
+
             $table->boolean('is_active')->default(true);
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
@@ -25,7 +27,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['saas_app_id', 'email']);
+            $table->unique(['saas_app_id', 'email', 'external_id']);
         });
     }
 
