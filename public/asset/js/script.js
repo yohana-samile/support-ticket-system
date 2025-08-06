@@ -16,10 +16,14 @@ $(document).ready(function () {
         currentFiles: [],
         selectedChannels: [],
         isCriticalPriority: false,
-        preSelectedServiceId: new URLSearchParams(window.location.search).get('saas_app_id'),
-        preSelectedClientId: new URLSearchParams(window.location.search).get('client_id'),
+        preSelectedServiceId: null,
+        preSelectedClientId: null,
         isWorkingCustomer: false
     };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    state.preSelectedServiceId = urlParams.has('saas_app_id') ? urlParams.get('saas_app_id') : null;
+    state.preSelectedClientId = urlParams.has('client_id') ? urlParams.get('client_id') : null;
 
     // DOM Elements
     const elements = {
@@ -61,15 +65,9 @@ $(document).ready(function () {
         if (state.preSelectedServiceId) {
             // Load without triggering change
             fetchPreselectedService(state.preSelectedServiceId);
+        } else {
+            loadServices();
         }
-    }
-
-    function bindEventHandlers() {
-        elements.service.on('change', handleServiceChange);
-        elements.client.on('change', handleClientChange);
-        elements.topic.on('change', handleTopicChange);
-        elements.subtopic.on('change', handleSubtopicChange);
-        elements.priority.on('change', handlePriorityChange);
     }
 
     // Select2 Initialization
@@ -196,8 +194,11 @@ $(document).ready(function () {
         if (state.isWorkingCustomer && clientName.length > 0) {
             // Only load topics if we haven't already shown the topic section
             if ($('#topicSection').hasClass('hidden-section')) {
-                loadTopics(state.preSelectedServiceId);
-                clearError('#clientSection');
+                const serviceId = state.preSelectedServiceId || $(this).val();
+                if (serviceId) {
+                    loadTopics(serviceId);
+                    clearError('#clientSection');
+                }
             }
         } else if (state.isWorkingCustomer) {
             // Hide topic section if client name is empty
@@ -232,14 +233,20 @@ $(document).ready(function () {
             }
             // Proceed with the unregistered client flow
             loadClientTicketHistory(null);
-            loadTopics(state.preSelectedServiceId);
+            const serviceId = state.preSelectedServiceId || $('#service').val();
+            if (serviceId) {
+                loadTopics(serviceId);
+            }
             clearError('#clientSection');
         }
         else {
             const clientId = $('#client').val();
             if (clientId) {
                 loadClientTicketHistory(clientId);
-                loadTopics(state.preSelectedServiceId);
+                const serviceId = state.preSelectedServiceId || $('#service').val();
+                if (serviceId) {
+                    loadTopics(serviceId);
+                }
                 clearError('#clientSection');
             } else {
                 hideSections(['#topicSection', '#ticketHistorySection']);
