@@ -25,12 +25,21 @@
                     <!-- Client Selection -->
                     <div class="mb-3 form-section hidden-section" id="clientSection">
                         <label for="client" class="form-label">{{__('label.client')}} <span class="text-danger">*</span></label>
-                        <select class="form-select form-control select2" id="client" required >
-                            <option value="" >Select a client</option>
-                            @if(isset($preSelectedClient))
-                                <option value="{{ $preSelectedClient->id }}" selected>{{ $preSelectedClient->name }}</option>
-                            @endif
-                        </select>
+                        <div id="clientSelectContainer">
+                            <select class="form-select form-control select2" id="client" required>
+                                <option value="">Select a client</option>
+                                @if(isset($preSelectedClient))
+                                    <option value="{{ $preSelectedClient->id }}" selected>{{ $preSelectedClient->name }}</option>
+                                @endif
+                            </select>
+                        </div>
+
+                        <div class="mt-2 hidden-section" id="clientNameInputSection">
+{{--                            <label for="clientName" class="form-label">Client Full Name <span class="text-danger">*</span></label>--}}
+                            <input type="text" class="form-control" id="clientName" placeholder="Enter client's full name">
+                            <div class="form-text">Please enter the full name of the client</div>
+                        </div>
+
                         <div class="form-text" id="clientHistoryText"></div>
                     </div>
 
@@ -371,13 +380,15 @@
                 selectedChannels: [],
                 isCriticalPriority: false,
                 preSelectedServiceId: new URLSearchParams(window.location.search).get('saas_app_id'),
-                preSelectedClientId: new URLSearchParams(window.location.search).get('client_id')
+                preSelectedClientId: new URLSearchParams(window.location.search).get('client_id'),
+                isWorkingCustomer: false
             };
 
             // DOM Elements
             const elements = {
                 service: $('#service'),
                 client: $('#client'),
+                clientName: $('#clientName'),
                 topic: $('#topic'),
                 subtopic: $('#subtopic'),
                 tertiaryTopic: $('#tertiaryTopic'),
@@ -402,6 +413,7 @@
                 bindEventHandlers();
                 initializeFileUpload();
                 initializeNotificationChannels();
+                $('#clientName').on('input', handleClientNameInput);
 
                 if (state.preSelectedServiceId) {
                     loadClients(state.preSelectedServiceId);
@@ -510,12 +522,47 @@
 
             function handleServiceChange() {
                 const serviceId = $(this).val();
+                const serviceName = $(this).find('option:selected').text().toLowerCase();
+
+                state.isWorkingCustomer = serviceName.includes('working customer');
+
                 if (serviceId) {
                     loadClients(serviceId);
                     showSection('#clientSection');
                     clearError('#serviceSection');
+
+                    // Toggle between client select and client name input
+                    if (state.isWorkingCustomer) {
+                        // Hide Select2 properly
+                        $('#client').next('.select2-container').hide();
+                        $('#client').addClass('hidden-section').prop('required', false);
+                        $('#clientNameInputSection').removeClass('hidden-section');
+                        // Clear any existing topic selection
+                        hideSections(['#topicSection', '#ticketHistorySection']);
+                    } else {
+                        // Show Select2 properly
+                        $('#client').next('.select2-container').show();
+                        $('#client').removeClass('hidden-section').prop('required', true);
+                        $('#clientNameInputSection').addClass('hidden-section');
+                        // Clear the client name input
+                        $('#clientName').val('');
+                    }
                 } else {
                     hideSections(['#clientSection', '#topicSection']);
+                }
+            }
+
+            function handleClientNameInput() {
+                const clientName = $(this).val().trim();
+                if (state.isWorkingCustomer && clientName.length > 0) {
+                    // Only load topics if we haven't already shown the topic section
+                    if ($('#topicSection').hasClass('hidden-section')) {
+                        loadTopics(state.preSelectedServiceId);
+                        clearError('#clientSection');
+                    }
+                } else if (state.isWorkingCustomer) {
+                    // Hide topic section if client name is empty
+                    hideSections(['#topicSection', '#ticketHistorySection']);
                 }
             }
 
@@ -538,13 +585,28 @@
             }
 
             function handleClientChange() {
-                const clientId = $(this).val();
-                if (clientId) {
-                    loadClientTicketHistory(clientId);
+                if (state.isWorkingCustomer) {
+                    const clientName = $('#clientName').val().trim();
+                    if (!clientName) {
+                        showAlert('error', 'Please enter the client full name for Working Customer');
+                        return;
+                    }
+                    // Proceed with the unregistered client flow
+                    loadClientTicketHistory(null);
                     loadTopics(state.preSelectedServiceId);
                     clearError('#clientSection');
-                } else {
-                    hideSections(['#topicSection', '#ticketHistorySection']);
+                }
+                else {
+                    const clientId = $('#client').val();
+                    if (clientId) {
+                        loadClientTicketHistory(clientId);
+                        loadTopics(state.preSelectedServiceId);
+                        clearError('#clientSection');
+                    } else {
+                        hideSections(['#topicSection', '#ticketHistorySection']);
+                        // Reset Select2 if needed
+                        $('#client').val('').trigger('change');
+                    }
                 }
             }
 
@@ -824,7 +886,6 @@
                     });
             }
 
-            // File Upload Functions
             // File Upload Functions
             function initializeFileUpload() {
                 elements.attachments.addEventListener('change', handleFileSelection);
