@@ -1,659 +1,715 @@
-    class TicketForm {
-        constructor() {
-            this.initElements();
-            this.initState();
-            this.initSelect2();
-            this.initEventListeners();
-            this.loadInitialData();
+document.addEventListener('DOMContentLoaded', function() {
+    const operatorChoices = new Choices('#operator', {
+        removeItemButton: true,
+        placeholder: true,
+        searchEnabled: true,
+        shouldSort: false,
+        duplicateItemsAllowed: false
+    });
+    const form = document.getElementById('ticketForm');
+    const serviceSelect = document.getElementById('service');
+    const clientSelect = document.getElementById('client');
+    const topicSelect = document.getElementById('topic');
+    const subtopicSelect = document.getElementById('subtopic');
+    const tertiaryTopicSelect = document.getElementById('tertiaryTopic');
+    const managerSelect = document.getElementById('manager');
+    const ticketHistoryDiv = document.getElementById('ticketHistory');
+    const attachmentsInput = document.getElementById('attachments');
+    const attachmentPreviews = document.getElementById('attachmentPreviews');
+    const senderIdSelect = document.getElementById('senderId');
+    const operatorSelect = document.getElementById('operator');
+    const paymentChannelSelect = document.getElementById('paymentChannel');
+    const subjectField = document.getElementById('subject');
+    const descriptionField = document.getElementById('description');
+    const priorityField = document.getElementById('priority');
+    let selectedChannels = [];
+    let isCriticalPriority = false;
+
+    // State to track selected values
+    let selectedServiceId = null;
+    let selectedClientId = null;
+    let selectedTopicId = null;
+    let selectedSubtopicId = null;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const preSelectedServiceId = urlParams.get('saas_app_id');
+    if (preSelectedServiceId) {
+        // Trigger the service change handler immediately
+        serviceSelect.value = preSelectedServiceId;
+        handleServiceChange();
+        $(serviceSelect).trigger('change');
+    }
+
+    // Initialize the form
+    loadServices(preSelectedServiceId);
+
+    function autoSelectChannel() {
+        selectedChannels = [];
+        $('.channel-card').removeClass('border border-primary');
+
+        // Always select email and WhatsApp
+        selectedChannels.push('mail', 'whatsapp', 'database');
+
+        // Add SMS for critical priority
+        if (isCriticalPriority) {
+            selectedChannels.push('sms');
         }
 
-        initSelect2() {
-            try{
-                // Initialize service select first
-                if (this.serviceSelect) {
-                    this.serviceSelect2 = $(this.serviceSelect).select2({
-                        ajax: {
-                            url: this.serviceSelect.dataset.ajaxUrl,
-                            dataType: 'json',
-                            delay: 250,
-                            data: function (params) {
-                                return {
-                                    search: params.term,
-                                    page: params.page
-                                };
-                            },
-                            processResults: function (data, params) {
-                                params.page = params.page || 1;
-                                return {
-                                    results: data.data.map(item => ({
-                                        id: item.id,
-                                        text: item.name
-                                    })),
-                                    pagination: {
-                                        more: (params.page * 10) < data.total
-                                    }
-                                };
-                            },
-                            cache: true
-                        },
-                        placeholder: this.serviceSelect.dataset.placeholder,
-                        minimumInputLength: 1,
-                        width: '100%'
-                    });
-                }
+        // Update UI to reflect selections
+        updateChannelSelectionUI();
+        updateChannelSelectionSummary();
+    }
 
-                // Initialize client select with proper container class
-                if (this.clientSelect) {
-                    $(this.clientSelect).select2({
-                        width: '100%',
-                        dropdownParent: $(this.clientSelect).parent()
-                    });
-                }
-
-                // Initialize other Select2 elements
-                if (this.topicSelect) $(this.topicSelect).select2({ width: '100%' });
-                if (this.subtopicSelect) $(this.subtopicSelect).select2({ width: '100%' });
-                if (this.tertiaryTopicSelect) $(this.tertiaryTopicSelect).select2({ width: '100%' });
-                if (this.senderIdSelect) $(this.senderIdSelect).select2({ width: '100%' });
-                if (this.paymentChannelSelect) $(this.paymentChannelSelect).select2({ width: '100%' });
-                if (this.priorityField) $(this.priorityField).select2({ width: '100%' });
-                if (this.managerSelect) $(this.managerSelect).select2({ width: '100%' });
-
-            } catch (e) {
-                console.error('Select2 initialization error:', e);
-            }
-        }
-
-        // Initialize DOM elements
-        initElements() {
-            this.form = document.getElementById('ticketForm');
-            this.serviceSelect = document.getElementById('service');
-            this.clientSelect = document.getElementById('client');
-            this.topicSelect = document.getElementById('topic');
-            this.subtopicSelect = document.getElementById('subtopic');
-            this.tertiaryTopicSelect = document.getElementById('tertiaryTopic');
-            this.managerSelect = document.getElementById('manager');
-            this.priorityField = document.getElementById('priority');
-            this.subjectField = document.getElementById('subject');
-            this.descriptionField = document.getElementById('description');
-            this.attachmentsInput = document.getElementById('attachments');
-            this.attachmentPreviews = document.getElementById('attachmentPreviews');
-            this.fileCountDisplay = document.getElementById('fileCount');
-            this.addMoreFilesBtn = document.getElementById('addMoreFiles');
-            this.senderIdSelect = document.getElementById('senderId');
-            this.paymentChannelSelect = document.getElementById('paymentChannel');
-            this.dateSection = document.getElementById('dateSection');
-            this.issueDateInput = document.getElementById('issueDate');
-
-            this.operatorChoices = new Choices('#operator', {
-                removeItemButton: true,
-                placeholder: true,
-                searchEnabled: true,
-                shouldSort: false,
-                duplicateItemsAllowed: false
-            });
-        }
-
-        // Initialize application state
-        initState() {
-            this.selectedChannels = [];
-            this.isCriticalPriority = false;
-            this.currentFiles = [];
-            this.selectedServiceId = null;
-            this.selectedClientId = null;
-            this.selectedTopicId = null;
-            this.selectedSubtopicId = null;
-        }
-
-        // Set up event listeners
-        initEventListeners() {
-            this.serviceSelect.addEventListener('change', () => this.handleServiceChange());
-            this.clientSelect.addEventListener('change', () => this.handleClientChange());
-            this.topicSelect.addEventListener('change', () => this.handleTopicChange());
-            this.subtopicSelect.addEventListener('change', () => this.handleSubtopicChange());
-            this.tertiaryTopicSelect.addEventListener('change', () => this.handleTertiaryTopicChange());
-            this.subjectField.addEventListener('input', () => this.handleSubjectInput());
-            this.descriptionField.addEventListener('input', () => this.handleDescriptionInput());
-            this.priorityField.addEventListener('change', () => this.handlePriorityChange());
-            this.attachmentsInput.addEventListener('change', (e) => this.handleFileSelect(e));
-            this.addMoreFilesBtn.addEventListener('click', () => this.handleAddMoreFiles());
-            this.form.addEventListener('submit', (e) => this.handleFormSubmit(e));
-        }
-
-        // Load initial data if preselected service exists
-        loadInitialData() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const preSelectedServiceId = urlParams.get('saas_app_id');
-            this.ticketHistoryDiv = document.getElementById('ticketHistory');
-
-            // Call loadServices with the preselected ID
-            this.loadServices(preSelectedServiceId);
-        }
-
-        // Main form handler methods
-        async handleServiceChange() {
-            this.selectedServiceId = this.serviceSelect.value;
-            if (!this.selectedServiceId) return;
-
-            const selectedServiceText = this.serviceSelect.options[this.serviceSelect.selectedIndex].text;
-            const isWorkingCustomer = selectedServiceText.toLowerCase() === 'working customer';
-
-            if (isWorkingCustomer) {
-                this.setupWorkingCustomerFlow();
+    function updateChannelSelectionUI() {
+        $('.channel-card').each(function() {
+            const channel = $(this).data('channel');
+            if (selectedChannels.includes(channel)) {
+                $(this).addClass('border border-primary');
             } else {
-                this.setupRegularClientFlow();
+                $(this).removeClass('border border-primary');
             }
+        });
 
-            this.hideDependentSections();
-            await this.loadClients();
+        // Update hidden inputs
+        $('#notification_channels_wrapper').html('');
+        selectedChannels.forEach(channel => {
+            $('#notification_channels_wrapper').append(
+                `<input type="hidden" name="notification_channels[]" value="${channel}">`
+            );
+        });
+    }
+
+    // Update the channel card click handler to allow user modifications
+    $('.channel-card').on('click', function() {
+        const channel = $(this).data('channel');
+
+        // Don't allow removing email for critical tickets
+        if (isCriticalPriority && channel === 'sms') {
+            toastr.warning('SMS is required for critical priority tickets');
+            return;
         }
 
-        setupWorkingCustomerFlow() {
-            let customerNameInput = document.getElementById('customerNameInput');
-            if (!customerNameInput) {
-                customerNameInput = this.createCustomerNameInput();
-
-                // Get the parent container of the Select2 element
-                const select2Container = $(this.clientSelect).closest('.form-section');
-
-                // Append the input to the same container
-                select2Container.append(customerNameInput);
-            }
-
-            // Hide the Select2 container
-            $(this.clientSelect).select2('container').hide();
-            customerNameInput.style.display = 'block';
+        // Toggle selection
+        if (selectedChannels.includes(channel)) {
+            selectedChannels = selectedChannels.filter(c => c !== channel);
+        } else {
+            selectedChannels.push(channel);
         }
 
-        createCustomerNameInput() {
-            const input = document.createElement('input');
-            input.id = 'customerNameInput';
-            input.type = 'text';
-            input.className = 'form-control mt-2';
-            input.placeholder = 'Enter customer full name';
-            input.required = true;
-            input.style.display = 'none'; // Start hidden
+        // Update UI
+        $(this).toggleClass('border border-primary');
+        updateChannelSelectionSummary();
 
-            input.addEventListener('input', () => {
-                if (input.value.trim() !== '') {
-                    this.showSection('topicSection');
-                    this.loadTopics();
-                } else {
-                    this.hideSection('topicSection');
-                }
+        // Update hidden inputs
+        $('#notification_channels_wrapper').html('');
+        selectedChannels.forEach(channel => {
+            $('#notification_channels_wrapper').append(
+                `<input type="hidden" name="notification_channels[]" value="${channel}">`
+            );
+        });
+    });
+
+    managerSelect.addEventListener('change', function() {
+        if (this.value) {
+            autoSelectChannel();
+        } else {
+            resetChannelSelections();
+        }
+    });
+
+    // Event listeners
+    serviceSelect.addEventListener('change', handleServiceChange);
+    clientSelect.addEventListener('change', handleClientChange);
+    topicSelect.addEventListener('change', handleTopicChange);
+    subtopicSelect.addEventListener('change', handleSubtopicChange);
+    form.addEventListener('submit', handleFormSubmit);
+    attachmentsInput.addEventListener('change', handleFileSelect);
+    tertiaryTopicSelect.addEventListener('change', handleTertiaryTopicChange);
+    subjectField.addEventListener('input', handleSubjectInput);
+    descriptionField.addEventListener('input', handleDescriptionInput);
+    priorityField.addEventListener('change', handlePriorityChange);
+
+    function showChannelModal() {
+        $('#channelModal').modal('show');
+    }
+    function resetChannelSelections() {
+        selectedChannels = [];
+        isCriticalPriority = false;
+        $('.channel-card').removeClass('border border-primary');
+        $('#notification_channels_wrapper').html('');
+        updateChannelSelectionSummary();
+    }
+    function updateChannelSelectionSummary() {
+        const summaryContainer = document.getElementById('channelSelectionSummary');
+        if (!summaryContainer) {
+            const managerSection = document.getElementById('managerSection');
+            const summaryDiv = document.createElement('div');
+            summaryDiv.id = 'channelSelectionSummary';
+            summaryDiv.className = 'mt-2 channel-summary';
+            managerSection.appendChild(summaryDiv);
+        }
+
+        const summaryElement = document.getElementById('channelSelectionSummary');
+        if (selectedChannels.length > 0) {
+            const channelBadges = selectedChannels.map(channel =>
+                `<span class="badge bg-primary me-1">${channel}</span>`
+            ).join('');
+            summaryElement.innerHTML = `
+                <small class="text-muted">Notification channels:</small>
+                <div>${channelBadges}</div>
+                <small class="text-muted click-to-edit" style="cursor: pointer; color: #0d6efd !important;">
+                    <i class="bi bi-pencil-square"></i> Click to edit
+                </small>
+            `;
+
+            // Add click handler to show modal for editing
+            $('.click-to-edit').on('click', function() {
+                $('#channelModal').modal('show');
             });
+        } else {
+            summaryElement.innerHTML = `
+            <small class="text-muted">No notification channels selected</small>
+        `;
+        }
+    }
 
-            return input;
+    $('#channelModal .btn-primary').on('click', function() {
+        $('#channelModal').modal('hide');
+    });
+
+    // Helper functions for section visibility
+    function showSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        section.classList.remove('hidden-section');
+        section.classList.add('visible-section');
+    }
+
+    function hideSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        section.classList.remove('visible-section');
+        section.classList.add('hidden-section');
+    }
+
+    function resetSelect(selectElement, placeholder = 'Select an option') {
+        selectElement.innerHTML = `<option value="" selected disabled>${placeholder}</option>`;
+    }
+    // Load services
+    function loadServices(preSelectedId = null) {
+        const serviceSelect = $('#service');
+        const serviceSelectElement = serviceSelect[0];
+        showLoading(serviceSelectElement);
+
+        // Destroy existing Select2 instance if it exists
+        if (serviceSelect.hasClass('select2-hidden-accessible')) {
+            serviceSelect.select2('destroy');
         }
 
-        setupRegularClientFlow() {
-            this.showSection('clientSection');
+        // Clear any existing options
+        serviceSelect.empty().append('<option value=""></option>');
 
-            const customerNameInput = document.getElementById('customerNameInput');
-            if (customerNameInput) {
-                customerNameInput.style.display = 'none';
-            }
+        // Initialize Select2
+        serviceSelect.select2({
+            ajax: {
+                url: serviceSelect.data('ajax-url'),
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        search: params.term,
+                        page: params.page || 1,
+                        id: preSelectedId // Include the preselected ID in requests
+                    };
+                },
+                processResults: function(data, params) {
+                    params.page = params.page || 1;
+                    hideLoading(serviceSelectElement);
+                    return {
+                        results: data.data.map(item => ({
+                            id: item.id,
+                            text: item.name
+                        })),
+                        pagination: {
+                            more: data.next_page_url ? true : false
+                        }
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 2,
+            placeholder: serviceSelect.data('placeholder'),
+            allowClear: true,
+            escapeMarkup: function(markup) { return markup; }
+        }).on('select2:select', function(e) {
+            handleServiceChange();
+        });
 
-            // Safely handle Select2
-            if (this.clientSelect) {
-                // Ensure Select2 is initialized
-                if (!$.fn.select2) {
-                    console.error('Select2 not loaded');
-                    return;
-                }
+        // Handle preselected service
+        if (preSelectedId) {
+            // console.log("preSelectedServiceId ", preSelectedId);
 
-                // Initialize Select2 if not already initialized
-                if (!$(this.clientSelect).hasClass('select2-hidden-accessible')) {
-                    $(this.clientSelect).select2({
-                        width: '100%',
-                        dropdownParent: $(this.clientSelect).parent()
-                    });
-                }
-
-                // Show the Select2 container safely
-                const select2Instance = $(this.clientSelect).data('select2');
-                if (select2Instance && select2Instance.$container) {
-                    select2Instance.$container.show();
-                }
-
-                this.clientSelect.style.display = 'block';
-                this.clientSelect.innerHTML = '<option value="" selected disabled>Loading clients...</option>';
-            }
-        }
-
-        hideDependentSections() {
-            const sectionsToHide = [
-                'subtopicSection', 'tertiaryTopicSection',
-                'managerSection', 'senderIdSection',
-                'operatorSection', 'paymentChannelSection', 'subjectSection',
-                'descriptionSection', 'prioritySection', 'attachmentsSection',
-                'submitSection'
-            ];
-
-            sectionsToHide.forEach(section => this.hideSection(section));
-        }
-
-        async loadServices(preSelectedServiceId = null) {
-            try {
-                const response = await fetch('/backend/saas_app/search');
-                const data = await response.json();
-
-                // Clear existing options
-                $(this.serviceSelect).empty();
-
-                // Add default option
-                const defaultOption = new Option('Select a Saas App', '', true, true);
-                defaultOption.disabled = true;
-                this.serviceSelect.appendChild(defaultOption);
-
-                // Add all services
-                data.data.forEach(service => {
-                    const option = new Option(service.name, service.id);
-                    this.serviceSelect.appendChild(option);
-                });
-
-                // If there's a preselected service, set it
-                if (preSelectedServiceId) {
-                    $(this.serviceSelect).val(preSelectedServiceId).trigger('change');
-                    this.handleServiceChange();
-                }
-
-                // Initialize Select2 after options are loaded
-                $(this.serviceSelect).select2({
-                    ajax: {
-                        url: this.serviceSelect.dataset.ajaxUrl,
-                        dataType: 'json',
-                        delay: 250,
-                        data: function (params) {
-                            return {
-                                search: params.term,
-                                page: params.page
-                            };
-                        },
-                        processResults: function (data, params) {
-                            params.page = params.page || 1;
-                            return {
-                                results: data.data.map(item => ({
-                                    id: item.id,
-                                    text: item.name
-                                })),
-                                pagination: {
-                                    more: (params.page * 10) < data.total
-                                }
-                            };
-                        },
-                        cache: true
+            // First try to find if the option already exists
+            if (serviceSelect.find(`option[value="${preSelectedId}"]`).length) {
+                serviceSelect.val(preSelectedId).trigger('change');
+                handleServiceChange();
+                hideLoading(serviceSelectElement);
+            } else {
+                // Fetch the specific service
+                $.ajax({
+                    url: serviceSelect.data('ajax-url'),
+                    data: {
+                        search: '',
+                        id: preSelectedId,
+                        specific: true // Add this to ensure you get exactly what you requested
                     },
-                    placeholder: this.serviceSelect.dataset.placeholder,
-                    minimumInputLength: 1,
-                    width: '100%'
+                    dataType: 'json'
+                }).done(function(data) {
+                    if (data.data && data.data.length) {
+                        const service = data.data.find(item => item.id == preSelectedId);
+
+                        if (!service) {
+                            // console.error('Requested service not found in response', {
+                            //     requestedId: preSelectedId,
+                            //     returnedData: data.data
+                            // });
+                            hideLoading(serviceSelectElement);
+                            return;
+                        }
+
+                        // console.log("Creating option for service:", service);
+                        const option = new Option(service.name, service.id, true, true);
+                        serviceSelect.append(option).trigger('change');
+                        handleServiceChange();
+                    }
+                    hideLoading(serviceSelectElement);
+                }).fail(function(error) {
+                    // console.error('Failed to load preselected service:', error);
+                    hideLoading(serviceSelectElement);
                 });
-
-            } catch (error) {
-                console.error('Error loading services:', error);
-                this.serviceSelect.innerHTML = '<option value="" selected disabled>Error loading services</option>';
             }
+        } else {
+            setTimeout(() => {
+                hideLoading(serviceSelectElement);
+            }, 500);
         }
+    }
 
-        async loadClients() {
-            try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const preSelectedClientId = urlParams.get('client_id');
+    // When service is selected, load clients
+    function handleServiceChange() {
+        selectedServiceId = serviceSelect.value;
+        if (!selectedServiceId) return;
 
-                const response = await fetch(`/backend/client/client_by_services/${this.selectedServiceId}`);
-                const data = await response.json();
+        // Show client section
+        showSection('clientSection');
+        clientSelect.innerHTML = '<option value="" selected disabled>Loading clients...</option>';
 
-                this.resetSelect(this.clientSelect, 'Select a client');
+        // Hide dependent sections
+        hideSection('topicSection');
+        hideSection('subtopicSection');
+        hideSection('tertiaryTopicSection');
+        hideSection('managerSection');
+        hideSection('ticketHistorySection');
+        hideSection('senderIdSection');
+        hideSection('operatorSection');
+        hideSection('paymentChannelSection');
+        hideSection('subjectSection');
+        hideSection('descriptionSection');
+        hideSection('prioritySection');
+        hideSection('attachmentsSection');
+        hideSection('submitSection');
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const preSelectedClientId = urlParams.get('client_id');
+
+        fetch(`/backend/client/client_by_services/${selectedServiceId}`)
+            .then(response => response.json())
+            .then(data => {
+                resetSelect(clientSelect, 'Select a client');
                 data.data.forEach(client => {
                     const option = document.createElement('option');
                     option.value = client.id;
                     option.textContent = client.name;
 
+                    // Pre-select if this is the client from URL parameters
                     if (preSelectedClientId && client.id == preSelectedClientId) {
                         option.selected = true;
-                        this.selectedClientId = client.id;
+                        selectedClientId = client.id;
+
+                        // Trigger client change handler immediately
                         setTimeout(() => {
-                            this.handleClientChange();
-                            $(this.clientSelect).trigger('change');
+                            handleClientChange();
+                            $(clientSelect).trigger('change');
                         }, 100);
                     }
 
-                    this.clientSelect.appendChild(option);
+                    clientSelect.appendChild(option);
                 });
-            } catch (error) {
-                this.clientSelect.innerHTML = '<option value="" selected disabled>Error loading clients</option>';
-            }
-        }
+            })
+            .catch(error => {
+                clientSelect.innerHTML = '<option value="" selected disabled>Error loading clients</option>';
+            });
+    }
 
-        async handleClientChange() {
-            this.selectedClientId = this.clientSelect.value;
-            if (!this.selectedClientId) return;
+    // When client is selected, load ticket history and topics
+    function handleClientChange() {
+        selectedClientId = clientSelect.value;
+        if (!selectedClientId) return;
 
-            this.showLoading(this.clientSelect);
-            this.resetDependentFields();
+        showLoading(clientSelect);
+        showSection('topicSection');
+        topicSelect.innerHTML = '<option value="" selected disabled>Loading topics...</option>';
 
-            this.showSection('topicSection');
-            this.topicSelect.innerHTML = '<option value="" selected disabled>Loading topics...</option>';
+        const ticketHistoryDiv = document.getElementById('ticketHistory');
+        ticketHistoryDiv.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 mb-0">Loading ticket history...</p>
+            </div>
+        `;
 
-            await Promise.all([
-                this.loadTicketHistory(),
-                this.loadTopics()
-            ]);
+        fetch(`/backend/ticket/client_ticket_history/${selectedClientId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(responseData => {
+                showSection('ticketHistorySection');
 
-            this.hideLoading(this.clientSelect);
-        }
-
-        resetDependentFields() {
-            // Reset topic and all subsequent fields
-            $(this.topicSelect).val(null).trigger('change');
-            $(this.subtopicSelect).val(null).trigger('change');
-            $(this.tertiaryTopicSelect).val(null).trigger('change');
-            $(this.managerSelect).val(null).trigger('change');
-            $(this.priorityField).val(null).trigger('change');
-            this.subjectField.value = "";
-            this.descriptionField.value = "";
-
-            // Clear date field
-            this.clearDateField();
-
-            // Reset Choices.js for operator selection if it exists
-            if (this.operatorChoices) {
-                this.operatorChoices.clearStore();
-                this.operatorChoices.setChoices(
-                    [{value: '', label: 'Select mobile operator(s)', disabled: true}],
-                    'value',
-                    'label',
-                    true
-                );
-            }
-
-            // Reset any other special fields
-            if (this.senderIdSelect) {
-                $(this.senderIdSelect).val(null).trigger('change');
-            }
-            if (this.paymentChannelSelect) {
-                $(this.paymentChannelSelect).val(null).trigger('change');
-            }
-
-            // Clear attachments
-            this.currentFiles = [];
-            this.updateFileDisplay();
-
-            // Hide all dependent sections except topic section
-            this.hideDependentSections();
-
-            // Ensure ticket history remains visible
-            this.showSection('ticketHistorySection');
-        }
-
-        clearDateField() {
-            if (this.issueDateInput) {
-                this.issueDateInput.value = '';
-            }
-            const dateSection = document.getElementById('dateSection');
-            if (dateSection) {
-                dateSection.classList.remove('visible-section');
-                dateSection.classList.add('hidden-section');
-            }
-        }
-
-        async loadTicketHistory() {
-            try {
-                const response = await fetch(`/backend/ticket/client_ticket_history/${this.selectedClientId}`);
-                const responseData = await response.json();
-
-                if (!responseData?.data?.data || !Array.isArray(responseData.data.data)) {
+                if (!responseData || !responseData.data || !responseData.data.data || !Array.isArray(responseData.data.data)) {
                     throw new Error('Invalid data format received from server');
                 }
 
-                this.showSection('ticketHistorySection');
-                if (this.ticketHistoryDiv) {
-                    this.renderTicketHistory(responseData.data);
+                const tickets = responseData.data.data;
+                const paginationInfo = responseData.data;
+                const clientName = tickets[0]?.client?.name || 'Client';
+
+                if (tickets.length === 0) {
+                    ticketHistoryDiv.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-inbox empty-state-icon"></i>
+                        <p class="empty-state-text">No previous tickets found for this client.</p>
+                    </div>
+                `;
+                } else {
+                    ticketHistoryDiv.innerHTML = `
+                        <div class="ticket-history-header">
+                            <h3 class="ticket-history-title">
+                                <span class="badge bg-primary client-badge">${clientName}</span>
+                                Recent Tickets
+                            </h3>
+                            <span class="ticket-history-count">${Math.min(tickets.length, 5)} of ${paginationInfo.total}</span>
+                        </div>
+                        <div id="ticketHistoryList"></div>
+                    `;
+
+                    const list = document.getElementById('ticketHistoryList');
+                    if (!list) {
+                        console.error('ticketHistoryList not found in DOM');
+                        return;
+                    }
+                    const ticketsToShow = tickets.slice(0, 5);
+
+                    ticketsToShow.forEach(ticket => {
+                        const priorityClass = ticket.priority?.toLowerCase() || 'low';
+                        const statusClass = ticket.status?.toLowerCase() || 'open';
+                        const timeAgoResult = ticket.created_at ? timeAgo(ticket.created_at) : '';
+                        const timeBadgeClass = getTimeBadgeClass(ticket.created_at);
+
+                        let categoryPath = ticket.topic?.name || 'No topic';
+                        if (ticket.subtopic?.name) categoryPath += ` › ${ticket.subtopic.name}`;
+                        if (ticket.tertiary_topic?.name) categoryPath += ` › ${ticket.tertiary_topic.name}`;
+
+                        const item = document.createElement('div');
+                        item.className = `ticket-item ${isTicketRecent(ticket.created_at) ? 'recent-ticket' : ''}`;
+
+                        item.innerHTML = `
+                            <div class="ticket-main-info">
+                                <h4 class="ticket-title">${ticket.title || 'No title'}</h4>
+                                <span class="ticket-status ${statusClass}">${ticket.status || 'Unknown'}</span>
+                            </div>
+                            <div class="ticket-meta">
+                                <span class="ticket-category">${categoryPath}</span>
+                                <span class="ticket-assignee">
+                                    <i class="bi bi-person"></i> ${ticket.assigned_to?.name || 'Unassigned'}
+                                </span>
+                                <span class="ticket-date">
+                                    <i class="bi bi-calendar"></i> ${formatTicketDate(ticket.created_at)}
+                                </span>
+                                <span class="ticket-number">
+                                    <i class="bi bi-tag"></i> ${ticket.ticket_number || ''}
+                                </span>
+                            </div>
+                            ${ticket.description ? `
+                            <div class="ticket-description">
+                                ${ticket.description}
+                            </div>
+                            ` : ''}
+                            <div class="ticket-footer">
+                                <span class="ticket-priority ${priorityClass}">${ticket.priority || 'Unknown'}</span>
+                                <span class="ticket-time text-white badge ${timeBadgeClass}">
+                                    <i class="bi bi-clock"></i> ${timeAgoResult}
+                                </span>
+                            </div>
+                        `;
+                        list.appendChild(item);
+                    });
+
+                    if (tickets.length > 5) {
+                        const firstTicketUid = tickets[0]?.uid || '';
+                        const viewAll = document.createElement('a');
+                        viewAll.href = `/backend/ticket/client_ticket_history/${selectedClientId}`;
+                        viewAll.className = 'view-all-tickets';
+                        viewAll.innerHTML = 'View all tickets <i class="bi bi-chevron-right"></i>';
+                        list.appendChild(viewAll);
+                    }
                 }
-            } catch (error) {
-                this.ticketHistoryDiv.innerHTML = `
-                  <div class="alert alert-danger m-3">
-                    <i class="bi bi-exclamation-triangle-fill"></i> Failed to load ticket history: ${error.message}
-                  </div>
+            })
+            .catch(error => {
+                ticketHistoryDiv.innerHTML = `
+                    <div class="alert alert-danger m-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Failed to load ticket history: ${error.message}
+                    </div>
                 `;
-                this.hideSection('ticketHistorySection');
-            }
-        }
-
-        renderTicketHistory({ data: tickets, total }) {
-            if (!this.ticketHistoryDiv) return;
-
-            if (tickets.length === 0) {
-                this.ticketHistoryDiv.innerHTML = `
-                  <div class="empty-state">
-                    <i class="bi bi-inbox empty-state-icon"></i>
-                    <p class="empty-state-text">No previous tickets found for this client.</p>
-                  </div>
-                `;
-                return;
-            }
-
-            const clientName = tickets[0]?.client?.name || 'Client';
-            const ticketsToShow = tickets.slice(0, 5);
-
-            this.ticketHistoryDiv.innerHTML = `
-                <div class="ticket-history-header">
-                  <h3 class="ticket-history-title">
-                    <span class="badge bg-primary client-badge">${clientName}</span>
-                    Recent Tickets
-                  </h3>
-                  <span class="ticket-history-count">${Math.min(tickets.length, 5)} of ${total}</span>
-                </div>
-                <div id="ticketHistoryList"></div>
-              `;
-
-            const list = document.getElementById('ticketHistoryList');
-            ticketsToShow.forEach(ticket => {
-                list.appendChild(this.createTicketItem(ticket));
+                hideSection('ticketHistorySection');
             });
 
-            if (tickets.length > 5) {
-                const viewAll = document.createElement('a');
-                viewAll.href = `/backend/ticket/client_ticket_history/${this.selectedClientId}`;
-                viewAll.className = 'view-all-tickets';
-                viewAll.innerHTML = 'View all tickets <i class="bi bi-chevron-right"></i>';
-                list.appendChild(viewAll);
-            }
-        }
-
-        createTicketItem(ticket) {
-            const priorityClass = ticket.priority?.toLowerCase() || 'low';
-            const statusClass = ticket.status?.toLowerCase() || 'open';
-            const timeAgoResult = ticket.created_at ? this.timeAgo(ticket.created_at) : '';
-            const timeBadgeClass = this.getTimeBadgeClass(ticket.created_at);
-
-            let categoryPath = ticket.topic?.name || 'No topic';
-            if (ticket.subtopic?.name) categoryPath += ` › ${ticket.subtopic.name}`;
-            if (ticket.tertiary_topic?.name) categoryPath += ` › ${ticket.tertiary_topic.name}`;
-
-            const item = document.createElement('div');
-            item.className = `ticket-item ${this.isTicketRecent(ticket.created_at) ? 'recent-ticket' : ''}`;
-
-            item.innerHTML = `
-                <div class="ticket-main-info">
-                  <h4 class="ticket-title">${ticket.title || 'No title'}</h4>
-                  <span class="ticket-status ${statusClass}">${ticket.status || 'Unknown'}</span>
-                </div>
-                <div class="ticket-meta">
-                  <span class="ticket-category">${categoryPath}</span>
-                  <span class="ticket-assignee">
-                    <i class="bi bi-person"></i> ${ticket.assigned_to?.name || 'Unassigned'}
-                  </span>
-                  <span class="ticket-date">
-                    <i class="bi bi-calendar"></i> ${this.formatTicketDate(ticket.created_at)}
-                  </span>
-                  <span class="ticket-number">
-                    <i class="bi bi-tag"></i> ${ticket.ticket_number || ''}
-                  </span>
-                </div>
-                ${ticket.description ? `
-                    <div class="ticket-description">
-                      ${ticket.description}
-                    </div>
-                ` : ''}
-                <div class="ticket-footer">
-                  <span class="ticket-priority ${priorityClass}">${ticket.priority || 'Unknown'}</span>
-                  <span class="ticket-time text-white badge ${timeBadgeClass}">
-                    <i class="bi bi-clock"></i> ${timeAgoResult}
-                  </span>
-                </div>
-              `;
-
-            return item;
-        }
-
-        async loadTopics() {
-            try {
-                const response = await fetch(`/backend/topic/get_by_service/${this.selectedServiceId}`);
-                const data = await response.json();
-
-                this.resetSelect(this.topicSelect, 'Select a topic');
+        fetch(`/backend/topic/get_by_service/${selectedServiceId}`)
+            .then(response => response.json())
+            .then(data => {
+                resetSelect(topicSelect, 'Select a topic');
                 data.data.forEach(topic => {
                     const option = document.createElement('option');
                     option.value = topic.id;
                     option.textContent = topic.name;
-                    this.topicSelect.appendChild(option);
+                    topicSelect.appendChild(option);
                 });
-            } catch (error) {
-                this.topicSelect.innerHTML = '<option value="" selected disabled>Error loading topics</option>';
+                hideLoading(clientSelect);
+            })
+            .catch(error => {
+                topicSelect.innerHTML = '<option value="" selected disabled>Error loading topics</option>';
+                hideLoading(clientSelect);
+            });
+    }
+
+    function formatTicketDate(dateString) {
+        if (!dateString) return 'Unknown date';
+
+        const now = new Date();
+        const ticketDate = new Date(dateString);
+        const diffInHours = Math.abs(now - ticketDate) / 36e5;
+
+        if (ticketDate.toDateString() === now.toDateString()) {
+            // Today
+            if (diffInHours < 1) {
+                const mins = Math.floor(diffInHours * 60);
+                return `<span class="date-today recent-highlight">${mins}m ago</span>`;
             }
+            return `<span class="date-today">Today at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
         }
 
-        async handleTopicChange() {
-            this.selectedTopicId = this.topicSelect.value;
-            if (!this.selectedTopicId) return;
-
-            // Clear the date field when topic changes
-            this.clearDateField();
-
-            // Get the selected option text properly for Select2
-            const selectedOption = $(this.topicSelect).select2('data')[0];
-            const selectedTopicText = selectedOption ? selectedOption.text.toLowerCase() : this.topicSelect.options[this.topicSelect.selectedIndex].text.toLowerCase();
-
-            const isPaymentTopic = selectedTopicText.includes('payment') ||
-                selectedTopicText.includes('billing') ||
-                selectedTopicText.includes('invoice');
-            const isSmsTopic = selectedTopicText.includes('sms') ||
-                selectedTopicText.includes('message') ||
-                selectedTopicText.includes('delivery');
-
-            this.hideDependentSections();
-
-            if (isSmsTopic) {
-                await this.handleSmsTopic();
-            } else if (isPaymentTopic) {
-                await this.handlePaymentTopic();
-            } else {
-                await this.loadSubtopics();
-            }
+        // Yesterday
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (ticketDate.toDateString() === yesterday.toDateString()) {
+            return `<span class="date-yesterday">Yesterday at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
         }
 
-        async handleSmsTopic() {
-            this.showSection('senderIdSection');
-            this.senderIdSelect.innerHTML = '<option value="" selected disabled>Loading sender IDs...</option>';
+        // Older than yesterday
+        return ticketDate.toLocaleDateString([], {month: 'short', day: 'numeric', year: 'numeric'});
+    }
 
-            if (!this.selectedClientId) {
-                this.senderIdSelect.innerHTML = '<option value="" selected disabled>Please select a client first</option>';
+    function getTimeBadgeClass(dateString) {
+        if (!dateString) return 'bg-dark';
+
+        const now = new Date();
+        const ticketDate = new Date(dateString);
+        const diffInDays = Math.abs(now - ticketDate) / (24 * 60 * 60 * 1000);
+
+        if (diffInDays < 1) {
+            return 'bg-danger'; // Less than 1 day - red
+        } else if (diffInDays < 7) {
+            return 'bg-primary'; // 1-7 days - blue
+        } else {
+            return 'bg-dark'; // More than 7 days - dark
+        }
+    }
+
+    function isTicketRecent(dateString) {
+        if (!dateString) return false;
+        const now = new Date();
+        const ticketDate = new Date(dateString);
+        const diffInHours = Math.abs(now - ticketDate) / 36e5;
+        return diffInHours < 24; // Consider recent if within last 24 hours
+    }
+
+    function timeAgo(dateString) {
+        if (!dateString) return '';
+
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+
+        if (seconds < 60) {
+            return `${seconds} second${seconds === 1 ? '' : 's'} ago`;
+        }
+
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) {
+            return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+        }
+
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) {
+            return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+        }
+
+        const days = Math.floor(hours / 24);
+        if (days < 7) {
+            return `${days} day${days === 1 ? '' : 's'} ago`;
+        }
+
+        const weeks = Math.floor(days / 7);
+        if (weeks < 4) {
+            return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+        }
+
+        const months = Math.floor(days / 30);
+        if (months < 12) {
+            return `${months} month${months === 1 ? '' : 's'} ago`;
+        }
+
+        const years = Math.floor(days / 365);
+        return `${years} year${years === 1 ? '' : 's'} ago`;
+    }
+
+    // When topic is selected, load subtopics or special fields
+    function handleTopicChange() {
+        selectedTopicId = topicSelect.value;
+        if (!selectedTopicId) return;
+
+        const selectedTopicText = topicSelect.options[topicSelect.selectedIndex].text.toLowerCase();
+        const isPaymentTopic = selectedTopicText.includes('payment') || selectedTopicText.includes('billing') || selectedTopicText.includes('invoice');
+        const isSmsTopic = selectedTopicText.includes('sms') || selectedTopicText.includes('message') || selectedTopicText.includes('delivery');
+
+        hideSection('subtopicSection');
+        hideSection('tertiaryTopicSection');
+        hideSection('managerSection');
+        hideSection('senderIdSection');
+        hideSection('operatorSection');
+        hideSection('paymentChannelSection');
+        hideSection('subjectSection');
+        hideSection('descriptionSection');
+        hideSection('prioritySection');
+        hideSection('attachmentsSection');
+        hideSection('submitSection');
+        hideSection('dateSection');
+
+        if (isSmsTopic) {
+            showSection('senderIdSection');
+            senderIdSelect.innerHTML = '<option value="" selected disabled>Loading sender IDs...</option>';
+
+            const selectedClientId = clientSelect.value;
+
+            if (!selectedClientId) {
+                senderIdSelect.innerHTML = '<option value="" selected disabled>Please select a client first</option>';
                 return;
             }
 
-            try {
-                const response = await fetch(`/backend/sender_id/active_sender_ids/${this.selectedClientId}`);
-                const data = await response.json();
-
-                this.resetSelect(this.senderIdSelect, 'Select a sender ID');
-                data.data.forEach(sender => {
-                    const option = document.createElement('option');
-                    option.value = sender.id;
-                    option.textContent = `${sender.sender_id}`;
-                    option.dataset.operators = JSON.stringify(sender.operators || []);
-                    this.senderIdSelect.appendChild(option);
+            fetch(`/backend/sender_id/active_sender_ids/${selectedClientId}`)
+                .then(response => response.json())
+                .then(data => {
+                    resetSelect(senderIdSelect, 'Select a sender ID');
+                    data.data.forEach(sender => {
+                        const option = document.createElement('option');
+                        option.value = sender.id;
+                        option.textContent = `${sender.sender_id}`;
+                        option.dataset.operators = JSON.stringify(sender.operators || []);
+                        senderIdSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    senderIdSelect.innerHTML = '<option value="" selected disabled>Error loading sender IDs</option>';
                 });
 
-                this.senderIdSelect.addEventListener('change', () => this.handleSenderIdChange());
-                this.showDateSection('When did the SMS fail to deliver?');
-            } catch (error) {
-                this.senderIdSelect.innerHTML = '<option value="" selected disabled>Error loading sender IDs</option>';
-            }
+            senderIdSelect.addEventListener('change', handleSenderIdChange);
+
+            // Show date section for SMS issues
+            showDateSection('When did the SMS fail to deliver?');
         }
+        else if (isPaymentTopic) {
+            showSection('paymentChannelSection');
+            paymentChannelSelect.innerHTML = '<option value="" selected disabled>Loading payment channels...</option>';
 
-        async handlePaymentTopic() {
-            this.showSection('paymentChannelSection');
-            this.paymentChannelSelect.innerHTML = '<option value="" selected disabled>Loading payment channels...</option>';
-
-            try {
-                const response = await fetch('/backend/payment_channel/active_payment_channels');
-                const data = await response.json();
-
-                this.resetSelect(this.paymentChannelSelect, 'Select a payment channel');
-                data.data.forEach(channel => {
-                    const option = document.createElement('option');
-                    option.value = channel.id;
-                    option.textContent = channel.name;
-                    this.paymentChannelSelect.appendChild(option);
+            fetch('/backend/payment_channel/active_payment_channels')
+                .then(response => response.json())
+                .then(data => {
+                    resetSelect(paymentChannelSelect, 'Select a payment channel');
+                    data.data.forEach(channel => {
+                        const option = document.createElement('option');
+                        option.value = channel.id;
+                        option.textContent = channel.name;
+                        paymentChannelSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    paymentChannelSelect.innerHTML = '<option value="" selected disabled>Error loading channels</option>';
                 });
 
-                this.paymentChannelSelect.addEventListener('change', () => {
-                    if (this.paymentChannelSelect.value) {
-                        this.loadSubtopics();
-                    }
-                });
+            paymentChannelSelect.addEventListener('change', function() {
+                if (this.value) {
+                    loadSubtopics();
+                }
+            });
 
-                this.showDateSection('When was the payment made?');
-            } catch (error) {
-                this.paymentChannelSelect.innerHTML = '<option value="" selected disabled>Error loading channels</option>';
-            }
+            // Show date section for payment issues
+            showDateSection('When was the payment made?');
+        }
+        else {
+            loadSubtopics();
+        }
+    }
+
+    function showDateSection(labelText) {
+        // Create or update the date section
+        let dateSection = document.getElementById('dateSection');
+        if (!dateSection) {
+            dateSection = document.createElement('div');
+            dateSection.id = 'dateSection';
+            dateSection.className = 'mb-3 form-section';
+            dateSection.innerHTML = `
+            <label for="issueDate" class="form-label">${labelText}</label>
+            <input type="date" class="form-control" id="issueDate" max="${new Date().toISOString().split('T')[0]}">
+            <div class="form-text">Please specify the date when the issue occurred</div>
+        `;
+            // Insert after the topic section
+            document.getElementById('topicSection').after(dateSection);
+        } else {
+            // Update the label if it already exists
+            dateSection.querySelector('label').textContent = labelText;
         }
 
-        showDateSection(labelText) {
-            let dateSection = document.getElementById('dateSection');
-            if (!dateSection) {
-                dateSection = document.createElement('div');
-                dateSection.id = 'dateSection';
-                dateSection.className = 'mb-3 form-section';
-                dateSection.innerHTML = `
-                  <label for="issueDate" class="form-label">${labelText}</label>
-                  <input type="date" class="form-control" id="issueDate" max="${new Date().toISOString().split('T')[0]}">
-                  <div class="form-text">Please specify the date when the issue occurred</div>
-                `;
-                document.getElementById('topicSection').after(dateSection);
-                // Store reference to the input element
-                this.issueDateInput = document.getElementById('issueDate');
-            } else {
-                dateSection.querySelector('label').textContent = labelText;
-            }
+        showSection('dateSection');
+    }
 
-            this.showSection('dateSection');
+    function handleSenderIdChange() {
+        if (!this.value) {
+            hideSection('operatorSection');
+            hideSection('subtopicSection');
+            return;
         }
 
-        async handleSenderIdChange() {
-            if (!this.senderIdSelect.value) {
-                this.hideSection('operatorSection');
-                this.hideSection('subtopicSection');
-                return;
-            }
+        showSection('operatorSection');
 
-            this.showSection('operatorSection');
-            this.operatorChoices.clearStore();
-            this.operatorChoices.setChoices(
-                [{value: '', label: 'Loading operators...', disabled: true}],
-                'value',
-                'label',
-                true
-            );
+        // Clear existing choices
+        operatorChoices.clearStore();
+        operatorChoices.setChoices([{value: '', label: 'Loading operators...', disabled: true}], 'value', 'label', true);
 
-            try {
-                const response = await fetch('/backend/operator/get_all_operator');
-                const data = await response.json();
-
-                if (data.data?.length > 0) {
-                    this.operatorChoices.setChoices(
+        fetch('/backend/operator/get_all_operator')
+            .then(response => response.json())
+            .then(data => {
+                if (data.data && data.data.length > 0) {
+                    operatorChoices.setChoices(
                         data.data.map(operator => ({
                             value: operator.id,
                             label: operator.name
@@ -663,170 +719,166 @@
                         true
                     );
 
-                    this.operatorChoices.passedElement.element.addEventListener('change', () => {
-                        const selectedOperators = this.operatorChoices.getValue(true);
-                        if (selectedOperators?.length > 0) {
-                            this.loadSubtopics();
+                    // Add event listener for operator selection changes
+                    operatorChoices.passedElement.element.addEventListener('change', function() {
+                        // Check if at least one operator is selected
+                        const selectedOperators = operatorChoices.getValue(true);
+                        if (selectedOperators && selectedOperators.length > 0) {
+                            loadSubtopics();
                         } else {
-                            this.hideSection('subtopicSection');
+                            hideSection('subtopicSection');
                         }
                     }, false);
                 } else {
-                    this.operatorChoices.setChoices(
-                        [{value: '', label: 'No operators available', disabled: true}],
-                        'value',
-                        'label',
-                        true
-                    );
+                    operatorChoices.setChoices([{value: '', label: 'No operators available', disabled: true}], 'value', 'label', true);
                 }
-            } catch (error) {
-                this.operatorChoices.setChoices(
-                    [{value: '', label: 'Error loading operators', disabled: true}],
-                    'value',
-                    'label',
-                    true
-                );
-            }
-        }
+            })
+            .catch(error => {
+                operatorChoices.setChoices([{value: '', label: 'Error loading operators', disabled: true}], 'value', 'label', true);
+            });
+    }
 
-        async loadSubtopics() {
-            this.showSection('subtopicSection');
-            this.subtopicSelect.innerHTML = '<option value="" selected disabled>Loading subtopics...</option>';
+    function loadSubtopics() {
+        showSection('subtopicSection');
+        subtopicSelect.innerHTML = '<option value="" selected disabled>Loading subtopics...</option>';
 
-            try {
-                const response = await fetch(`/backend/subtopic/get_by_topic_id/${this.selectedTopicId}`);
-                const data = await response.json();
-
-                this.resetSelect(this.subtopicSelect, 'Select a subtopic');
+        fetch(`/backend/subtopic/get_by_topic_id/${selectedTopicId}`)
+            .then(response => response.json())
+            .then(data => {
+                resetSelect(subtopicSelect, 'Select a subtopic');
                 data.data.forEach(subtopic => {
                     const option = document.createElement('option');
                     option.value = subtopic.id;
                     option.textContent = subtopic.name;
-                    this.subtopicSelect.appendChild(option);
+                    subtopicSelect.appendChild(option);
                 });
-            } catch (error) {
-                this.subtopicSelect.innerHTML = '<option value="" selected disabled>Error loading subtopics</option>';
-            }
+            })
+            .catch(error => {
+                subtopicSelect.innerHTML = '<option value="" selected disabled>Error loading subtopics</option>';
+            });
+    }
+
+    // When subtopic is selected, load tertiary topics
+    function handleSubtopicChange() {
+        selectedSubtopicId = subtopicSelect.value;
+        if (!selectedSubtopicId) {
+            hideSection('tertiaryTopicSection');
+            return;
         }
 
+        // Show tertiary topic section
+        showSection('tertiaryTopicSection');
+        tertiaryTopicSelect.innerHTML = '<option value="" selected disabled>Loading tertiary topics...</option>';
 
-        async handleSubtopicChange() {
-            this.selectedSubtopicId = this.subtopicSelect.value;
-            if (!this.selectedSubtopicId) {
-                this.hideSection('tertiaryTopicSection');
-                return;
-            }
-
-            // Show all relevant sections
-            this.showSection('tertiaryTopicSection');
-            this.showSection('subjectSection');
-            this.showSection('descriptionSection');
-            this.showSection('prioritySection');
-            this.showSection('managerSection');
-            this.showSection('attachmentsSection');
-            this.showSection('submitSection');
-
-            // Set default priority to "low"
-            this.priorityField.value = "low";
-            this.showToast('Priority automatically set to "low"', 'info');
-
-            // Load managers and tertiary topics
-            await Promise.all([
-                this.loadManagers(),
-                this.loadTertiaryTopics()
-            ]);
-        }
-
-        async loadTertiaryTopics() {
-            this.tertiaryTopicSelect.innerHTML = '<option value="" selected disabled>Loading tertiary topics...</option>';
-
-            try {
-                const response = await fetch(`/backend/tertiary/tertiary_topic_by_subtopic_id/${this.selectedSubtopicId}`);
-                const data = await response.json();
-
-                this.resetSelect(this.tertiaryTopicSelect, 'Select a tertiary topic (optional)');
+        // Load tertiary topics
+        fetch(`/backend/tertiary/tertiary_topic_by_subtopic_id/${selectedSubtopicId}`)
+            .then(response => response.json())
+            .then(data => {
+                resetSelect(tertiaryTopicSelect, 'Select a tertiary topic (optional)');
                 if (data.data.length > 0) {
-                    data.data.forEach(topic => {
+                    data.data.forEach(tertiaryTopic => {
                         const option = document.createElement('option');
-                        option.value = topic.id;
-                        option.textContent = topic.name;
-                        this.tertiaryTopicSelect.appendChild(option);
+                        option.value = tertiaryTopic.id;
+                        option.textContent = tertiaryTopic.name;
+                        tertiaryTopicSelect.appendChild(option);
                     });
                 } else {
-                    this.tertiaryTopicSelect.innerHTML = '<option value="" selected disabled>No tertiary topics available</option>';
+                    tertiaryTopicSelect.innerHTML = '<option value="" selected disabled>No tertiary topics available</option>';
                 }
-            } catch (error) {
-                this.tertiaryTopicSelect.innerHTML = '<option value="" selected disabled>Error loading tertiary topics</option>';
-            }
+            })
+            .catch(error => {
+                tertiaryTopicSelect.innerHTML = '<option value="" selected disabled>Error loading tertiary topics</option>';
+            });
+    }
+
+    // Handle tertiary topic selection
+    function handleTertiaryTopicChange() {
+        if (this.value) {
+            // Show subject field when tertiary topic is selected
+            showSection('subjectSection');
+        } else {
+            // Hide all subsequent fields if tertiary topic is cleared
+            hideSection('subjectSection');
+            hideSection('descriptionSection');
+            hideSection('prioritySection');
+            hideSection('managerSection');
+            hideSection('attachmentsSection');
+            hideSection('submitSection');
         }
+    }
 
-        handleTertiaryTopicChange() {
-            if (this.tertiaryTopicSelect.value) {
-                this.showSection('subjectSection');
-            } else {
-                this.hideSection('subjectSection');
-                this.hideSection('descriptionSection');
-                this.hideSection('prioritySection');
-                this.hideSection('managerSection');
-                this.hideSection('attachmentsSection');
-                this.hideSection('submitSection');
-            }
+    // Handle subject input
+    function handleSubjectInput() {
+        if (this.value.trim() !== '') {
+            // Show description and priority fields when subject is filled
+            showSection('descriptionSection');
+            //showSection('prioritySection');
+        } else {
+            // Hide all subsequent fields if subject is cleared
+            hideSection('descriptionSection');
+            hideSection('prioritySection');
+            hideSection('managerSection');
+            hideSection('attachmentsSection');
+            hideSection('submitSection');
         }
+    }
 
-        handleSubjectInput() {
-            if (this.subjectField.value.trim() !== '') {
-                this.showSection('descriptionSection');
-            } else {
-                this.hideSection('descriptionSection');
-                this.hideSection('prioritySection');
-                this.hideSection('managerSection');
-                this.hideSection('attachmentsSection');
-                this.hideSection('submitSection');
+    // Handle description input
+    function handleDescriptionInput() {
+        if (this.value.trim() !== '') {
+            // Show attachments and submit button when description is filled
+            showSection('prioritySection');
+
+            if (!priorityField.value || priorityField.value === "") {
+                priorityField.value = "low";
+                toastr.info('Priority automatically set to "low"', '', {
+                    timeOut: 3000,
+                    positionClass: 'toast-bottom-right'
+                });
+                loadManagers();
+                showSection('managerSection');
             }
+            showSection('attachmentsSection');
+            showSection('submitSection');
+        } else {
+            // Hide these fields if description is cleared
+            hideSection('prioritySection');
+            hideSection('managerSection');
+            hideSection('attachmentsSection');
+            hideSection('submitSection');
         }
+    }
 
-        handleDescriptionInput() {
-            if (this.descriptionField.value.trim() !== '') {
-                this.showSection('prioritySection');
+    // Handle priority change - NEW FUNCTION
+    function handlePriorityChange() {
+        if (this.value) {
+            isCriticalPriority = this.value === 'critical';
+            showSection('managerSection');
+            loadManagers();
 
-                if (!this.priorityField.value) {
-                    this.priorityField.value = "low";
-                    this.showToast('Priority automatically set to "low"', 'info');
-                    this.loadManagers();
-                    this.showSection('managerSection');
+            //auto select channel
+            autoSelectChannel();
+        } else {
+            hideSection('managerSection');
+        }
+    }
+
+    // Load managers
+    function loadManagers() {
+        managerSelect.innerHTML = '<option value="" selected disabled>Loading managers...</option>';
+
+        fetch('/backend/user/active_manager')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
                 }
+                return response.json();
+            })
+            .then(data => {
+                resetSelect(managerSelect, 'Select a manager');
 
-                this.showSection('attachmentsSection');
-                this.showSection('submitSection');
-            } else {
-                this.hideSection('prioritySection');
-                this.hideSection('managerSection');
-                this.hideSection('attachmentsSection');
-                this.hideSection('submitSection');
-            }
-        }
-
-        handlePriorityChange() {
-            if (this.priorityField.value) {
-                this.isCriticalPriority = this.priorityField.value === 'critical';
-                this.showSection('managerSection');
-                this.loadManagers();
-                this.autoSelectChannel();
-            } else {
-                this.hideSection('managerSection');
-            }
-        }
-
-        async loadManagers() {
-            this.managerSelect.innerHTML = '<option value="" selected disabled>Loading managers...</option>';
-
-            try {
-                const response = await fetch('/backend/user/active_manager');
-                const data = await response.json();
-
-                this.resetSelect(this.managerSelect, 'Select a manager');
-
-                if (data.data?.length > 0) {
+                if (data.data && data.data.length > 0) {
+                    // Sort managers by favorite_count (descending)
                     const sortedManagers = data.data.sort((a, b) => b.favorite_count - a.favorite_count);
 
                     sortedManagers.forEach(manager => {
@@ -834,497 +886,361 @@
                         option.value = manager.id;
                         option.textContent = `${manager.name} ${manager.favorite_count > 0 ? `(${manager.favorite_count} similar tickets)` : ''}`;
                         option.dataset.favorites = manager.favorite_count;
-                        this.managerSelect.appendChild(option);
+                        managerSelect.appendChild(option);
                     });
                 } else {
-                    this.managerSelect.innerHTML = '<option value="" selected disabled>No managers available</option>';
+                    managerSelect.innerHTML = '<option value="" selected disabled>No managers available</option>';
                 }
-            } catch (error) {
-                this.managerSelect.innerHTML = '<option value="" selected disabled>Error loading managers</option>';
-            }
-        }
-
-        autoSelectChannel() {
-            this.selectedChannels = ['mail', 'whatsapp', 'database'];
-            if (this.isCriticalPriority) {
-                this.selectedChannels.push('sms');
-            }
-            this.updateChannelSelectionUI();
-            this.updateChannelSelectionSummary();
-        }
-
-
-
-        // Utility methods
-        showSection(sectionId) {
-            const section = document.getElementById(sectionId);
-            if (section) {
-                section.classList.remove('hidden-section');
-                section.classList.add('visible-section');
-                // Ensure Select2 is visible
-                const select2 = section.querySelector('.select2-container');
-                if (select2) {
-                    select2.style.display = '';
-                }
-            }
-        }
-
-        hideSection(sectionId) {
-            const section = document.getElementById(sectionId);
-            if (section) {
-                section.classList.remove('visible-section');
-                section.classList.add('hidden-section');
-            }
-        }
-
-        resetSelect(selectElement, placeholder = 'Select an option') {
-            selectElement.innerHTML = `<option value="" selected disabled>${placeholder}</option>`;
-        }
-
-        showLoading(element) {
-            const el = element.jquery ? element[0] : element;
-            if (!el || !el.parentNode) return;
-
-            const spinnerId = `${el.id}-spinner`;
-            if (document.getElementById(spinnerId)) return;
-
-            const spinner = document.createElement('span');
-            spinner.className = 'loading-spinner ms-2';
-            spinner.id = spinnerId;
-            el.parentNode.insertBefore(spinner, el.nextSibling);
-        }
-
-        hideLoading(element) {
-            const el = element.jquery ? element[0] : element;
-            if (!el) return;
-
-            const spinner = document.getElementById(`${el.id}-spinner`);
-            spinner?.remove();
-        }
-
-        showToast(message, type = 'info') {
-            const toastOptions = {
-                timeOut: 3000,
-                positionClass: 'toast-bottom-right',
-                closeButton: true
-            };
-
-            switch (type) {
-                case 'success':
-                    toastr.success(message, '', toastOptions);
-                    break;
-                case 'error':
-                    toastr.error(message, '', toastOptions);
-                    break;
-                case 'warning':
-                    toastr.warning(message, '', toastOptions);
-                    break;
-                default:
-                    toastr.info(message, '', toastOptions);
-            }
-        }
-
-        updateChannelSelectionUI() {
-            $('.channel-card').each((_, card) => {
-                const channel = $(card).data('channel');
-                $(card).toggleClass('border border-primary', this.selectedChannels.includes(channel));
+            })
+            .catch(error => {
+                managerSelect.innerHTML = '<option value="" selected disabled>Error loading managers</option>';
             });
+    }
 
-            $('#notification_channels_wrapper').html(
-                this.selectedChannels.map(channel =>
-                    `<input type="hidden" name="notification_channels[]" value="${channel}">`
-                ).join('')
+    const addMoreFilesBtn = document.getElementById('addMoreFiles');
+    const fileCountDisplay = document.getElementById('fileCount');
+
+    let currentFiles = [];
+    attachmentsInput.addEventListener('change', handleFileSelect);
+
+    function handleFileSelect(event) {
+        const newFiles = Array.from(event.target.files);
+
+        newFiles.forEach(newFile => {
+            const isDuplicate = currentFiles.some(
+                file => file.name === newFile.name &&
+                    file.size === newFile.size &&
+                    file.lastModified === newFile.lastModified
             );
-        }
-
-        updateChannelSelectionSummary() {
-            const summaryContainer = document.getElementById('channelSelectionSummary') ||
-                this.createChannelSummaryContainer();
-
-            if (this.selectedChannels.length > 0) {
-                summaryContainer.innerHTML = this.createChannelBadges();
-                this.setupEditChannelHandler();
-            } else {
-                summaryContainer.innerHTML = '<small class="text-muted">No notification channels selected</small>';
+            if (!isDuplicate) {
+                currentFiles.push(newFile);
             }
+        });
+
+        updateFileInput();
+        updateFileDisplay();
+    }
+
+    function updateFileInput() {
+        const dataTransfer = new DataTransfer();
+        currentFiles.forEach(file => dataTransfer.items.add(file));
+        attachmentsInput.files = dataTransfer.files;
+    }
+
+    function updateFileDisplay() {
+        updateFileCount();
+        renderFilePreviews();
+    }
+
+    function updateFileCount() {
+        fileCountDisplay.textContent = currentFiles.length;
+    }
+
+    function renderFilePreviews() {
+        attachmentPreviews.innerHTML = '';
+
+        if (currentFiles.length === 0) {
+            attachmentPreviews.innerHTML = '<p class="text-muted">No files selected</p>';
+            return;
         }
 
-        createChannelSummaryContainer() {
-            const summaryDiv = document.createElement('div');
-            summaryDiv.id = 'channelSelectionSummary';
-            summaryDiv.className = 'mt-2 channel-summary';
-            document.getElementById('managerSection').appendChild(summaryDiv);
-            return summaryDiv;
-        }
-
-        createChannelBadges() {
-            const channelBadges = this.selectedChannels.map(channel =>
-                `<span class="badge bg-primary me-1">${channel}</span>`
-            ).join('');
-
-            return `
-                <small class="text-muted">Notification channels:</small>
-                <div>${channelBadges}</div>
-                <small class="text-muted click-to-edit" style="cursor: pointer; color: #0d6efd !important;">
-                  <i class="bi bi-pencil-square"></i> Click to edit
-                </small>
-              `;
-        }
-
-        setupEditChannelHandler() {
-            $('.click-to-edit').off('click').on('click', () => {
-                $('#channelModal').modal('show');
-            });
-        }
-
-        handleFileSelect(event) {
-            const newFiles = Array.from(event.target.files);
-            this.currentFiles = [...this.currentFiles, ...newFiles.filter(newFile =>
-                !this.currentFiles.some(
-                    file => file.name === newFile.name &&
-                        file.size === newFile.size &&
-                        file.lastModified === newFile.lastModified
-                )
-            )];
-
-            this.updateFileInput();
-            this.updateFileDisplay();
-        }
-
-        updateFileInput() {
-            const dataTransfer = new DataTransfer();
-            this.currentFiles.forEach(file => dataTransfer.items.add(file));
-            this.attachmentsInput.files = dataTransfer.files;
-        }
-
-        updateFileDisplay() {
-            this.updateFileCount();
-            this.renderFilePreviews();
-        }
-
-        updateFileCount() {
-            this.fileCountDisplay.textContent = this.currentFiles.length;
-        }
-
-        renderFilePreviews() {
-            this.attachmentPreviews.innerHTML = this.currentFiles.length === 0
-                ? '<p class="text-muted">No files selected</p>'
-                : this.currentFiles.map((file, index) => this.createFilePreview(file, index)).join('');
-        }
-
-        createFilePreview(file, index) {
+        currentFiles.forEach((file, index) => {
             const previewDiv = document.createElement('div');
             previewDiv.className = 'd-inline-block position-relative me-2 mb-2 border p-2 rounded';
             previewDiv.dataset.fileIndex = index;
 
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = function(e) {
                     const img = document.createElement('img');
                     img.src = e.target.result;
                     img.className = 'img-thumbnail';
                     img.style.maxWidth = '100px';
                     img.style.maxHeight = '100px';
                     previewDiv.appendChild(img);
-                    this.addFileInfo(previewDiv, file);
-                    this.addRemoveButton(previewDiv, index);
+
+                    addFileInfo(previewDiv, file);
+                    addRemoveButton(previewDiv, index);
                 };
                 reader.readAsDataURL(file);
             } else {
                 const icon = document.createElement('i');
-                icon.className = `bi ${this.getFileIconClass(file)}`;
+                icon.className = 'bi ' + getFileIconClass(file);
                 icon.style.fontSize = '2rem';
                 previewDiv.appendChild(icon);
-                this.addFileInfo(previewDiv, file);
-                this.addRemoveButton(previewDiv, index);
+
+                addFileInfo(previewDiv, file);
+                addRemoveButton(previewDiv, index);
             }
 
-            return previewDiv;
-        }
+            attachmentPreviews.appendChild(previewDiv);
+        });
+    }
 
-        addFileInfo(container, file) {
-            const fileInfo = document.createElement('div');
-            fileInfo.className = 'small mt-1';
-            fileInfo.innerHTML = `
-                <strong class="d-block text-truncate" style="max-width: 120px">${file.name}</strong>
-                <small>${this.formatFileSize(file.size)}</small>
-              `;
-            container.appendChild(fileInfo);
-        }
+    function addFileInfo(container, file) {
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'small mt-1';
+        fileInfo.innerHTML = `
+            <strong class="d-block text-truncate" style="max-width: 120px">${file.name}</strong>
+            <small>${formatFileSize(file.size)}</small>
+        `;
+        container.appendChild(fileInfo);
+    }
 
-        getFileIconClass(file) {
-            if (file.type.startsWith('image/')) return 'bi-file-image text-primary';
+    function getFileIconClass(file) {
+        if (file.type.startsWith('image/')) return 'bi-file-image text-primary';
 
-            const ext = file.name.split('.').pop().toLowerCase();
-            switch (ext) {
-                case 'pdf': return 'bi-file-earmark-pdf text-danger';
-                case 'doc':
-                case 'docx': return 'bi-file-earmark-word text-primary';
-                case 'xls':
-                case 'xlsx': return 'bi-file-earmark-excel text-success';
-                default: return 'bi-file-earmark';
-            }
-        }
-
-        formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        addRemoveButton(container, fileIndex) {
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'btn btn-sm btn-danger position-absolute top-0 end-0 p-0 rounded-circle';
-            removeBtn.style.width = '20px';
-            removeBtn.style.height = '20px';
-            removeBtn.style.transform = 'translate(30%, -30%)';
-            removeBtn.innerHTML = '<i class="bi bi-x" style="font-size: 0.75rem;"></i>';
-            removeBtn.onclick = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.currentFiles.splice(fileIndex, 1);
-                this.updateFileInput();
-                this.updateFileDisplay();
-            };
-            container.appendChild(removeBtn);
-        }
-
-        handleAddMoreFiles() {
-            const tempInput = document.createElement('input');
-            tempInput.type = 'file';
-            tempInput.multiple = true;
-            tempInput.accept = '.jpg,.jpeg,.png,.pdf,.doc,.docx';
-
-            tempInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    const event = new Event('change');
-                    Object.defineProperty(event, 'target', {
-                        value: { files: e.target.files },
-                        enumerable: true
-                    });
-                    this.attachmentsInput.dispatchEvent(event);
-                }
-            });
-
-            tempInput.click();
-        }
-
-        async handleFormSubmit(event) {
-            event.preventDefault();
-
-            if (!this.validateForm()) {
-                return;
-            }
-
-            const submitBtn = document.getElementById('submitBtn');
-            const submitText = document.getElementById('submitText');
-            const submitSpinner = document.getElementById('submitSpinner');
-
-            submitBtn.disabled = true;
-            submitText.textContent = 'Creating Ticket...';
-            submitSpinner.style.display = 'inline-block';
-
-            try {
-                const formData = this.prepareFormData();
-                const response = await fetch('/backend/ticket/store', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-
-                const data = await response.json();
-                if (!response.ok) {
-                    throw new Error(data.message || 'Network response was not ok');
-                }
-
-                if (data.success) {
-                    this.showToast(data.message || 'Ticket created successfully!', 'success');
-                    this.resetForm();
-                } else {
-                    throw new Error(data.message || 'Failed to create ticket');
-                }
-            } catch (error) {
-                this.handleSubmitError(error);
-            } finally {
-                submitBtn.disabled = false;
-                submitText.textContent = 'Create Ticket';
-                submitSpinner.style.display = 'none';
-            }
-        }
-
-        prepareFormData() {
-            const formData = new FormData();
-            formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-
-            // Add required fields
-            formData.append('saas_app_id', this.serviceSelect.value);
-            formData.append('client_id', this.clientSelect.value);
-            formData.append('topic_id', this.topicSelect.value);
-            formData.append('sub_topic_id', this.subtopicSelect.value);
-            formData.append('priority', this.priorityField.value);
-            formData.append('assigned_to', this.managerSelect.value);
-
-            // Add optional fields
-            if (this.tertiaryTopicSelect.value) {
-                formData.append('tertiary_topic_id', this.tertiaryTopicSelect.value);
-            }
-
-            // Add notification channels
-            this.selectedChannels.forEach((channel, index) => {
-                formData.append(`notification_channels[${index}]`, channel);
-            });
-
-            // Add files
-            Array.from(this.attachmentsInput.files).forEach((file, i) => {
-                formData.append('attachments[]', file);
-            });
-
-            return formData;
-        }
-
-        handleSubmitError(error) {
-            const errors = error.message.split('<br>');
-            if (errors.length > 1) {
-                errors.forEach(err => this.showToast(err, 'error'));
-            } else {
-                this.showToast(error.message || 'Error creating ticket', 'error');
-            }
-        }
-
-        validateForm() {
-            const selectedServiceText = this.serviceSelect.options[this.serviceSelect.selectedIndex].text;
-            const isWorkingCustomer = selectedServiceText.toLowerCase() === 'working customer';
-            const customerNameInput = document.getElementById('customerNameInput');
-
-            if (isWorkingCustomer && (!customerNameInput || !customerNameInput.value.trim())) {
-                this.showToast('Please enter customer full name', 'error');
-                return false;
-            }
-
-            const requiredFields = [
-                { element: this.serviceSelect, name: 'Service' },
-                { element: isWorkingCustomer ? customerNameInput : this.clientSelect,
-                    name: isWorkingCustomer ? 'Customer Name' : 'Client' },
-                { element: this.topicSelect, name: 'Topic' },
-                { element: this.subtopicSelect, name: 'Subtopic' },
-                { element: this.priorityField, name: 'Priority' },
-                { element: this.managerSelect, name: 'Manager' }
-            ];
-
-            for (const field of requiredFields) {
-                if (!field.element || !field.element.value) {
-                    this.showToast(`Please ${field.name === 'Customer Name' ? 'enter' : 'select'} a ${field.name}`, 'error');
-                    if (field.element) field.element.focus();
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        resetForm() {
-            this.form.reset();
-            this.currentFiles = [];
-
-            // Reset all selects
-            this.resetSelect(this.serviceSelect, 'Select a Saas App');
-            this.resetSelect(this.clientSelect, 'Select a client');
-            this.resetSelect(this.topicSelect, 'Select a topic');
-            this.resetSelect(this.subtopicSelect, 'Select a subtopic');
-            this.resetSelect(this.tertiaryTopicSelect, 'Select a tertiary topic (optional)');
-            this.resetSelect(this.managerSelect, 'Select a manager');
-
-            // Reset priority
-            this.priorityField.value = "";
-            $(this.priorityField).trigger('change');
-
-            // Hide all sections except service
-            this.hideDependentSections();
-
-            // Clear previews
-            this.updateFileDisplay();
-        }
-
-        // Date/time formatting utilities
-        formatTicketDate(dateString) {
-            if (!dateString) return 'Unknown date';
-
-            const now = new Date();
-            const ticketDate = new Date(dateString);
-            const diffInHours = Math.abs(now - ticketDate) / 36e5;
-
-            if (ticketDate.toDateString() === now.toDateString()) {
-                if (diffInHours < 1) {
-                    const mins = Math.floor(diffInHours * 60);
-                    return `<span class="date-today recent-highlight">${mins}m ago</span>`;
-                }
-                return `<span class="date-today">Today at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
-            }
-
-            const yesterday = new Date(now);
-            yesterday.setDate(yesterday.getDate() - 1);
-            if (ticketDate.toDateString() === yesterday.toDateString()) {
-                return `<span class="date-yesterday">Yesterday at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
-            }
-
-            return ticketDate.toLocaleDateString([], {month: 'short', day: 'numeric', year: 'numeric'});
-        }
-
-        getTimeBadgeClass(dateString) {
-            if (!dateString) return 'bg-dark';
-
-            const now = new Date();
-            const ticketDate = new Date(dateString);
-            const diffInDays = Math.abs(now - ticketDate) / (24 * 60 * 60 * 1000);
-
-            if (diffInDays < 1) return 'bg-danger';
-            if (diffInDays < 7) return 'bg-primary';
-            return 'bg-dark';
-        }
-
-        isTicketRecent(dateString) {
-            if (!dateString) return false;
-            const now = new Date();
-            const ticketDate = new Date(dateString);
-            const diffInHours = Math.abs(now - ticketDate) / 36e5;
-            return diffInHours < 24;
-        }
-
-        timeAgo(dateString) {
-            if (!dateString) return '';
-
-            const date = new Date(dateString);
-            const now = new Date();
-            const seconds = Math.floor((now - date) / 1000);
-
-            const intervals = [
-                { unit: 'year', divisor: 31536000 },
-                { unit: 'month', divisor: 2592000 },
-                { unit: 'week', divisor: 604800 },
-                { unit: 'day', divisor: 86400 },
-                { unit: 'hour', divisor: 3600 },
-                { unit: 'minute', divisor: 60 },
-                { unit: 'second', divisor: 1 }
-            ];
-
-            for (const { unit, divisor } of intervals) {
-                const interval = Math.floor(seconds / divisor);
-                if (interval >= 1) {
-                    return `${interval} ${unit}${interval === 1 ? '' : 's'} ago`;
-                }
-            }
-
-            return 'Just now';
+        const ext = file.name.split('.').pop().toLowerCase();
+        switch (ext) {
+            case 'pdf': return 'bi-file-earmark-pdf text-danger';
+            case 'doc':
+            case 'docx': return 'bi-file-earmark-word text-primary';
+            case 'xls':
+            case 'xlsx': return 'bi-file-earmark-excel text-success';
+            default: return 'bi-file-earmark';
         }
     }
 
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize the application
-    new TicketForm();
+    function addRemoveButton(container, fileIndex) {
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'btn btn-sm btn-danger position-absolute top-0 end-0 p-0 rounded-circle';
+        removeBtn.style.width = '20px';
+        removeBtn.style.height = '20px';
+        removeBtn.style.transform = 'translate(30%, -30%)';
+        removeBtn.innerHTML = '<i class="bi bi-x" style="font-size: 0.75rem;"></i>';
+        removeBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Remove the file from currentFiles
+            currentFiles.splice(fileIndex, 1);
+
+            // Update the UI and file input
+            updateFileInput();
+            updateFileDisplay();
+        };
+        container.appendChild(removeBtn);
+    }
+    addMoreFilesBtn.addEventListener('click', function() {
+        const tempInput = document.createElement('input');
+        tempInput.type = 'file';
+        tempInput.multiple = true;
+        tempInput.accept = '.jpg,.jpeg,.png,.pdf,.doc,.docx';
+
+        tempInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const event = new Event('change');
+                Object.defineProperty(event, 'target', {
+                    value: { files: e.target.files },
+                    enumerable: true
+                });
+                attachmentsInput.dispatchEvent(event);
+            }
+        });
+
+        tempInput.click();
+    });
+
+    function handleFormSubmit(event) {
+        event.preventDefault();
+
+        const submitBtn = document.getElementById('submitBtn');
+        const submitText = document.getElementById('submitText');
+        const submitSpinner = document.getElementById('submitSpinner');
+
+        if (!validateForm()) {
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitText.textContent = 'Creating Ticket...';
+        submitSpinner.style.display = 'inline-block';
+
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
+        // required fields
+        formData.append('saas_app_id', serviceSelect.value);
+        formData.append('client_id', clientSelect.value);
+        formData.append('topic_id', topicSelect.value);
+        formData.append('sub_topic_id', subtopicSelect.value);
+        formData.append('title', subjectField.value);
+        formData.append('description', descriptionField.value);
+        formData.append('priority', priorityField.value);
+        formData.append('assigned_to', managerSelect.value);
+
+        const issueDate = document.getElementById('issueDate');
+        if (issueDate && issueDate.value) {
+            formData.append('issue_date', issueDate.value);
+        }
+
+        if (tertiaryTopicSelect.value) {
+            formData.append('tertiary_topic_id', tertiaryTopicSelect.value);
+        }
+        if (!document.getElementById('senderIdSection').classList.contains('hidden-section')) {
+            formData.append('sender_id', senderIdSelect.value);
+
+            const selectedOperators = Array.from(operatorSelect.selectedOptions)
+                .map(option => option.value)
+                .filter(value => value);
+
+            selectedOperators.forEach(operatorId => {
+                formData.append('operator[]', operatorId);
+            });
+        }
+        if (!document.getElementById('paymentChannelSection').classList.contains('hidden-section')) {
+            formData.append('payment_channel_id', paymentChannelSelect.value);
+        }
+        selectedChannels.forEach((channel, index) => {
+            formData.append(`notification_channels[${index}]`, channel);
+        });
+
+        const files = attachmentsInput.files;
+        for (let i = 0; i < files.length; i++) {
+            formData.append('attachments[]', files[i]);
+        }
+
+        fetch('/backend/ticket/store', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(async response => {
+                const data = await response.json();
+                if (!response.ok) {
+                    if (data.errors) {
+                        const errorMessages = Object.values(data.errors).flat().join('<br>');
+                        throw new Error(errorMessages);
+                    }
+                    throw new Error(data.message || 'Network response was not ok');
+                }
+                return data;
+            })
+            .then(data => {
+                if (data.success) {
+                    toastr.success(data.message || 'Ticket created successfully!');
+                    resetForm();
+                } else {
+                    throw new Error(data.message || 'Failed to create ticket');
+                }
+            })
+            .catch(error => {
+                const errors = error.message.split('<br>');
+                if (errors.length > 1) {
+                    errors.forEach(err => toastr.error(err));
+                } else {
+                    toastr.error(error.message || 'Error creating ticket');
+                }
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitText.textContent = 'Create Ticket';
+                submitSpinner.style.display = 'none';
+            });
+    }
+
+    function resetForm() {
+        form.reset();
+
+        // Reset all selects
+        resetSelect(serviceSelect, 'Select a Saas App');
+        resetSelect(clientSelect, 'Select a client');
+        resetSelect(topicSelect, 'Select a topic');
+        resetSelect(subtopicSelect, 'Select a subtopic');
+        resetSelect(tertiaryTopicSelect, 'Select a tertiary topic (optional)');
+        resetSelect(managerSelect, 'Select a manager');
+        resetSelect(senderIdSelect, 'Select sender ID');
+        resetSelect(operatorSelect, 'Select mobile operator');
+        resetSelect(paymentChannelSelect, 'Select a payment channel');
+
+        // Reset priority to Low
+        priorityField.value = ""; //"low"
+        $(priorityField).trigger('change');
+
+        // Hide all sections except service
+        hideSection('clientSection');
+        hideSection('topicSection');
+        hideSection('subtopicSection');
+        hideSection('tertiaryTopicSection');
+        hideSection('managerSection');
+        hideSection('ticketHistorySection');
+        hideSection('senderIdSection');
+        hideSection('operatorSection');
+        hideSection('paymentChannelSection');
+        hideSection('subjectSection');
+        hideSection('descriptionSection');
+        hideSection('prioritySection');
+        hideSection('attachmentsSection');
+        hideSection('submitSection');
+
+        // Clear previews
+        currentFiles = [];
+        updateFileInput();
+        updateFileDisplay();
+    }
+
+    function validateForm() {
+        const requiredFields = [
+            { element: serviceSelect, name: 'Service' },
+            { element: clientSelect, name: 'Client' },
+            { element: topicSelect, name: 'Topic' },
+            { element: subtopicSelect, name: 'Subtopic' },
+            { element: subjectField, name: 'Subject' },
+            { element: descriptionField, name: 'Description' },
+            { element: priorityField, name: 'Priority' },
+            { element: managerSelect, name: 'Manager' }
+        ];
+
+        for (const field of requiredFields) {
+            if (!field.element.value) {
+                toastr.error(`Please select a ${field.name}`);
+                field.element.focus();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function showLoading(element) {
+        const el = element.jquery ? element[0] : element;
+
+        if (!el || !el.parentNode) {
+            console.error('Invalid element passed to showLoading');
+            return;
+        }
+
+        const spinnerId = `${el.id}-spinner`;
+        if (document.getElementById(spinnerId)) {
+            return;
+        }
+
+        const spinner = document.createElement('span');
+        spinner.className = 'loading-spinner ms-2';
+        spinner.id = spinnerId;
+        el.parentNode.insertBefore(spinner, el.nextSibling);
+    }
+
+    function hideLoading(element) {
+        const el = element.jquery ? element[0] : element;
+        if (!el) return;
+
+        const spinnerId = `${el.id}-spinner`;
+        const spinner = document.getElementById(spinnerId);
+        if (spinner) {
+            spinner.remove();
+        }
+    }
 });

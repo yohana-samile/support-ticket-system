@@ -202,6 +202,22 @@
                 </div>
             </div>
         </div>
+
+        <!-- Image Preview Modal -->
+        <div class="modal fade" id="imagePreviewModal" tabindex="-1" role="dialog" aria-labelledby="imagePreviewModal" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{__('label.image_preview')}}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{__('label.close')}}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
 
@@ -336,38 +352,79 @@
 
 @push('scripts')
     <script>
-        // Ticket System Script
         $(document).ready(function () {
-            let currentFiles = [];
-            let selectedChannels = [];
-            let isCriticalPriority = false;
-            const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-            const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            // Constants and Configuration
+            const config = {
+                MAX_FILE_SIZE: 2 * 1024 * 1024, // 2MB
+                ALLOWED_FILE_TYPES: [
+                    'image/jpeg',
+                    'image/png',
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                ]
+            };
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const preSelectedServiceId = urlParams.get('saas_app_id');
+            // State Management
+            const state = {
+                currentFiles: [],
+                selectedChannels: [],
+                isCriticalPriority: false,
+                preSelectedServiceId: new URLSearchParams(window.location.search).get('saas_app_id'),
+                preSelectedClientId: new URLSearchParams(window.location.search).get('client_id')
+            };
 
+            // DOM Elements
+            const elements = {
+                service: $('#service'),
+                client: $('#client'),
+                topic: $('#topic'),
+                subtopic: $('#subtopic'),
+                tertiaryTopic: $('#tertiaryTopic'),
+                priority: $('#priority'),
+                attachments: document.getElementById('attachments'),
+                addMoreBtn: document.getElementById('addMoreFiles'),
+                fileCountDisplay: document.getElementById('fileCount'),
+                attachmentPreviews: document.getElementById('attachmentPreviews'),
+                ticketHistory: document.getElementById('ticketHistory')
+            };
+
+            // Initialize the application
             initialize();
 
-            if (preSelectedServiceId) $('#service').trigger('change');
-
-            function initialize() {
-                initializeSelect2();
-                bindServiceChange();
-                bindClientChange();
-                bindTopicChange();
-                bindSubtopicChange();
-                initializeFileUpload();
-                initializeNotificationChannels();
-                bindFormSubmit();
+            if (state.preSelectedServiceId) {
+                elements.service.val(state.preSelectedServiceId).trigger('change');
             }
 
+            // Core Functions
+            function initialize() {
+                initializeSelect2();
+                bindEventHandlers();
+                initializeFileUpload();
+                initializeNotificationChannels();
+
+                if (state.preSelectedServiceId) {
+                    loadClients(state.preSelectedServiceId);
+                    loadServices(state.preSelectedServiceId);
+                }
+            }
+
+            function bindEventHandlers() {
+                elements.service.on('change', handleServiceChange);
+                elements.client.on('change', handleClientChange);
+                elements.topic.on('change', handleTopicChange);
+                elements.subtopic.on('change', handleSubtopicChange);
+                elements.priority.on('change', handlePriorityChange);
+            }
+
+            // Select2 Initialization
             function initializeSelect2() {
                 $('.select2').select2({ width: '100%' });
+
                 $('.select2-ajax').select2({
                     width: '100%',
                     ajax: {
-                        url: $('#service').data('ajax-url'),
+                        url: elements.service.data('ajax-url'),
                         dataType: 'json',
                         delay: 250,
                         data: params => ({ search: params.term, page: params.page }),
@@ -383,94 +440,149 @@
                 });
             }
 
-            function bindServiceChange() {
-                $('#service').on('change', function () {
-                    const serviceId = $(this).val();
-                    if (serviceId) {
-                        loadClients(serviceId);
-                        showSection('#clientSection');
-                        clearError('#serviceSection');
-                    } else {
-                        hideSections(['#clientSection', '#topicSection']);
-                    }
-                });
+            // Service Related Functions
+            function loadServices(preSelectedServiceId = null) {
+                showLoading(elements.service[0]);
+                elements.service.empty().append('<option value=""></option>');
+
+                elements.service.select2({
+                    ajax: {
+                        url: elements.service.data('ajax-url'),
+                        dataType: 'json',
+                        delay: 250,
+                        data: function(params) {
+                            return {
+                                search: params.term,
+                                page: params.page || 1,
+                                id: preSelectedServiceId
+                            };
+                        },
+                        processResults: function(data, params) {
+                            params.page = params.page || 1;
+                            hideLoading(elements.service[0]);
+                            return {
+                                results: data.data.map(item => ({
+                                    id: item.id,
+                                    text: item.name
+                                })),
+                                pagination: {
+                                    more: data.next_page_url ? true : false
+                                }
+                            };
+                        },
+                        cache: true
+                    },
+                    minimumInputLength: 2,
+                    placeholder: elements.service.data('placeholder'),
+                    allowClear: true,
+                    escapeMarkup: markup => markup
+                }).on('select2:select', handleServiceChange);
+
+                if (preSelectedServiceId) {
+                    fetchPreselectedService(preSelectedServiceId);
+                } else {
+                    setTimeout(() => hideLoading(elements.service[0]), 500);
+                }
             }
 
+            function fetchPreselectedService(serviceId) {
+                if (elements.service.find(`option[value="${serviceId}"]`).length) {
+                    elements.service.val(serviceId).trigger('change');
+                    hideLoading(elements.service[0]);
+                    return;
+                }
+
+                $.ajax({
+                    url: elements.service.data('ajax-url'),
+                    data: { search: '', id: serviceId, specific: true },
+                    dataType: 'json'
+                }).done(function(data) {
+                    if (data.data?.length) {
+                        const service = data.data.find(item => item.id == serviceId);
+                        if (service) {
+                            const option = new Option(service.name, service.id, true, true);
+                            elements.service.append(option).trigger('change');
+                        }
+                    }
+                    hideLoading(elements.service[0]);
+                }).fail(() => hideLoading(elements.service[0]));
+            }
+
+            function handleServiceChange() {
+                const serviceId = $(this).val();
+                if (serviceId) {
+                    loadClients(serviceId);
+                    showSection('#clientSection');
+                    clearError('#serviceSection');
+                } else {
+                    hideSections(['#clientSection', '#topicSection']);
+                }
+            }
+
+            // Client Related Functions
             function loadClients(serviceId) {
-                const preSelectedClientId = urlParams.get('client_id');
                 $.get(`/backend/client/client_by_services/${serviceId}`)
                     .done(({ data }) => {
-                        const $client = $('#client').empty().append('<option value="">Select a client</option>');
+                        const $client = elements.client.empty().append('<option value="">Select a client</option>');
+
                         data.forEach(client => {
-                            const selected = preSelectedClientId == client.id ? 'selected' : '';
+                            const selected = state.preSelectedClientId == client.id ? 'selected' : '';
                             $client.append(`<option value="${client.id}" ${selected}>${client.name}</option>`);
                         });
-                        if (preSelectedClientId) $('#client').trigger('change');
+
+                        if (state.preSelectedClientId) {
+                            setTimeout(() => elements.client.trigger('change'), 100);
+                        }
                     })
-                    .fail(() => $('#client').html('<option>Error loading clients</option>'));
+                    .fail(() => elements.client.html('<option>Error loading clients</option>'));
             }
 
-            function bindClientChange() {
-                $('#client').on('change', function () {
-                    const clientId = $(this).val();
-                    if (clientId) {
-                        loadClientTicketHistory(clientId);
-                        loadTopics($('#service').val());
-                        clearError('#clientSection');
-                    } else {
-                        hideSections(['#topicSection', '#ticketHistorySection']);
-                    }
-                });
+            function handleClientChange() {
+                const clientId = $(this).val();
+                if (clientId) {
+                    loadClientTicketHistory(clientId);
+                    loadTopics(state.preSelectedServiceId);
+                    clearError('#clientSection');
+                } else {
+                    hideSections(['#topicSection', '#ticketHistorySection']);
+                }
             }
 
+            // Ticket History Functions
             async function loadClientTicketHistory(clientId) {
                 try {
                     const response = await fetch(`/backend/ticket/client_ticket_history/${clientId}`);
                     const responseData = await response.json();
-                    const ticketHistoryDiv = document.getElementById('ticketHistory');
-
                     const tickets = responseData?.data?.data;
+
                     if (!Array.isArray(tickets)) {
                         throw new Error('Invalid data format received from server');
                     }
 
                     showSection('#ticketHistorySection');
-
-                    if (ticketHistoryDiv) {
-                        renderTicketHistory(tickets, clientId);
-                    }
+                    renderTicketHistory(tickets);
                 } catch (error) {
-                    const ticketHistoryDiv = document.getElementById('ticketHistory');
-                    if (ticketHistoryDiv) {
-                        ticketHistoryDiv.innerHTML = `
-                            <div class="alert alert-danger m-3">
-                                <i class="bi bi-exclamation-triangle-fill"></i> Failed to load ticket history: ${error.message}
-                            </div>
-                        `;
-                    }
-                    hideSection('#ticketHistorySection');
+                    renderTicketHistoryError(error.message);
                 }
             }
 
-            function renderTicketHistory(tickets, clientId) {
-                const ticketHistoryDiv = document.getElementById('ticketHistory');
-                if (!ticketHistoryDiv) return;
+            function renderTicketHistory(tickets) {
+                if (!elements.ticketHistory) return;
 
                 if (tickets.length === 0) {
-                    ticketHistoryDiv.innerHTML = `
+                    elements.ticketHistory.innerHTML = `
                         <div class="empty-state text-center py-5">
                             <i class="bi bi-inbox-fill empty-state-icon fs-1 text-muted"></i>
                             <h4 class="empty-state-title mt-3">No Previous Tickets</h4>
                             <p class="empty-state-text text-muted">This client hasn't submitted any tickets yet.</p>
-                        </div>
-                        `;
+                        </div>`;
                     return;
                 }
 
                 const clientName = tickets[0]?.client?.name || 'Client';
                 const ticketsToShow = tickets.slice(0, 5);
 
-                ticketHistoryDiv.innerHTML = `
+                elements.ticketHistory.innerHTML = `
                     <div class="ticket-history-header d-flex justify-content-between align-items-center mb-3">
                         <h4 class="ticket-history-title mb-0 d-flex align-items-center gap-2">
                             <span class="badge bg-primary-subtle text-primary-emphasis client-badge">
@@ -490,29 +602,30 @@
                 });
 
                 if (tickets.length > 5) {
-                    const viewAll = document.createElement('a');
-                    viewAll.href = `/backend/ticket/client_ticket_history/${client?.uid}`;
-                    viewAll.target = '_blank';
-                    viewAll.className = 'btn btn-outline-primary w-100 mt-3 d-flex align-items-center justify-content-center gap-2';
-                    viewAll.innerHTML = 'View All Tickets <i class="bi bi-arrow-right"></i>';
-                    ticketHistoryDiv.appendChild(viewAll);
+                    addViewAllButton(tickets[0]?.client?.uid);
                 }
+            }
+
+            function renderTicketHistoryError(errorMessage) {
+                if (elements.ticketHistory) {
+                    elements.ticketHistory.innerHTML = `
+                        <div class="alert alert-danger m-3">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Failed to load ticket history: ${errorMessage}
+                        </div>`;
+                }
+                hideSection('#ticketHistorySection');
             }
 
             function createTicketItem(ticket) {
                 const createdDate = ticket.created_at ? new Date(ticket.created_at) : new Date();
                 const isResolved = ticket.status?.toLowerCase() === 'resolved';
-
-                let categoryPath = ticket.topic?.name;
-                if (ticket.subtopic?.name) categoryPath += ` › ${ticket.subtopic.name}`;
-                if (ticket.tertiary_topic?.name) categoryPath += ` › ${ticket.tertiary_topic.name}`;
+                const categoryPath = buildCategoryPath(ticket);
 
                 const item = document.createElement('div');
                 item.className = `ticket-history-item mb-3 p-3 rounded-3 border ${isResolved ? 'bg-light' : 'bg-white'} shadow-sm`;
                 item.style.transition = 'all 0.2s ease';
                 item.style.cursor = 'pointer';
 
-                // hover effect
                 item.onmouseenter = () => item.style.transform = 'translateY(-2px)';
                 item.onmouseleave = () => item.style.transform = '';
 
@@ -560,118 +673,85 @@
                     </div>
                 `;
 
-                // click handler to view ticket details
                 item.addEventListener('click', () => {
                     window.location.href = `/backend/ticket/view/${ticket.uid}`;
                 });
 
                 return item;
             }
-            function truncateText(text, maxLength) {
-                return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+
+            function buildCategoryPath(ticket) {
+                let path = ticket.topic?.name || '';
+                if (ticket.subtopic?.name) path += ` › ${ticket.subtopic.name}`;
+                if (ticket.tertiary_topic?.name) path += ` › ${ticket.tertiary_topic.name}`;
+                return path;
             }
-            function getPriorityBadgeClass(priority) {
-                const priorityLower = priority?.toLowerCase() || '';
-                switch(priorityLower) {
-                    case 'high': return 'bg-danger text-danger-fg';
-                    case 'medium': return 'bg-warning text-warning-fg';
-                    case 'low': return 'bg-success text-success-fg';
-                    case 'critical': return 'bg-danger text-white-fg';
-                    default: return 'bg-light text-dark';
-                }
+
+            function addViewAllButton(clientUid) {
+                if (!clientUid || !elements.ticketHistory) return;
+
+                const viewAll = document.createElement('a');
+                viewAll.href = `/backend/ticket/client_ticket_history/${clientUid}`;
+                viewAll.target = '_blank';
+                viewAll.className = 'btn btn-outline-primary w-100 mt-3 d-flex align-items-center justify-content-center gap-2';
+                viewAll.innerHTML = 'View All Tickets <i class="bi bi-arrow-right"></i>';
+                elements.ticketHistory.appendChild(viewAll);
             }
-            function getTimeBadgeClass(dateString) {
-                if (!dateString) return 'bg-dark';
 
-                const now = new Date();
-                const ticketDate = new Date(dateString);
-                const diffInDays = Math.abs(now - ticketDate) / (24 * 60 * 60 * 1000);
+            // Topic Related Functions
+            function handleTopicChange() {
+                const topicId = $(this).val();
+                if (!topicId) return hideSections(['#subtopicSection', '#dateSection']);
 
-                if (diffInDays < 1) return 'bg-danger';
-                if (diffInDays < 7) return 'bg-primary';
-                return 'bg-dark';
-            }
-            function formatTicketDate(dateString) {
-                if (!dateString) return 'Unknown date';
+                loadSubtopics(topicId);
+                const topicName = $(this).find('option:selected').text().toLowerCase();
 
-                const now = new Date();
-                const ticketDate = new Date(dateString);
-                const diffInHours = Math.abs(now - ticketDate) / 36e5;
-
-                if (ticketDate.toDateString() === now.toDateString()) {
-                    if (diffInHours < 1) {
-                        const mins = Math.floor(diffInHours * 60);
-                        return `<span class="date-today recent-highlight">${mins}m ago</span>`;
-                    }
-                    return `<span class="date-today">Today at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
-                }
-
-                const yesterday = new Date(now);
-                yesterday.setDate(yesterday.getDate() - 1);
-                if (ticketDate.toDateString() === yesterday.toDateString()) {
-                    return `<span class="date-yesterday">Yesterday at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+                if (topicName.includes('sms')) {
+                    loadSenderIds(elements.client.val());
+                    loadOperators();
+                    showSections(['#senderIdSection', '#operatorSection', '#dateSection']);
+                    hideSection('#paymentChannelSection');
+                    updateDateLabels('SMS Issue Date', 'Please specify when the SMS issue occurred');
+                } else if (topicName.includes('payment')) {
+                    loadPaymentChannels();
+                    showSections(['#paymentChannelSection', '#dateSection']);
+                    hideSections(['#senderIdSection', '#operatorSection']);
+                    updateDateLabels('Payment Date', 'Please specify when the payment was made');
+                } else {
+                    hideSections(['#senderIdSection', '#operatorSection', '#dateSection', '#paymentChannelSection']);
                 }
 
-                return ticketDate.toLocaleDateString([], {month: 'short', day: 'numeric', year: 'numeric'});
-            }
-
-
-            function bindTopicChange() {
-                $('#topic').on('change', function () {
-                    const topicId = $(this).val();
-                    if (!topicId) return hideSections(['#subtopicSection', '#dateSection']);
-
-                    loadSubtopics(topicId);
-
-                    const topicName = $(this).find('option:selected').text().toLowerCase();
-                    if (topicName.includes('sms')) {
-                        loadSenderIds($('#client').val());
-                        loadOperators();
-                        showSections(['#senderIdSection', '#operatorSection', '#dateSection']);
-                        hideSection('#paymentChannelSection');
-                        updateDateLabels('SMS Issue Date', 'Please specify when the SMS issue occurred');
-                    } else if (topicName.includes('payment')) {
-                        loadPaymentChannels();
-                        showSections(['#paymentChannelSection', '#dateSection']);
-                        hideSections(['#senderIdSection', '#operatorSection']);
-                        updateDateLabels('Payment Date', 'Please specify when the payment was made');
-                    } else {
-                        hideSections(['#senderIdSection', '#operatorSection', '#dateSection', '#paymentChannelSection']);
-                    }
-
-                    clearError('#topicSection');
-                });
+                clearError('#topicSection');
             }
 
             function loadTopics(serviceId) {
                 $.get(`/backend/topic/get_by_service/${serviceId}`)
                     .done(({ data }) => {
-                        const $topic = $('#topic').empty().append('<option value="">Select a topic</option>');
-                        data.forEach(t => $topic.append(`<option value="${t.id}">${t.name}</option>`));
+                        elements.topic.empty().append('<option value="">Select a topic</option>');
+                        data.forEach(t => elements.topic.append(`<option value="${t.id}">${t.name}</option>`));
                         showSection('#topicSection');
                     })
                     .fail(() => showAlert('error', 'Failed to load topics'));
             }
 
-            function bindSubtopicChange() {
-                $('#subtopic').on('change', function () {
-                    const subtopicId = $(this).val();
-                    if (!subtopicId) return hideSections(['#subjectSection']);
+            // Subtopic Related Functions
+            function handleSubtopicChange() {
+                const subtopicId = $(this).val();
+                if (!subtopicId) return hideSections(['#subjectSection']);
 
-                    loadTertiaryTopics(subtopicId);
-                    $('#priority').val('low').trigger('change');
-                    showAlert("info", 'Priority automatically set to "low"');
-                    showSections(['#subjectSection', '#descriptionSection', '#prioritySection', '#attachmentsSection', '#submitSection']);
-                    loadManagers();
-                    clearError('#subtopicSection');
-                });
+                loadTertiaryTopics(subtopicId);
+                elements.priority.val('low').trigger('change');
+                showAlert("info", 'Priority automatically set to "low"');
+                showSections(['#subjectSection', '#descriptionSection', '#prioritySection', '#attachmentsSection', '#submitSection']);
+                loadManagers();
+                clearError('#subtopicSection');
             }
 
             function loadSubtopics(topicId) {
                 $.get(`/backend/subtopic/get_by_topic_id/${topicId}`)
                     .done(({ data }) => {
-                        const $sub = $('#subtopic').empty().append('<option value="">Select a subtopic</option>');
-                        data.forEach(st => $sub.append(`<option value="${st.id}">${st.name}</option>`));
+                        elements.subtopic.empty().append('<option value="">Select a subtopic</option>');
+                        data.forEach(st => elements.subtopic.append(`<option value="${st.id}">${st.name}</option>`));
                         showSection('#subtopicSection');
                     })
                     .fail(() => showAlert('error', 'Failed to load subtopics'));
@@ -680,8 +760,8 @@
             function loadTertiaryTopics(subtopicId) {
                 $.get(`/backend/tertiary/tertiary_topic_by_subtopic_id/${subtopicId}`)
                     .done(({ data }) => {
-                        const $ter = $('#tertiaryTopic').empty().append('<option value="">Select a tertiary topic (optional)</option>');
-                        data.forEach(t => $ter.append(`<option value="${t.id}">${t.name}</option>`));
+                        elements.tertiaryTopic.empty().append('<option value="">Select a tertiary topic (optional)</option>');
+                        data.forEach(t => elements.tertiaryTopic.append(`<option value="${t.id}">${t.name}</option>`));
                         showSection('#tertiaryTopicSection');
                     })
                     .fail(() => showAlert('error', 'Failed to load tertiary topics'));
@@ -711,6 +791,7 @@
                     });
             }
 
+            //load staffs users
             function loadManagers() {
                 const $manager = $('#manager');
                 $manager.empty().append('<option value="">Loading managers...</option>');
@@ -743,206 +824,261 @@
                     });
             }
 
+            // File Upload Functions
+            // File Upload Functions
             function initializeFileUpload() {
-                const attachmentsInput = document.getElementById('attachments');
-                const addMoreBtn = document.getElementById('addMoreFiles');
-                const fileCountDisplay = document.getElementById('fileCount');
-                const attachmentPreviews = document.getElementById('attachmentPreviews');
+                elements.attachments.addEventListener('change', handleFileSelection);
+                elements.addMoreBtn.addEventListener('click', handleAddMoreFiles);
+            }
 
-                // Handle file selection
-                attachmentsInput.addEventListener('change', function(event) {
-                    const newFiles = Array.from(event.target.files);
+            function handleFileSelection(event) {
+                const newFiles = Array.from(event.target.files);
+                const validationResults = validateFiles(newFiles);
 
-                    // Validate files before adding
-                    const validFiles = newFiles.filter(file => {
-                        if (file.size > MAX_FILE_SIZE) {
-                            showAlert('error', `File "${file.name}" exceeds 2MB limit`);
-                            return false;
-                        }
-                        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-                            showAlert('error', `File type not supported for "${file.name}"`);
-                            return false;
-                        }
-                        return true;
-                    });
+                if (validationResults.invalidFiles.length > 0) {
+                    showInvalidFilesAlert(validationResults.invalidFiles);
+                }
 
-                    // Check for duplicates
-                    const uniqueFiles = validFiles.filter(newFile =>
-                        !currentFiles.some(
-                            file => file.name === newFile.name &&
-                                file.size === newFile.size &&
-                                file.lastModified === newFile.lastModified
-                        )
-                    );
+                const uniqueValidFiles = validationResults.validFiles.filter(newFile =>
+                    !state.currentFiles.some(
+                        file => file.name === newFile.name &&
+                            file.size === newFile.size &&
+                            file.lastModified === newFile.lastModified
+                    )
+                );
 
-                    currentFiles = [...currentFiles, ...uniqueFiles];
+                if (uniqueValidFiles.length > 0) {
+                    state.currentFiles = [...state.currentFiles, ...uniqueValidFiles];
                     updateFileInput();
                     updateFileDisplay();
-                });
-
-                // Handle "Add More" button click
-                addMoreBtn.addEventListener('click', function() {
-                    const tempInput = document.createElement('input');
-                    tempInput.type = 'file';
-                    tempInput.multiple = true;
-                    tempInput.accept = ALLOWED_FILE_TYPES.join(',');
-
-                    tempInput.addEventListener('change', (e) => {
-                        if (e.target.files.length > 0) {
-                            const event = new Event('change');
-                            Object.defineProperty(event, 'target', {
-                                value: { files: e.target.files },
-                                enumerable: true
-                            });
-                            attachmentsInput.dispatchEvent(event);
-                        }
-                    });
-
-                    tempInput.click();
-                });
-
-                function updateFileInput() {
-                    const dataTransfer = new DataTransfer();
-                    currentFiles.forEach(file => dataTransfer.items.add(file));
-                    attachmentsInput.files = dataTransfer.files;
-                }
-
-                function updateFileDisplay() {
-                    updateFileCount();
-                    renderFilePreviews();
-                }
-
-                function updateFileCount() {
-                    fileCountDisplay.textContent = currentFiles.length;
-                }
-
-                function renderFilePreviews() {
-                    if (currentFiles.length === 0) {
-                        attachmentPreviews.innerHTML = '<p class="text-muted small">No files selected</p>';
-                        return;
-                    }
-
-                    attachmentPreviews.innerHTML = '';
-                    currentFiles.forEach((file, index) => {
-                        const previewDiv = document.createElement('div');
-                        previewDiv.className = 'file-preview d-flex align-items-center border rounded p-2 mb-2 bg-light';
-                        previewDiv.dataset.fileIndex = index;
-
-                        // File icon/thumbnail
-                        const previewIcon = document.createElement('div');
-                        previewIcon.className = 'file-icon me-2';
-
-                        if (file.type.startsWith('image/')) {
-                            const img = document.createElement('img');
-                            img.src = URL.createObjectURL(file);
-                            img.className = 'img-thumbnail';
-                            img.style.maxWidth = '60px';
-                            img.style.maxHeight = '60px';
-                            previewIcon.appendChild(img);
-                        } else {
-                            const icon = document.createElement('i');
-                            icon.className = `bi ${getFileIconClass(file)} fs-3`;
-                            previewIcon.appendChild(icon);
-                        }
-
-                        // File info
-                        const fileInfo = document.createElement('div');
-                        fileInfo.className = 'file-info flex-grow-1';
-                        fileInfo.innerHTML = `
-                            <div class="file-name text-truncate" style="max-width: 200px">${file.name}</div>
-                            <div class="file-size small text-muted">${formatFileSize(file.size)}</div>
-                        `;
-
-                        // Remove button
-                        const removeBtn = document.createElement('button');
-                        removeBtn.className = 'btn btn-sm btn-outline-danger ms-2';
-                        removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
-                        removeBtn.onclick = (e) => {
-                            e.preventDefault();
-                            currentFiles.splice(index, 1);
-                            updateFileInput();
-                            updateFileDisplay();
-                        };
-
-                        previewDiv.appendChild(previewIcon);
-                        previewDiv.appendChild(fileInfo);
-                        previewDiv.appendChild(removeBtn);
-                        attachmentPreviews.appendChild(previewDiv);
-                    });
-                }
-
-                function getFileIconClass(file) {
-                    if (file.type.startsWith('image/')) return 'bi-file-image text-primary';
-
-                    const ext = file.name.split('.').pop().toLowerCase();
-                    switch (ext) {
-                        case 'pdf': return 'bi-file-earmark-pdf text-danger';
-                        case 'doc':
-                        case 'docx': return 'bi-file-earmark-word text-primary';
-                        case 'xls':
-                        case 'xlsx': return 'bi-file-earmark-excel text-success';
-                        default: return 'bi-file-earmark text-secondary';
-                    }
-                }
-
-                function formatFileSize(bytes) {
-                    if (bytes === 0) return '0 Bytes';
-                    const k = 1024;
-                    const sizes = ['Bytes', 'KB', 'MB'];
-                    const i = Math.floor(Math.log(bytes) / Math.log(k));
-                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                    showAlert('success', `Added ${uniqueValidFiles.length} file(s)`);
                 }
             }
 
-            function updateDateLabels(label, description) {
-                $('#dateLabel').text(label);
-                $('#dateDescription').text(description);
-            }
+            function validateFiles(files) {
+                const result = {
+                    validFiles: [],
+                    invalidFiles: []
+                };
 
-            /**
-             * notification channels
-             */
-            function initializeNotificationChannels() {
-                // Initialize channel selection when priority changes
-                $('#priority').on('change', handlePriorityChange);
+                files.forEach(file => {
+                    const validation = {
+                        file,
+                        errors: []
+                    };
 
-                // Set up channel card click handlers
-                $('.channel-card').on('click', function() {
-                    if (isCriticalPriority && $(this).data('channel') === 'sms') {
-                        showAlert('warning', 'SMS channel is required for critical priority tickets');
-                        return;
+                    // Size validation
+                    if (file.size > config.MAX_FILE_SIZE) {
+                        validation.errors.push(`Size exceeds ${formatFileSize(config.MAX_FILE_SIZE)} limit`);
                     }
 
-                    const channel = $(this).data('channel');
-                    const index = selectedChannels.indexOf(channel);
+                    // Type validation
+                    if (!config.ALLOWED_FILE_TYPES.includes(file.type)) {
+                        const allowedTypes = config.ALLOWED_FILE_TYPES.map(t => t.split('/')[1]).join(', ');
+                        validation.errors.push(`Type not allowed (allowed: ${allowedTypes})`);
+                    }
 
-                    if (index === -1) {
-                        selectedChannels.push(channel);
+                    // Virus scan simulation (would be async in real implementation)
+                    if (file.name.toLowerCase().includes('virus')) {
+                        validation.errors.push('File appears malicious');
+                    }
+
+                    if (validation.errors.length === 0) {
+                        result.validFiles.push(file);
                     } else {
-                        selectedChannels.splice(index, 1);
+                        result.invalidFiles.push(validation);
+                    }
+                });
+
+                return result;
+            }
+
+            function showInvalidFilesAlert(invalidFiles) {
+                // Combine all error messages into a single string
+                const errorMessages = invalidFiles.map(file => {
+                    return `${file.file.name}: ${file.errors.join(', ')}`;
+                }).join('\n');
+
+                // Show as a single alert
+                showAlert('error', `failed validation:\n${errorMessages}`);
+            }
+
+            function handleAddMoreFiles() {
+                const tempInput = document.createElement('input');
+                tempInput.type = 'file';
+                tempInput.multiple = true;
+                tempInput.accept = config.ALLOWED_FILE_TYPES.join(',');
+
+                tempInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        const event = new Event('change');
+                        Object.defineProperty(event, 'target', {
+                            value: { files: e.target.files },
+                            enumerable: true
+                        });
+                        elements.attachments.dispatchEvent(event);
+                    }
+                });
+
+                tempInput.click();
+            }
+
+            function updateFileInput() {
+                const dataTransfer = new DataTransfer();
+                state.currentFiles.forEach(file => dataTransfer.items.add(file));
+                elements.attachments.files = dataTransfer.files;
+            }
+
+            function updateFileDisplay() {
+                updateFileCount();
+                renderFilePreviews();
+            }
+
+            function updateFileCount() {
+                elements.fileCountDisplay.textContent = state.currentFiles.length;
+                elements.fileCountDisplay.classList.toggle('text-danger', state.currentFiles.length >= 5);
+            }
+
+            function renderFilePreviews() {
+                if (state.currentFiles.length === 0) {
+                    elements.attachmentPreviews.innerHTML = `
+                        <div class="empty-state text-center py-3">
+                            <i class="bi bi-cloud-arrow-up fs-1 text-muted"></i>
+                            <p class="text-muted small mt-2">No files selected</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                elements.attachmentPreviews.innerHTML = '';
+                state.currentFiles.forEach((file, index) => {
+                    const previewDiv = document.createElement('div');
+                    previewDiv.className = 'file-preview d-flex align-items-center border rounded p-2 mb-2 bg-light';
+                    previewDiv.dataset.fileIndex = index;
+
+                    // File type indicator
+                    const fileTypeBadge = document.createElement('span');
+                    fileTypeBadge.className = 'file-type-badge badge bg-secondary me-2 text-white';
+                    fileTypeBadge.textContent = file.type.split('/')[1]?.toUpperCase() || 'FILE';
+
+                    previewDiv.innerHTML = `
+                        <div class="file-icon me-2">
+                            ${file.type.startsWith('image/') ?
+                            `<img src="${URL.createObjectURL(file)}" class="img-thumbnail" style="max-width: 60px; max-height: 60px">` :
+                            `<i class="bi ${getFileIconClass(file)} fs-3"></i>`}
+                                </div>
+                                <div class="file-info flex-grow-1">
+                                    <div class="file-name text-truncate" style="max-width: 200px" title="${file.name}">
+                                        ${file.name}
+                                    </div>
+                                    <div class="file-meta d-flex justify-content-between small text-muted">
+                                        <span>${formatFileSize(file.size)}</span>
+                                        <span>${new Date(file.lastModified).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger ms-2">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            `;
+
+                    // Insert type badge
+                    previewDiv.insertBefore(fileTypeBadge, previewDiv.firstChild);
+
+                    // Add click handler for removal
+                    previewDiv.querySelector('button').onclick = (e) => {
+                        e.preventDefault();
+                        state.currentFiles.splice(index, 1);
+                        updateFileInput();
+                        updateFileDisplay();
+                        showAlert('info', `Removed ${file.name}`);
+                    };
+
+                    // Add click handler for preview
+                    if (file.type.startsWith('image/')) {
+                        previewDiv.querySelector('.file-icon').style.cursor = 'pointer';
+                        previewDiv.querySelector('.file-icon').onclick = (e) => {
+                            e.stopPropagation();
+                            showImagePreview(file);
+                        };
                     }
 
-                    updateChannelSelectionUI();
-                    updateChannelSelectionSummary();
+                    elements.attachmentPreviews.appendChild(previewDiv);
                 });
+            }
 
-                // Set up modal confirm button
-                $('.modal-footer .btn-primary').on('click', function() {
-                    updateChannelSelectionUI();
-                    updateChannelSelectionSummary();
-                });
+            function showImagePreview(file) {
+                // Still using modal for image preview as it's better UX
+                const modalContent = `
+                    <div class="text-center">
+                        <img src="${URL.createObjectURL(file)}" class="img-fluid" alt="Preview">
+                        <div class="mt-3">
+                            <span class="badge bg-dark text-white">${file.name}</span>
+                            <span class="badge bg-secondary ms-1 text-white">${formatFileSize(file.size)}</span>
+                        </div>
+                    </div>
+                `;
+
+                $('#imagePreviewModal .modal-body').html(modalContent);
+                $('#imagePreviewModal').modal('show');
+            }
+
+            function getFileIconClass(file) {
+                if (file.type.startsWith('image/')) return 'bi-file-image text-primary';
+
+                const ext = file.name.split('.').pop().toLowerCase();
+                switch (ext) {
+                    case 'pdf': return 'bi-file-earmark-pdf text-danger';
+                    case 'doc':
+                    case 'docx': return 'bi-file-earmark-word text-primary';
+                    case 'xls':
+                    case 'xlsx': return 'bi-file-earmark-excel text-success';
+                    case 'ppt':
+                    case 'pptx': return 'bi-file-earmark-ppt text-warning';
+                    case 'zip':
+                    case 'rar': return 'bi-file-earmark-zip text-secondary';
+                    case 'txt': return 'bi-file-earmark-text text-info';
+                    case 'csv': return 'bi-file-earmark-spreadsheet text-success';
+                    default: return 'bi-file-earmark text-secondary';
+                }
+            }
+
+            // Notification Channel Functions
+            function initializeNotificationChannels() {
+                $('.channel-card').on('click', handleChannelClick);
+                $('.modal-footer .btn-primary').on('click', updateChannelSelection);
             }
 
             function handlePriorityChange() {
                 const priority = $(this).val();
-                isCriticalPriority = priority === 'critical';
+                state.isCriticalPriority = priority === 'critical';
 
-                // Auto-select default channels
-                selectedChannels = ['mail', 'whatsapp', 'database'];
-                if (isCriticalPriority) {
-                    selectedChannels.push('sms');
+                state.selectedChannels = ['mail', 'whatsapp', 'database'];
+                if (state.isCriticalPriority) {
+                    state.selectedChannels.push('sms');
                 }
 
+                updateChannelSelection();
+            }
+
+            function handleChannelClick() {
+                if (state.isCriticalPriority && $(this).data('channel') === 'sms') {
+                    showAlert('warning', 'SMS channel is required for critical priority tickets');
+                    return;
+                }
+
+                const channel = $(this).data('channel');
+                const index = state.selectedChannels.indexOf(channel);
+
+                if (index === -1) {
+                    state.selectedChannels.push(channel);
+                } else {
+                    state.selectedChannels.splice(index, 1);
+                }
+
+                updateChannelSelection();
+            }
+
+            function updateChannelSelection() {
                 updateChannelSelectionUI();
                 updateChannelSelectionSummary();
             }
@@ -950,23 +1086,16 @@
             function updateChannelSelectionUI() {
                 $('.channel-card').each(function() {
                     const channel = $(this).data('channel');
-                    const isSelected = selectedChannels.includes(channel);
-                    const isLocked = isCriticalPriority && channel === 'sms';
+                    const isSelected = state.selectedChannels.includes(channel);
+                    const isLocked = state.isCriticalPriority && channel === 'sms';
 
-                    $(this).toggleClass('selected', isSelected);
-                    $(this).find('i').toggleClass('text-muted', !isSelected);
-
-                    if (isLocked) {
-                        $(this).addClass('locked');
-                        $(this).find('i').removeClass('text-muted');
-                    } else {
-                        $(this).removeClass('locked');
-                    }
+                    $(this).toggleClass('selected', isSelected)
+                        .toggleClass('locked', isLocked)
+                        .find('i').toggleClass('text-muted', !isSelected && !isLocked);
                 });
 
-                // Update hidden input fields for form submission
                 $('#notification_channels_wrapper').html(
-                    selectedChannels.map(channel =>
+                    state.selectedChannels.map(channel =>
                         `<input type="hidden" name="notification_channels[]" value="${channel}">`
                     ).join('')
                 );
@@ -984,9 +1113,9 @@
                     $('#managerSection').append(summaryContainer);
                 }
 
-                if (selectedChannels.length > 0) {
-                    const channelBadges = selectedChannels.map(channel => {
-                        const isLocked = isCriticalPriority && channel === 'sms';
+                if (state.selectedChannels.length > 0) {
+                    const channelBadges = state.selectedChannels.map(channel => {
+                        const isLocked = state.isCriticalPriority && channel === 'sms';
                         return `<span class="badge text-white ${isLocked ? 'bg-secondary' : 'bg-primary'} me-1">
                             ${channel} ${isLocked ? '<i class="bi bi-lock-fill ms-1"></i>' : ''}
                         </span>`;
@@ -1000,14 +1129,17 @@
                         </small>
                     `);
 
-                    $('.click-to-edit').on('click', function() {
-                        $('#channelModal').modal('show');
-                    });
+                    $('.click-to-edit').on('click', () => $('#channelModal').modal('show'));
                 } else {
                     summaryContainer.html('<small class="text-muted">No notification channels selected</small>');
                 }
             }
 
+            // Utility Functions
+            function updateDateLabels(label, description) {
+                $('#dateLabel').text(label);
+                $('#dateDescription').text(description);
+            }
 
             function showSection(id) {
                 $(id).removeClass('hidden-section');
@@ -1029,13 +1161,20 @@
                 $(id).removeClass('has-error').find('.error-message').remove();
             }
 
-            function timeAgo(dateString) {
-                if (!dateString) return '';
+            function truncateText(text, maxLength) {
+                return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+            }
 
-                const date = new Date(dateString);
-                const now = new Date();
-                const seconds = Math.floor((now - date) / 1000);
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
 
+            function timeAgo(date) {
+                const seconds = Math.floor((new Date() - date) / 1000);
                 const intervals = [
                     { unit: 'year', divisor: 31536000 },
                     { unit: 'month', divisor: 2592000 },
@@ -1048,12 +1187,54 @@
 
                 for (const { unit, divisor } of intervals) {
                     const interval = Math.floor(seconds / divisor);
-                    if (interval >= 1) {
-                        return `${interval} ${unit}${interval === 1 ? '' : 's'} ago`;
+                    if (interval >= 1) return `${interval} ${unit}${interval === 1 ? '' : 's'} ago`;
+                }
+                return 'Just now';
+            }
+
+            function formatTicketDate(dateString) {
+                if (!dateString) return 'Unknown date';
+                const now = new Date();
+                const ticketDate = new Date(dateString);
+                const diffInHours = Math.abs(now - ticketDate) / 36e5;
+
+                if (ticketDate.toDateString() === now.toDateString()) {
+                    if (diffInHours < 1) {
+                        const mins = Math.floor(diffInHours * 60);
+                        return `<span class="date-today recent-highlight">${mins}m ago</span>`;
                     }
+                    return `<span class="date-today">Today at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
                 }
 
-                return 'Just now';
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                if (ticketDate.toDateString() === yesterday.toDateString()) {
+                    return `<span class="date-yesterday">Yesterday at ${ticketDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+                }
+
+                return ticketDate.toLocaleDateString([], {month: 'short', day: 'numeric', year: 'numeric'});
+            }
+
+            function getPriorityBadgeClass(priority) {
+                const priorityLower = priority?.toLowerCase() || '';
+                switch(priorityLower) {
+                    case 'high': return 'bg-danger text-danger-fg';
+                    case 'medium': return 'bg-warning text-warning-fg';
+                    case 'low': return 'bg-success text-success-fg';
+                    case 'critical': return 'bg-danger text-white-fg';
+                    default: return 'bg-light text-dark';
+                }
+            }
+
+            function getTimeBadgeClass(dateString) {
+                if (!dateString) return 'bg-dark';
+                const now = new Date();
+                const ticketDate = new Date(dateString);
+                const diffInDays = Math.abs(now - ticketDate) / (24 * 60 * 60 * 1000);
+
+                if (diffInDays < 1) return 'bg-danger';
+                if (diffInDays < 7) return 'bg-primary';
+                return 'bg-dark';
             }
 
             function getStatusColor(status) {
@@ -1073,25 +1254,30 @@
                     positionClass: 'toast-bottom-right',
                     closeButton: true
                 };
-                switch (type) {
-                    case 'success':
-                        toastr.success(message, '', toastOptions);
-                        break;
-                    case 'error':
-                        toastr.error(message, '', toastOptions);
-                        break;
-                    case 'warning':
-                        toastr.warning(message, '', toastOptions);
-                        break;
-                    default:
-                        toastr.info(message, '', toastOptions);
-                }
+
+                toastr[type](message, '', toastOptions);
             }
 
-            function bindFormSubmit() {
-                // Bind form submission if needed
+            function showLoading(element) {
+                const el = element.jquery ? element[0] : element;
+                if (!el?.parentNode) return;
+
+                const spinnerId = `${el.id}-spinner`;
+                if (document.getElementById(spinnerId)) return;
+
+                const spinner = document.createElement('span');
+                spinner.className = 'loading-spinner ms-2';
+                spinner.id = spinnerId;
+                el.parentNode.insertBefore(spinner, el.nextSibling);
+            }
+
+            function hideLoading(element) {
+                const el = element.jquery ? element[0] : element;
+                if (!el) return;
+
+                const spinner = document.getElementById(`${el.id}-spinner`);
+                if (spinner) spinner.remove();
             }
         });
-
     </script>
 @endpush
