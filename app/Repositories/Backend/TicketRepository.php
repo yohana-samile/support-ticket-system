@@ -294,7 +294,7 @@ class TicketRepository extends  BaseRepository {
                     $this->notifyForNewTicket($user, $ticket);
                     break;
                 case 'whatsapp':
-                    //$this->sendTicketNotification($user, $ticket);
+                    $this->sendTicketNotification($user, $ticket);
                     break;
             }
         }

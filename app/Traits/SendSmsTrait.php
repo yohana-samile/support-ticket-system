@@ -69,8 +69,9 @@ trait SendSmsTrait
 
     protected function sendSms($smsPayload): void
     {
+        $token = 'Basic ' . env('SMS_BASIC_TOKEN');
         $response = Http::withHeaders([
-            'Authorization' => 'Basic TmFuYWg6bmFuYWhAMjUxMg==',
+            'Authorization' => $token,
         ])->post('https://messaging-service.co.tz/api/sms/v1/text/single', $smsPayload);
 
         if (!$response->successful()) {

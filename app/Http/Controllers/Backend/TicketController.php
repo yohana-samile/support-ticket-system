@@ -46,7 +46,7 @@ class TicketController extends Controller
     {
         $ticket = $this->ticketRepository->store($request->validated());
         return response()->json([
-            "success" => true,
+            "success" => false,
             'message' => 'Ticket created successfully',
             'data' => $ticket
         ], Response::HTTP_CREATED);

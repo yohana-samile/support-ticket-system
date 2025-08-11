@@ -19,7 +19,8 @@
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-html": "^3.12",
         "yajra/laravel-datatables": "^12",
-        "yajra/laravel-datatables-buttons": "^12"
+        "yajra/laravel-datatables-buttons": "^12",
+        "ext-fileinfo": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
