@@ -13,11 +13,14 @@ class RoleRepository extends BaseRepository
 {
     const MODEL = Role::class;
 
-
     public function  getDetail($id){
 
-        $role = $this->query()->where('id', $id)->first();
-        return $role;
+        return $this->query()->where('id', $id)->first();
+    }
+
+    public function  getActiveRoles(){
+
+        return $this->query()->where('isactive', true)->get();
     }
 
     public function forSelect()
@@ -97,10 +100,6 @@ class RoleRepository extends BaseRepository
         });
     }
 
-    /**
-     * @param Model $role
-     * @throws \Exception
-     */
     public function delete(Model $role)
     {
         $role->permissions()->sync([]);

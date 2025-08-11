@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('tickets', function (Blueprint $table) {
-            $table->date('issue_date')->nullable()->after('sub_topic_id')->comment('this elaborate when payment issue occur or when sms fail to deliver');
+        Schema::table('users', function (Blueprint $table) {
+            $table->integer('favorite_count')->nullable()->after('is_active');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('tickets', function (Blueprint $table) {
-            $table->dropColumn('issue_date');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('favorite_count');
         });
     }
 };

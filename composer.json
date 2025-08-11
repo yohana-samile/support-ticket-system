@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "ext-fileinfo": "*",
         "ext-gd": "*",
         "ext-pdo": "*",
         "barryvdh/laravel-dompdf": "^3.1",
@@ -15,12 +16,11 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "maatwebsite/excel": "*",
-        "owen-it/laravel-auditing": "^14.0",
+        "propaganistas/laravel-phone": "^6.0",
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-html": "^3.12",
         "yajra/laravel-datatables": "^12",
-        "yajra/laravel-datatables-buttons": "^12",
-        "ext-fileinfo": "*"
+        "yajra/laravel-datatables-buttons": "^12"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

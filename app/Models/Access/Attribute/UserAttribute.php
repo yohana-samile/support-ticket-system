@@ -73,4 +73,12 @@ trait UserAttribute
     {
         return self::where('email', $email)->first();
     }
+    public static function getUserIdById($id)
+    {
+        return self::where('id', $id)->first();
+    }
+    public static function getUserIdByUid($uid)
+    {
+        return self::where('uid', $uid)->first();
+    }
 }

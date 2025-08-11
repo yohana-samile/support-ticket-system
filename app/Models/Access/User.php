@@ -9,11 +9,9 @@
     use Illuminate\Foundation\Auth\User as Authenticatable;
     use Illuminate\Notifications\Notifiable;
     use Laravel\Sanctum\HasApiTokens;
-    use OwenIt\Auditing\Auditable;
-    use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-    class User extends Authenticatable implements MustVerifyEmail, AuditableContract {
-        use HasApiTokens, HasFactory, Notifiable, SoftDeletes, UserRelationship, UserAttribute, UserAccess, HasProfilePhoto, Auditable;
+    class User extends Authenticatable implements MustVerifyEmail {
+        use HasApiTokens, HasFactory, Notifiable, SoftDeletes, UserRelationship, UserAttribute, UserAccess, HasProfilePhoto;
         protected $guarded = ['id'];
 
         protected static function booted()
@@ -44,7 +42,6 @@
                 'email_verified_at' => 'datetime',
                 'password' => 'hashed',
                 'is_active' => 'boolean',
-                'specializations' => 'array'
             ];
         }
     }

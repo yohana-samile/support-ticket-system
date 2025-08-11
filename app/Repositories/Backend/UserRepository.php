@@ -5,9 +5,9 @@ namespace App\Repositories\Backend;
 use App\Models\Access\Permission;
 use App\Models\Access\Role;
 use App\Models\Access\User;
+use App\Models\Topic;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class UserRepository extends BaseRepository
 {
@@ -15,55 +15,57 @@ class UserRepository extends BaseRepository
 
     public function store(array $data)
     {
-        return DB::transaction(function() use($data) {
-            $user = $this->createNewUser($data);
-            if ($user->wasRecentlyCreated) {
-                $this->assignRolesAndPermissions($user, $data['role_id']);
-            }
+        $rawPassword = app(ClientRepository::class)->generatePassword();
+
+        $user = DB::transaction(function() use($data, $rawPassword) {
+            $user = $this->createNewUser($data, $rawPassword);
+            $this->assignRolesAndPermissions($user, $data['role_id']);
+            $this->assignTopicsOfSpecialization($user, $data['topic_ids'] ?? []);
             return $user;
         });
+
+        app(ClientRepository::class)->sendEmailWithPassword($user, $user->password);
+        return $user;
     }
 
-    protected function createNewUser(array $data)
+    protected function createNewUser(array $data, string $rawPassword)
     {
-        $role = Role::getRoleById($data['role_id']);
-        $reporter = $role && $role->name === 'reporter';
-
         return $this->query()->create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => $data['password'],
+            'password' => $rawPassword,
             'phone' => $data['phone'] ?? null,
             'department' => $data['department'] ?? null,
-            'specializations' => $data['specializations'] ?? [],
             'favorite_count' => 0,
             'is_active' => $data['is_active'] ?? true,
             'is_super_admin' => $data['is_super_admin'] ?? false,
-            'is_reporter' => $reporter,
             'email_verified_at' => now(),
-            'uid' => Str::uuid()
         ]);
     }
 
-    protected function assignRolesAndPermissions(User $user, int $roleId): bool
+    protected function assignTopicsOfSpecialization(User $user, array $topicIds): void
     {
-        $role = Role::getRoleById($roleId);
-        if (!$role) {
-            throw new \InvalidArgumentException("Role with ID {$roleId} not found");
+        if (array('all', $topicIds)) {
+            $topicIds = Topic::pluck('id')->toArray();
         }
-        $user->roles()->sync([$role->id]);
-        if ($role->permissions->isNotEmpty()) {
-            $user->permissions()->sync($role->permissions->pluck('id')->toArray());
-        }
+        $user->topics()->sync($topicIds);
+    }
+
+    protected function assignRolesAndPermissions(User $user, array $roleIds): bool
+    {
+        $user->roles()->sync($roleIds);
+        $permissionIds = Role::whereIn('id', $roleIds)->with('permissions')->get()
+            ->pluck('permissions.*.id')
+            ->flatten()
+            ->unique()->filter()->toArray();
+        $user->permissions()->sync($permissionIds);
         return true;
     }
 
     public function update($userId, array $data)
     {
         return DB::transaction(function() use($userId, $data) {
-            $user = is_numeric($userId)
-                ? User::getUserIdById($userId)
-                : User::getUserIdByUid($userId);
+            $user = is_numeric($userId) ? User::getUserIdById($userId) : User::getUserIdByUid($userId);
 
             if (!$user) {
                 return false;
@@ -71,7 +73,6 @@ class UserRepository extends BaseRepository
 
             $user->name = $data['name'] ?? $user->name;
             $user->department = $data['department'] ?? $user->department;
-            $user->specializations = $data['specializations'] ?? $user->specializations;
             $user->is_active = ($data['is_active'] ?? $user->is_active) ? 1 : 0;
 
             if (!empty($data['email']) && $data['email'] !== $user->email) {
@@ -99,6 +100,10 @@ class UserRepository extends BaseRepository
                 $user->permissions()->sync($permissionIds);
             }
 
+            if (!empty($data['topic_ids'])) {
+                $this->assignTopicsOfSpecialization($user, $data['topic_ids']);
+            }
+
             $user->save();
             return $user->fresh();
         });
@@ -107,9 +112,7 @@ class UserRepository extends BaseRepository
     public function delete($userId)
     {
         return DB::transaction(function () use ($userId) {
-            $user = is_numeric($userId)
-                ? User::getUserIdById($userId)
-                : User::getUserIdByUid($userId);
+            $user = is_numeric($userId) ? User::getUserIdById($userId) : User::getUserIdByUid($userId);
 
             if (!$user) {
                 return false;
@@ -129,16 +132,15 @@ class UserRepository extends BaseRepository
 
     public function getActiveManagers()
     {
-        return $this->query()->where('is_active', true)->where('is_super_admin', true)->orderBy('created_at')->get();
+        return $this->query()->where('is_active', true)->orderBy('created_at')->get();
     }
 
-    public function getManagersBySpecialization(array $specializations)
+    public function getStaffBySpecialization(array $specializationTopics)
     {
         return $this->query()->where('is_active', true)
-            ->whereHas('roles', function($q) {
-                $q->where('name', 'administration');
-            })
-            ->whereJsonContains('specializations', $specializations)->orderBy('favorite_count', 'desc')->get();
+                ->whereHas('topics', function($q) use ($specializationTopics) {
+                    $q->whereIn('id', $specializationTopics);
+                })->orderBy('favorite_count', 'desc')->get();
     }
 
     public function getAll()
@@ -151,14 +153,14 @@ class UserRepository extends BaseRepository
         return $this->query()->where('uid', $userUid)->first();
     }
 
-    public function incrementFavoriteCount(User $manager): User
+    public function incrementFavoriteCount(User $user): User
     {
-        $manager->increment('favorite_count');
-        return $manager->fresh();
+        $user->increment('favorite_count');
+        return $user->fresh();
     }
 
     public function getAdminUsers()
     {
-        return $this->query()->where('admin_id', auth()->id())->orderBy('created_at', 'desc')->get();
+        return $this->query()->where('admin_id', user_id())->orderBy('created_at', 'desc')->get();
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Access\Permission;
 use App\Models\Access\Role;
 use App\Models\System\CodeValue;
 use App\Models\Ticket\Ticket;
+use App\Models\Topic;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -76,5 +77,10 @@ trait UserRelationship
     public function logs()
     {
         return $this->hasMany('user_logs','user_id','id');
+    }
+
+    public function topics()
+    {
+        return $this->belongsToMany(Topic::class)->withTimestamps();
     }
 }

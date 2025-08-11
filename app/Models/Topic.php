@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Access\User;
 use App\Models\Ticket\Ticket;
 use App\Models\Topic\TopicTrait;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -26,6 +27,11 @@ class Topic extends BaseModel
     public function subtopics()
     {
         return $this->hasMany(SubTopic::class);
+    }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
     }
 
     protected $appends = ['can_be_deleted'];

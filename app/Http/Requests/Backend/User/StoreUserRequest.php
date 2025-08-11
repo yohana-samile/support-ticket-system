@@ -16,12 +16,12 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
             'phone' => 'nullable|string|max:20',
             'department' => 'nullable|string|max:100',
-            'specializations' => 'nullable|array',
-            'specializations.*' => 'string|max:100',
-            'role_id' => 'required|exists:roles,id',
+            'topic_ids' => 'nullable|array',
+            'topic_ids.*' => 'exists:topics,id',
+            'role_id' => 'required|array',
+            'role_id.*' => 'exists:roles,id',
             'is_active' => 'nullable|boolean',
             'is_super_admin' => 'nullable|boolean',
         ];

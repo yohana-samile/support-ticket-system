@@ -19,12 +19,12 @@
 
             @if($errors->any())
                 @foreach($errors->all() as $error)
-                toastr.error('{{ $error }}', 'Validation Error', {
-                    closeButton: true,
-                    progressBar: true,
-                    timeOut: 10000
-                });
-            @endforeach
+                    toastr.error('{{ $error }}', 'Validation Error', {
+                        closeButton: true,
+                        progressBar: true,
+                        timeOut: 10000
+                    });
+                @endforeach
             @endif
         });
     });

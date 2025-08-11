@@ -19,7 +19,6 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->boolean('is_active')->default(true);
             $table->string('department')->nullable();
-            $table->string('specializations')->nullable();
             $table->boolean('is_super_admin')->default(false);
 
             $table->string('password');

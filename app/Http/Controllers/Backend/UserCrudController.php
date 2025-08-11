@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Backend\UpdateUserRequest as updateRequest;
 use App\Http\Requests\Backend\User\StoreUserRequest as storeRequest;
 use App\Models\Access\User;
+use App\Repositories\Access\RoleRepository;
 use App\Repositories\Backend\UserRepository;
+use App\Traits\PhoneNumberValidation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
@@ -14,11 +16,14 @@ use Yajra\DataTables\DataTables;
 
 class UserCrudController extends Controller
 {
+    use PhoneNumberValidation;
     protected $userRepo;
+    protected $roleRepo;
 
     public function __construct()
     {
         $this->userRepo = app(UserRepository::class);
+        $this->roleRepo = app(RoleRepository::class);
     }
 
     public function index()
@@ -28,7 +33,8 @@ class UserCrudController extends Controller
 
     public function create()
     {
-        return view('pages.backend.user.create');
+        $roles = $this->roleRepo->getActiveRoles();
+        return view('pages.backend.user.staff.create', compact('roles'));
     }
 
     public function activeManagers(): JsonResponse
@@ -41,12 +47,26 @@ class UserCrudController extends Controller
 
     public function store(storeRequest $request): JsonResponse
     {
-        $user = $this->userRepo->store($request->validated());
+        $input = $request->validated();
+        try {
+            $input['phone'] = $this->formatPhoneNumber($input['phone']);
+            $user = $this->userRepo->store($input);
 
-        return response()->json([
-            'message' => 'User created successfully',
-            'data' => $user
-        ], Response::HTTP_CREATED);
+            return response()->json([
+                'message' => 'User created successfully',
+                'data' => $user
+            ], 201);
+        } catch (\Throwable $e) {
+            \Log::error('User creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'message' => 'An error occurred while creating the user.',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function show(string $uid): JsonResponse
