@@ -59,7 +59,12 @@ class CodeValuesTableSeeder extends Seeder
                 ['reference' => 'OPERATOR03', 'name' => 'Yas', 'is_system_defined' => 1],
                 ['reference' => 'OPERATOR04', 'name' => 'Halotel', 'is_system_defined' => 1],
                 ['reference' => 'OPERATOR05', 'name' => 'All', 'is_system_defined' => 1],
-            ]
+            ],
+            'Sticker Status' => [
+                ['reference' => 'STICKER_STATUS01', 'name' => 'active', 'is_system_defined' => 1],
+                ['reference' => 'STICKER_STATUS02', 'name' => 'done', 'is_system_defined' => 1],
+                ['reference' => 'STICKER_STATUS03', 'name' => 'archived', 'is_system_defined' => 1],
+            ],
         ];
 
         foreach ($allCodeValues as $codeName => $values) {

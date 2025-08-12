@@ -12,7 +12,6 @@ use App\Repositories\Backend\UserRepository;
 use App\Traits\PhoneNumberValidation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
@@ -107,11 +106,13 @@ class UserCrudController extends Controller
         try {
             $this->userRepo->delete($user);
             return response()->json([
-                'message' => 'User deleted successfully'
+                'success' => true,
+                'message' => __('messages.user_deleted_successfully')
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'message' => 'User could not be deleted',
+                'success' => false,
+                'message' => __('messages.user_could_not_be_deleted'),
                 'error'   => $e->getMessage(),
             ], 500);
         }
@@ -185,7 +186,8 @@ class UserCrudController extends Controller
         $user = $this->userRepo->incrementFavoriteCount($manager);
 
         return response()->json([
-            'user' => 'Favorite count incremented',
+            'success' => true,
+            'user' => __('messages.favorite_count_incremented'),
             'data' => $user
         ]);
     }

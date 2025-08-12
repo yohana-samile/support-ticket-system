@@ -1,5 +1,10 @@
 @php
     $saasApps = App\Models\SaasApp::all();
+    $users = App\Models\Access\User::all();
+    $unreadCount = user()->unreadNotifications->count();
+    $upcomingReminders = user()->upcomingReminders()->limit(3)->get();
+    $remindersCount = $upcomingReminders->count();
+    $totalAlerts = $unreadCount + $remindersCount;
 @endphp
     <!DOCTYPE html>
 <html lang="en">
@@ -202,24 +207,54 @@
                     <li class="nav-item dropdown no-arrow mx-1">
                         <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-bell fa-fw"></i>
-                            <span class="badge badge-danger badge-counter">3+</span>
+                            @if($totalAlerts > 0)
+                                <span class="badge badge-danger badge-counter">
+                                    {{ $totalAlerts > 9 ? '9+' : $totalAlerts }}
+                                </span>
+                            @endif
                         </a>
                         <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="alertsDropdown">
                             <h6 class="dropdown-header">
                                 Alerts Center
                             </h6>
-                            <a class="dropdown-item d-flex align-items-center" href="#">
-                                <div class="mr-3">
-                                    <div class="icon-circle bg-primary">
-                                        <i class="fas fa-ticket-alt text-white"></i>
+
+                            {{-- Unread Notifications --}}
+                            @forelse(user()->unreadNotifications->take(3) as $notification)
+                                <a class="dropdown-item d-flex align-items-center" href="{{ route('backend.notifications.show', $notification->id) }}">
+                                    <div class="mr-3">
+                                        <i class="fas fa-dot-circle text-primary"></i>
                                     </div>
+                                    <div>
+                                        <div class="small text-gray-500">{{ $notification->created_at->diffForHumans() }}</div>
+                                        <span class="font-weight-bold">{{ $notification->data['message'] ?? 'New notification' }}</span>
+                                    </div>
+                                </a>
+                            @empty
+                                <div class="dropdown-item text-center small text-gray-500">
+                                    No new notifications
                                 </div>
-                                <div>
-                                    <div class="small text-gray-500">Today</div>
-                                    <span class="font-weight-bold">3 new tickets have been created</span>
-                                </div>
+                            @endforelse
+
+                            {{-- Upcoming Sticker Reminders --}}
+                            @foreach($upcomingReminders as $reminder)
+                                <a class="dropdown-item d-flex align-items-center" href="{{ route('backend.stickers.show', $notification->id) }}">
+                                    <div class="mr-3">
+                                        <div class="icon-circle bg-warning">
+                                            <i class="fas fa-sticky-note text-white"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="small text-gray-500">
+                                            {{ \Carbon\Carbon::parse($reminder->remind_at)->format('d M Y h:i A') }}
+                                        </div>
+                                        <span class="font-weight-bold">{{ $reminder->note }}</span>
+                                    </div>
+                                </a>
+                            @endforeach
+
+                            <a class="dropdown-item text-center small text-gray-500" href="{{ route('backend.notifications.index') }}">
+                                Show All Alerts
                             </a>
-                            <a class="dropdown-item text-center small text-gray-500" href="#">Show All Alerts</a>
                         </div>
                     </li>
 
@@ -237,16 +272,20 @@
                         <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
                             <a class="dropdown-item" href="{{ route('backend.profile.show') }}">
                                 <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                Profile
+                                {{__('label.profile')}}
+                            </a>
+                            <a class="dropdown-item" href="{{ route('backend.stickers.index') }}">
+                                <i class="fas fa-book-open fa-sm fa-fw mr-2 text-gray-400"></i>
+                                {{__('label.yellow_sticker')}}
                             </a>
                             <a class="dropdown-item" href="#">
                                 <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                Settings
+                                {{__('label.settings')}}
                             </a>
                             <div class="dropdown-divider"></div>
                             <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                                 <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                Logout
+                                {{__('label.logout')}}
                             </a>
                         </div>
                     </li>
@@ -288,6 +327,7 @@
 <!-- 5. DataTables and other plugins -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
 
 <!-- Scroll to top button -->
 <a class="scroll-to-top rounded" href="#page-top">

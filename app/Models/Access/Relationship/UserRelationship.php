@@ -4,6 +4,7 @@ namespace App\Models\Access\Relationship;
 
 use App\Models\Access\Permission;
 use App\Models\Access\Role;
+use App\Models\Sticker;
 use App\Models\System\CodeValue;
 use App\Models\Ticket\Ticket;
 use App\Models\Topic;
@@ -82,5 +83,15 @@ trait UserRelationship
     public function topics()
     {
         return $this->belongsToMany(Topic::class)->withTimestamps();
+    }
+
+    public function createdStickers()
+    {
+        return $this->hasMany(Sticker::class, 'user_id');
+    }
+
+    public function receivedStickers()
+    {
+        return $this->belongsToMany(Sticker::class, 'sticker_user');
     }
 }

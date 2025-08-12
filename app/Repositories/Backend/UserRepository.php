@@ -141,6 +141,11 @@ class UserRepository extends BaseRepository
         return $this->query()->where('is_active', true)->orderBy('created_at')->get();
     }
 
+    public function getActiveForSticker()
+    {
+        return $this->query()->where('is_active', true)->where('id', '!=', user_id())->orderBy('created_at')->get();
+    }
+
     public function getStaffBySpecialization(array $specializationTopics)
     {
         return $this->query()->where('is_active', true)

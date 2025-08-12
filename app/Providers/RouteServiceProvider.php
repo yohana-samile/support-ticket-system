@@ -6,6 +6,7 @@ use App\Models\Access\Client;
 use App\Models\Access\User;
 use App\Models\SaasApp;
 use App\Models\SenderId;
+use App\Models\Sticker;
 use App\Models\SubTopic;
 use App\Models\Topic;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -50,6 +51,9 @@ class RouteServiceProvider extends ServiceProvider
         });
         Route::bind('user', function ($value) {
             return User::where('uid', $value)->firstOrFail();
+        });
+        Route::bind('sticker', function ($value) {
+            return Sticker::where('uid', $value)->firstOrFail();
         });
 
         RateLimiter::for('api', function (Request $request) {

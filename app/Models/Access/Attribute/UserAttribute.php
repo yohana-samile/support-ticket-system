@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models\Access\Attribute;
+use App\Models\Sticker;
 use App\Repositories\Access\UserRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -80,5 +81,16 @@ trait UserAttribute
     public static function getUserIdByUid($uid)
     {
         return self::where('uid', $uid)->first();
+    }
+
+    public function upcomingReminders()
+    {
+        return Sticker::query()->where(function ($query) {
+            $query->where('user_id', $this->id) //own stickers
+                ->orWhereHas('recipients', function ($subQuery) {
+                    $subQuery->where('user_id', $this->id); //sent to me
+                })->orWhere('is_for_all', true); // public stickers
+        })
+            ->where('remind_at', '>=', now())->orderBy('remind_at', 'asc');
     }
 }

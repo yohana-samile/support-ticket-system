@@ -91,6 +91,7 @@ return [
     "tickets_by_mno" => "List tickets by Mnos",
     "tile" => "Title",
     "view" => "View",
+    "delete" => "Delete",
     "channel" => "Channel",
     "by_payment_channel" => "By payment channel",
     "tickets_by_payment_channel" => "List tickets by channel",
@@ -126,7 +127,19 @@ return [
     "two_factor_secret" => "Two factor secret",
     "change_password_instead" => "Change Password Instead",
     "resend_password" => "Resend Password",
-    "edit_staff" => "Edit Staff"
+    "edit_staff" => "Edit Staff",
+    "yellow_sticker" => "Yellow Sticker",
+    "profile" => "Profile",
+    "settings" => "Settings",
+    "logout" => "Logout",
+    "add_sender" => "Add Sender",
+    'add_sticker' => 'Add Sticker',
+    'note' => 'Note',
+    'sticker_color' => 'Sticker Color',
+    'is_private' => 'Is Private?',
+    'private' => 'Private',
+    'public' => 'Public'
+
 
 
 

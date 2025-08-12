@@ -12,4 +12,9 @@ return [
     'user_enabled_successfully'  => 'User enabled successfully',
     'user_disabled_successfully' => 'User disabled successfully',
     'cannot_disable_self'        => 'You cannot disable your own account.',
+    'favorite_count_incremented' => 'Favorite count incremented.',
+    'user_deleted_successfully' => 'User deleted successfully.',
+    'user_could_not_be_deleted' => 'User could not be deleted.',
+    'sticker_created_successfully' => 'Sticker created successfully',
+
 ];

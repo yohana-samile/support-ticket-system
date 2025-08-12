@@ -17,4 +17,6 @@ return [
     'subtopic_name_max' => 'The subtopic name may not be greater than 255 characters.',
     'please_select_topic' => 'Please select a topic.',
     'invalid_topic_selected' => 'The selected topic is invalid.',
+    'the_selected_target_user_is_invalid' => 'The selected target user is invalid.',
+
 ];
