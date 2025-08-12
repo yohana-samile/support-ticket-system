@@ -306,7 +306,6 @@ if (!function_exists('getManagerBadge')) {
     }
 }
 
-
 if (!function_exists('getStatusBadgeColor')) {
     function getStatusBadgeColor($status)
     {

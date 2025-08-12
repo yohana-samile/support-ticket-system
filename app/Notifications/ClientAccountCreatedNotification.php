@@ -21,8 +21,8 @@ class ClientAccountCreatedNotification extends Notification
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Your Client Account Has Been Created')
-            ->line('Your client account has been created.')
+            ->subject('Your Account Has Been Created')
+            ->line('Your account has been created.')
             ->line('Email: ' . $this->data['email'])
             ->line('Temporary Password: ' . $this->data['password'])
             ->line('Please change your password after first login.');

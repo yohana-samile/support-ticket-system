@@ -8,6 +8,7 @@ use App\Models\Access\User;
 use App\Models\Topic;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class UserRepository extends BaseRepository
 {
@@ -23,7 +24,6 @@ class UserRepository extends BaseRepository
             $this->assignTopicsOfSpecialization($user, $data['topic_ids'] ?? []);
             return $user;
         });
-
         app(ClientRepository::class)->sendEmailWithPassword($user, $user->password);
         return $user;
     }
@@ -62,15 +62,9 @@ class UserRepository extends BaseRepository
         return true;
     }
 
-    public function update($userId, array $data)
+    public function update($user, array $data)
     {
-        return DB::transaction(function() use($userId, $data) {
-            $user = is_numeric($userId) ? User::getUserIdById($userId) : User::getUserIdByUid($userId);
-
-            if (!$user) {
-                return false;
-            }
-
+        return DB::transaction(function() use($user, $data) {
             $user->name = $data['name'] ?? $user->name;
             $user->department = $data['department'] ?? $user->department;
             $user->is_active = ($data['is_active'] ?? $user->is_active) ? 1 : 0;
@@ -109,17 +103,10 @@ class UserRepository extends BaseRepository
         });
     }
 
-    public function delete($userId)
+    public function delete($user)
     {
-        return DB::transaction(function () use ($userId) {
-            $user = is_numeric($userId) ? User::getUserIdById($userId) : User::getUserIdByUid($userId);
-
-            if (!$user) {
-                return false;
-            }
-
+        return DB::transaction(function () use ($user) {
             $this->renamingSoftDelete($user, 'email');
-
             activity()
                 ->performedOn($user)
                 ->causedBy(auth()->user())
@@ -128,6 +115,25 @@ class UserRepository extends BaseRepository
 
             return $user->delete();
         });
+    }
+
+    public function updatePassword($input){
+        $user = User::getUserIdByEmail($input['email']);
+        $this->passwordUpdateUtil($user, $input['password']);
+        return $user;
+    }
+
+    public function resendPassword($input){
+        $user = User::getUserIdByEmail($input['email']);
+        $newPassword = app(ClientRepository::class)->generatePassword();
+        $this->passwordUpdateUtil($user, $newPassword);
+        return $user;
+    }
+
+    protected function passwordUpdateUtil($user, $password)
+    {
+        $user->update(['password' => $password]);
+        app(ClientRepository::class)->sendEmailWithPassword($user, $password);
     }
 
     public function getActiveManagers()

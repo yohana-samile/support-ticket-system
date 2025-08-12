@@ -112,7 +112,22 @@ return [
     "image_preview" => "Image Preview",
     "close" => "close",
     "skip" => "Skip",
-    "confirm" => "Confirm"
+    "confirm" => "Confirm",
+    "is_password_updated" => "Is Password Updated",
+    "sidebar_summary" => "Sidebar Summary",
+    "email_verified_at" => "Email Verified At",
+    "department" => "Department",
+    "general_info" => "General Info",
+    "favorite_count" => "Favorite Count",
+    "topic_of_specialization" => "Topic Of Specialization",
+    "two_factor_recovery_codes" => "Two factor recovery codes",
+    "two_factor_confirmed_at" => "Two factor confirmed at",
+    "roles" => "Roles",
+    "two_factor_secret" => "Two factor secret",
+    "change_password_instead" => "Change Password Instead",
+    "resend_password" => "Resend Password",
+    "edit_staff" => "Edit Staff"
+
 
 
 

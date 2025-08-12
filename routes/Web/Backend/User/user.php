@@ -12,10 +12,16 @@ Route::group([
 
         Route::get('/create', 'UserCrudController@create')->name('create');
         Route::post('/', 'UserCrudController@store')->name('store');
-        Route::get('/{user}', 'UserCrudController@show')->name('show');
+
+        Route::get('/show/{user}', 'UserCrudController@show')->name('show');
         Route::get('/edit/{user}', 'UserCrudController@edit')->name('edit');
         Route::put('/{user}', 'UserCrudController@update')->name('update');
         Route::delete('/{user}', 'UserCrudController@destroy')->name('destroy');
+
+        Route::post('resend_resend_temp_password', 'UserCrudController@resendPassowrd')->name('resend_resend_temp_password');
+        Route::post('change_password_instead', 'UserCrudController@changePasswordInstead')->name('change_password_instead');
+        Route::put('update_topics/{user}', 'UserCrudController@updateTopics')->name('update_topics');
+        Route::post('/toggle_status', 'UserCrudController@toggleStatus')->name('toggle_status');
 
         Route::get('/user_by_specialization/{specialization}', 'UserCrudController@getBySpecialization')->name('user_by_specialization');
         Route::post('/{manager}/increment_favorite', 'UserCrudController@incrementFavorite')->name('increment_favorite');
