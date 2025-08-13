@@ -16,5 +16,6 @@ return [
     'user_deleted_successfully' => 'User deleted successfully.',
     'user_could_not_be_deleted' => 'User could not be deleted.',
     'sticker_created_successfully' => 'Sticker created successfully',
+    'settings_updated_success' => 'Settings updated successfully!',
 
 ];

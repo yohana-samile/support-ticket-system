@@ -4,6 +4,7 @@ namespace App\Models\Access\Relationship;
 
 use App\Models\Access\Permission;
 use App\Models\Access\Role;
+use App\Models\Setting;
 use App\Models\Sticker;
 use App\Models\System\CodeValue;
 use App\Models\Ticket\Ticket;
@@ -88,5 +89,10 @@ trait UserRelationship
     public function receivedStickers()
     {
         return $this->belongsToMany(Sticker::class, 'sticker_user');
+    }
+
+    public function setting()
+    {
+        return $this->hasOne(Setting::class, 'user_id');
     }
 }

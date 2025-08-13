@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\NotificationConstants;
 use App\Mail\StickerReminderMail;
 use App\Models\Sticker;
 use App\Traits\SendSmsTrait;
@@ -18,35 +19,39 @@ class SendStickerReminders implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SendSmsTrait;
 
-    public function __construct()
-    {
-        //
-    }
-
     /**
      * Execute the job.
      */
     public function handle()
     {
-        $now = Carbon::now()->format('Y-m-d H:i');
+        $now = Carbon::now()->format('YYYY-MM-DD HH24:MI');
 
         $stickers = Sticker::query()
             ->whereNotNull('remind_at')
             ->whereRaw("TO_CHAR(remind_at, 'YYYY-MM-DD HH24:MI') = ?", [$now])->get();
         foreach ($stickers as $sticker) {
             try {
+                $user = $sticker->creator;
+                if (!$user) continue;
+
+                $settings = $user->setting;
+                $channel = $settings?->notification_channel ?? NotificationConstants::CHANNEL_BOTH;
                 /**
-                 * send email
+                 * send email if allowed
                  */
-                if ($sticker->creator && $sticker->creator->email) {
-                    Mail::to($sticker->creator->email)->send(new StickerReminderMail($sticker));
+                if (in_array($channel, [NotificationConstants::CHANNEL_EMAIL,NotificationConstants::CHANNEL_BOTH])) {
+                    if ($user->email) {
+                        Mail::to($user->email)->send(new StickerReminderMail($sticker));
+                    }
                 }
 
                 /**
-                 * send sms
+                 * send sms if allowed
                  */
-                if ($sticker->creator && $sticker->creator->phone) {
-                    $this->stickerReminderMail($sticker->creator->phone, $sticker);
+                if (in_array($channel, [NotificationConstants::CHANNEL_SMS,NotificationConstants::CHANNEL_BOTH])) {
+                    if ($user->phone) {
+                        $this->stickerReminderMail($sticker->creator->phone, $sticker);
+                    }
                 }
 
                 Log::info("Reminder sent for sticker Id: {$sticker->id}");

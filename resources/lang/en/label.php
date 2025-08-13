@@ -139,9 +139,23 @@ return [
     'is_private' => 'Is Private?',
     'private' => 'Private',
     'public' => 'Public',
-    'sticker' => 'Sticker'
-
-
+    'sticker' => 'Sticker',
+    'sticker_settings' => 'Sticker Settings',
+    'switch_dark_mode' => 'Switch Dark Mode',
+    'setting' => 'Settings',
+    'toggle_sticker_button' => 'Toggle the floating sticker creation button',
+    'sticker_notification_preference' => 'How would you like to receive sticker notifications?',
+    'notification_channel' => 'Notification Channel',
+    'notification_settings' => 'Notification Settings',
+    'show_quick_sticker_button' => 'Show Quick Sticker Button',
+    'switch_light_dark_mode' => 'Switch between light and dark mode',
+    'both_email_sms' => 'Both Email and SMS',
+    'no_notifications' => 'No Notifications',
+    'sms' => 'SmS',
+    'notification_channel_email' => 'Email',
+    'notification_channel_sms' => 'SMS',
+    'notification_channel_both' => 'Both Email and SMS',
+    'notification_channel_none' => 'No Notifications',
 
 
 

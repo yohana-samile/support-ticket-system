@@ -1,6 +1,9 @@
 @php
     $saasApps = App\Models\SaasApp::all();
     $users = App\Models\Access\User::all();
+    $settings = Auth::check()
+        ? \App\Models\Setting::firstOrCreate(['user_id' => Auth::id()])
+        : null;
     $unreadCount = user()->unreadNotifications->count();
     $upcomingReminders = user()->upcomingReminders()->limit(3)->get();
     $remindersCount = $upcomingReminders->count();
@@ -276,7 +279,7 @@
                                 <i class="fas fa-book-open fa-sm fa-fw mr-2 text-gray-400"></i>
                                 {{__('label.yellow_sticker')}}
                             </a>
-                            <a class="dropdown-item" href="#">
+                            <a class="dropdown-item" href="{{ route('backend.setting.index') }}">
                                 <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
                                 {{__('label.settings')}}
                             </a>
