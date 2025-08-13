@@ -239,15 +239,13 @@
                             @foreach($upcomingReminders as $reminder)
                                 <a class="dropdown-item d-flex align-items-center" href="{{ route('backend.stickers.show', $notification->id) }}">
                                     <div class="mr-3">
-                                        <div class="icon-circle bg-warning">
-                                            <i class="fas fa-sticky-note text-white"></i>
-                                        </div>
+                                        <i class="fas fa-sticky-note text-warning"></i>
                                     </div>
                                     <div>
                                         <div class="small text-gray-500">
                                             {{ \Carbon\Carbon::parse($reminder->remind_at)->format('d M Y h:i A') }}
                                         </div>
-                                        <span class="font-weight-bold">{{ $reminder->note }}</span>
+                                        <span class="font-weight-bold">{!! Purifier::clean($reminder->note) !!}</span>
                                     </div>
                                 </a>
                             @endforeach
@@ -335,6 +333,7 @@
 </a>
 
 @include('layouts.partials.modal')
+@include('layouts.partials.customizer')
 
 @stack('plugins')
 @stack('scripts')

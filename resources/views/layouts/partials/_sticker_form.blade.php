@@ -32,7 +32,7 @@
                 id="stickerNote"
                 name="note"
                 rows="3"
-                placeholder="Write your note here...">{{ old('note', $sticker->note ?? '') }}</textarea>
+                placeholder="Write your note here...">{{ old('note', isset($sticker) ? Purifier::clean($sticker->note) : '') }}</textarea>
         </div>
 
         <!-- Reminder Date & Time -->
@@ -90,10 +90,12 @@
         </div>
     </div>
 
-    <button type="submit" class="btn btn-primary text-white">
-        <i class="fas fa-save"></i> {{__('label.submit')}}
-    </button>
-    <a href="{{ route('backend.stickers.index') }}" class="btn btn-secondary">
-        <i class="fas fa-times"></i> {{__('label.cancel')}}
-    </a>
+    <div class="modal-footer">
+        <a href="{{ route('backend.stickers.index') }}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> {{__('label.cancel')}}
+        </a>
+        <button type="submit" class="btn btn-primary text-white">
+            <i class="fas fa-save"></i> {{__('label.submit')}}
+        </button>
+    </div>
 </form>

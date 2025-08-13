@@ -21,14 +21,7 @@ class StickerRepository extends  BaseRepository {
 
             $sticker = $this->query()->create($data);
             if ($data['is_private'] === false) {
-                if ($targetUserId === 'all') {
-                    // Attach all users except the owner
-                    $userIds = User::query()->where('id', '!=', user_id())->pluck('id');
-                    $sticker->recipients()->syncWithoutDetaching($userIds);
-                } elseif ($targetUserId) {
-                    // Attach only the target user
-                    $sticker->recipients()->syncWithoutDetaching([$targetUserId]);
-                }
+                $this->syncRecipients($sticker, $targetUserId);
             }
             return $sticker;
         });
@@ -39,19 +32,15 @@ class StickerRepository extends  BaseRepository {
         return DB::transaction(function () use ($sticker, $data) {
             $targetUserId = $data['target_user_id'] ?? null;
             unset($data['target_user_id']);
+
             $sticker->update($data);
 
             if ($data['is_private'] === false) {
-                if ($targetUserId === 'all') {
-                    $userIds = User::query()->where('id', '!=', user_id())->pluck('id');
-                    $sticker->recipients()->syncWithoutDetaching($userIds);
-                } else {
-                    $sticker->recipients()->syncWithoutDetaching([$targetUserId]);
-                }
+                $this->syncRecipients($sticker, $targetUserId);
             } else {
-                // If it is private, detach all recipients
                 $sticker->recipients()->detach();
             }
+
             return $sticker;
         });
     }
@@ -66,5 +55,15 @@ class StickerRepository extends  BaseRepository {
                 ->log('deleted sticker');
             return $sticker->delete();
         });
+    }
+
+    protected function syncRecipients(Sticker $sticker, $targetUserId)
+    {
+        if ($targetUserId === 'all') {
+            $userIds = User::query()->where('id', '!=', user_id())->pluck('id');
+            $sticker->recipients()->syncWithoutDetaching($userIds);
+        } elseif ($targetUserId) {
+            $sticker->recipients()->syncWithoutDetaching([$targetUserId]);
+        }
     }
 }

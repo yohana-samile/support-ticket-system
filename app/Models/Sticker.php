@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Models;
-
 use App\Models\Access\User;
 
 class Sticker extends BaseModel

@@ -14,11 +14,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 trait UserRelationship
 {
-    /**
-     * Many-to-Many relations with Role.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
-     */
     public function roles() {
         return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id');
     }

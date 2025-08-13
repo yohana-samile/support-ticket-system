@@ -57,6 +57,11 @@ trait SendSmsTrait
         }
     }
 
+    public function stickerReminderMail($user, $sticker)
+    {
+        $this->sendSms($this->buildSmsPayload('REMINDER', $user->phone, "Reminder set for: " . $sticker->remind_at->format('M d, Y g:i A') . "\nNote: " . $sticker->note));
+    }
+
     private function buildSmsPayload($from, $to, $text, $reference = 'xaefcgt')
     {
         return [

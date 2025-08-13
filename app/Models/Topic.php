@@ -5,11 +5,10 @@ namespace App\Models;
 use App\Models\Access\User;
 use App\Models\Ticket\Ticket;
 use App\Models\Topic\TopicTrait;
-use Spatie\Activitylog\Traits\LogsActivity;
 
 class Topic extends BaseModel
 {
-    use TopicTrait, LogsActivity;
+    use TopicTrait;
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -35,9 +34,4 @@ class Topic extends BaseModel
     }
 
     protected $appends = ['can_be_deleted'];
-
-    public function activities()
-    {
-        return $this->morphMany(\Spatie\Activitylog\Models\Activity::class, 'subject')->latest();
-    }
 }

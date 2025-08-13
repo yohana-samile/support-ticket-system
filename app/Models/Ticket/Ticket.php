@@ -2,11 +2,10 @@
 namespace App\Models\Ticket;
 
 use App\Models\BaseModel;
-use Spatie\Activitylog\Traits\LogsActivity;
 
 class Ticket extends BaseModel
 {
-    use LogsActivity, TicketAttribute, TicketRelationship;
+    use TicketAttribute, TicketRelationship;
     protected $casts = [
         'feedback_submitted_at' => 'datetime',
         'due_date' => 'datetime',
@@ -19,9 +18,4 @@ class Ticket extends BaseModel
     ];
 
     protected $appends = ['can_be_deleted'];
-
-    public function activities()
-    {
-        return $this->morphMany(\Spatie\Activitylog\Models\Activity::class, 'subject')->latest();
-    }
 }

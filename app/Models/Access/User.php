@@ -9,9 +9,11 @@
     use Illuminate\Foundation\Auth\User as Authenticatable;
     use Illuminate\Notifications\Notifiable;
     use Laravel\Sanctum\HasApiTokens;
+    use Spatie\Activitylog\LogOptions;
+    use Spatie\Activitylog\Traits\LogsActivity;
 
     class User extends Authenticatable implements MustVerifyEmail {
-        use HasApiTokens, HasFactory, Notifiable, SoftDeletes, UserRelationship, UserAttribute, UserAccess, HasProfilePhoto;
+        use HasApiTokens, HasFactory, Notifiable, SoftDeletes, UserRelationship, UserAttribute, UserAccess, HasProfilePhoto, LogsActivity;
         protected $guarded = ['id'];
 
         protected static function booted()
@@ -27,11 +29,6 @@
             'two_factor_secret',
         ];
 
-        /**
-         * The accessors to append to the model's array form.
-         *
-         * @var array<int, string>
-         */
         protected $appends = [
             'profile_photo_url',
         ];
@@ -43,6 +40,19 @@
                 'password' => 'hashed',
                 'is_active' => 'boolean',
             ];
+        }
+
+        public function activities()
+        {
+            return $this->morphMany(\Spatie\Activitylog\Models\Activity::class, 'subject')->latest();
+        }
+
+        public function getActivitylogOptions(): LogOptions
+        {
+            return LogOptions::defaults()
+                ->logOnly(['*'])  // Log all attributes
+                ->logOnlyDirty()  // Only log changed attributes
+                ->dontSubmitEmptyLogs();
         }
     }
 

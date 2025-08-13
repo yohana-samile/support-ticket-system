@@ -138,7 +138,8 @@ return [
     'sticker_color' => 'Sticker Color',
     'is_private' => 'Is Private?',
     'private' => 'Private',
-    'public' => 'Public'
+    'public' => 'Public',
+    'sticker' => 'Sticker'
 
 
 
