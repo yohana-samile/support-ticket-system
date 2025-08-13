@@ -46,7 +46,7 @@ class SendStickerReminders implements ShouldQueue
                     // send email
                     if (in_array($channel, [NotificationConstants::CHANNEL_EMAIL, NotificationConstants::CHANNEL_BOTH])) {
                         if ($user->email) {
-                            Mail::to($user->email)->send(new StickerReminderMail($sticker));
+                            Mail::to($user->email)->send(new StickerReminderMail($user->name, $sticker));
                         }
                     }
 

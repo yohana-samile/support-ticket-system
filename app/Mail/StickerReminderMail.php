@@ -11,8 +11,10 @@ class StickerReminderMail extends Mailable
 {
     use Queueable, SerializesModels;
     public $sticker;
-    public function __construct(Sticker $sticker)
+    public $user;
+    public function __construct($user, Sticker $sticker)
     {
+        $this->user = $user;
         $this->sticker = $sticker;
     }
 
