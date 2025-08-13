@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Access\Client;
+use App\Models\Access\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -24,15 +26,22 @@ class ForgotPasswordController extends Controller
     public function sendPasswordResetLink(Request $request)
     {
         $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email',
         ]);
 
-        $response = Password::sendResetLink($request->only('email'));
-        if ($response == Password::RESET_LINK_SENT) {
-            return back()->with('status', __('We have e-mailed your password reset link!'));
+        $email = $request->email;
+
+        if (User::where('email', $email)->exists()) {
+            $response = Password::broker('users')->sendResetLink(['email' => $email]);
+        } elseif (Client::where('email', $email)->exists()) {
+            $response = Password::broker('clients')->sendResetLink(['email' => $email]);
+        } else {
+            return back()->withErrors(['email' => __('We could not find an account with that email address.')]);
         }
 
-        return back()->withErrors(['email' => __('We could not find a user with that email address.')]);
+        return $response == Password::RESET_LINK_SENT
+            ? back()->with('status', __('We have e-mailed your password reset link!'))
+            : back()->withErrors(['email' => __('Unable to send reset link.')]);
     }
 
     public function reset(Request $request)
@@ -43,19 +52,26 @@ class ForgotPasswordController extends Controller
             'password' => 'required|confirmed|min:8',
         ]);
 
-        $response = Password::reset(
+        $email = $validated['email'];
+        $broker = User::where('email', $email)->exists() ? 'users' : 'clients';
+
+        $response = Password::broker($broker)->reset(
             $validated,
-            function ($user) use ($request) {
-                $user->forceFill([
-                    'password' =>  Hash::make($request->password),
+            function ($account) use ($request, $broker) {
+                $account->forceFill([
+                    'password' => Hash::make($request->password),
                 ])->save();
-                 Auth::login($user);
+
+                if (!$account->is_active) {
+                    throw new \Exception('Your account is blocked. Please contact the administrator.');
+                }
+
+                Auth::guard($broker === 'users' ? 'web' : 'client')->login($account);
             }
         );
 
-        if ($response == Password::PASSWORD_RESET) {
-            return redirect('/gbv/layouts/dashboard');
-        }
-        return back()->withErrors(['email' => __('This password reset token is invalid.')]);
+        return $response == Password::PASSWORD_RESET
+            ? redirect()->route('home')->with('status', __('Your password has been reset!'))
+            : back()->withErrors(['email' => __('This password reset token is invalid.')]);
     }
 }
