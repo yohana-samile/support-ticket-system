@@ -28,35 +28,40 @@ class SendStickerReminders implements ShouldQueue
 
         $stickers = Sticker::query()
             ->whereNotNull('remind_at')
-            ->whereRaw("TO_CHAR(remind_at, 'YYYY-MM-DD HH24:MI') = ?", [$now])->get();
+            ->whereRaw("TO_CHAR(remind_at, 'YYYY-MM-DD HH24:MI') = ?", [$now])
+            ->get();
+
         foreach ($stickers as $sticker) {
-            try {
-                $user = $sticker->creator;
-                if (!$user) continue;
+            if ($sticker->is_private) {
+                $recipients = collect([$sticker->creator])->filter(); // only creator
+            } else {
+                $recipients = $sticker->recipients->push($sticker->creator)->filter(); // recipients + creator
+            }
 
-                $settings = $user->setting;
-                $channel = $settings?->notification_channel ?? NotificationConstants::CHANNEL_BOTH;
-                /**
-                 * send email if allowed
-                 */
-                if (in_array($channel, [NotificationConstants::CHANNEL_EMAIL,NotificationConstants::CHANNEL_BOTH])) {
-                    if ($user->email) {
-                        Mail::to($user->email)->send(new StickerReminderMail($sticker));
+            foreach ($recipients as $user) {
+                try {
+                    $settings = $user->setting;
+                    $channel = $settings?->notification_channel ?? NotificationConstants::CHANNEL_BOTH;
+
+                    // send email
+                    if (in_array($channel, [NotificationConstants::CHANNEL_EMAIL, NotificationConstants::CHANNEL_BOTH])) {
+                        if ($user->email) {
+                            Mail::to($user->email)->send(new StickerReminderMail($sticker));
+                        }
                     }
-                }
 
-                /**
-                 * send sms if allowed
-                 */
-                if (in_array($channel, [NotificationConstants::CHANNEL_SMS,NotificationConstants::CHANNEL_BOTH])) {
-                    if ($user->phone) {
-                        $this->stickerReminderMail($sticker->creator->phone, $sticker);
+                    // send SMS
+                    if (in_array($channel, [NotificationConstants::CHANNEL_SMS, NotificationConstants::CHANNEL_BOTH])) {
+                        if ($user->phone) {
+                            $this->stickerReminderMail($user->phone, $sticker);
+                        }
                     }
-                }
 
-                Log::info("Reminder sent for sticker Id: {$sticker->id}");
-            } catch (\Throwable $e) {
-                Log::error("Failed to send reminder for sticker ID {$sticker->id}: " . $e->getMessage());
+                    Log::info("Reminder sent for sticker ID {$sticker->id} to user {$user->id} via {$channel}");
+
+                } catch (\Throwable $e) {
+                    Log::error("Failed to send reminder for sticker ID {$sticker->id} to user {$user->id}: " . $e->getMessage());
+                }
             }
         }
     }

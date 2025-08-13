@@ -4,7 +4,7 @@
         <button type="button" class="btn btn-sm btn-primary p-2 text-capitalize rounded-0 shadow-lg"
                 data-toggle="modal" data-target="#stickerModal"
                 style="writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 2px;">
-            <i class="fa fa-plus-circle mb-2"></i>
+            <i class="fa fa-plus-circle"></i>
             {{ __('label.sticker') }}
         </button>
     </div>

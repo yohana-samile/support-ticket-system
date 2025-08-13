@@ -240,7 +240,7 @@
 
                             {{-- Upcoming Sticker Reminders --}}
                             @foreach($upcomingReminders as $reminder)
-                                <a class="dropdown-item d-flex align-items-center" href="{{ route('backend.stickers.show', $notification->id) }}">
+                                <a class="dropdown-item d-flex align-items-center" href="{{ route('backend.stickers.show', $reminder->uid) }}">
                                     <div class="mr-3">
                                         <i class="fas fa-sticky-note text-warning"></i>
                                     </div>

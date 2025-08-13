@@ -1,6 +1,7 @@
 # remember
 ### storage link
 ### stmp config
+### job supervisor
 php artisan optimize:clear
 
 
