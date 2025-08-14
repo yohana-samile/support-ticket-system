@@ -5,29 +5,28 @@ Breadcrumbs::for('backend.user.index', function ($breadcrumbs) {
 });
 
 /*create admin */
-Breadcrumbs::for('backend.create.user',function($breadcrumbs){
+Breadcrumbs::for('backend.user.create',function($breadcrumbs){
     $breadcrumbs->parent('home');
-    $breadcrumbs->push(__('Users' ), route('backend.user'));
-    $breadcrumbs->push(__('Create user' ), route('backend.create.user'));
+    $breadcrumbs->push(__('users' ), route('backend.user.index'));
+    $breadcrumbs->push(__('create' ), route('backend.user.create'));
 });
 
-Breadcrumbs::for('backend.show.user',function($breadcrumbs, $user){
+Breadcrumbs::for('backend.user.show',function($breadcrumbs, $user){
     $breadcrumbs->parent('home');
-    $breadcrumbs->push(__('User' ), route('backend.user'));
-    $breadcrumbs->push(__('show' ), route('backend.show.user', $user));
+    $breadcrumbs->push(__('user' ), route('backend.user.index'));
+    $breadcrumbs->push(__('show' ), route('backend.user.show', $user));
 });
 
-Breadcrumbs::for('backend.edit.user', function($breadcrumbs, $user){
+Breadcrumbs::for('backend.user.edit', function($breadcrumbs, $user){
     $breadcrumbs->parent('home');
-    $breadcrumbs->push(__('User' ), route('backend.user'));
-    $breadcrumbs->push(__('Show' ), route('backend.show.user', $user));
-    $breadcrumbs->push(__('Edit user'), route('backend.edit.user', $user));
+    $breadcrumbs->push(__('user' ), route('backend.user.index'));
+    $breadcrumbs->push(__('show' ), route('backend.user.show', $user));
+    $breadcrumbs->push(__('edit'), route('backend.user.edit', $user));
 });
 
-Breadcrumbs::for('backend.user.activity', function($breadcrumbs, $user){
+Breadcrumbs::for('backend.user.caused_activity', function($breadcrumbs, $user){
     $breadcrumbs->parent('home');
-    $breadcrumbs->push(__('User' ), route('backend.user'));
-    $breadcrumbs->push(__('Show' ), route('backend.show.user', $user));
-    $breadcrumbs->push(__('Caused Activity'), route('backend.user.activity', $user));
+    $breadcrumbs->push(__('role' ), route('backend.role.index'));
+//    $breadcrumbs->push(__('user_with_role' ), route('backend.role.role_user', $user));
+    $breadcrumbs->push(__('Caused Activity'), route('backend.user.caused_activity', $user));
 });
-

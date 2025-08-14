@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Access\Client;
+use App\Models\Access\Role;
 use App\Models\Access\User;
 use App\Models\SaasApp;
 use App\Models\SenderId;
@@ -54,6 +55,9 @@ class RouteServiceProvider extends ServiceProvider
         });
         Route::bind('sticker', function ($value) {
             return Sticker::where('uid', $value)->firstOrFail();
+        });
+        Route::bind('role', function ($value) {
+            return Role::where('uid', $value)->firstOrFail();
         });
 
         RateLimiter::for('api', function (Request $request) {

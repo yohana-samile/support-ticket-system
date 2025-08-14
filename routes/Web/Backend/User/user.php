@@ -25,5 +25,8 @@ Route::group([
 
         Route::get('/user_by_specialization/{specialization}', 'UserCrudController@getBySpecialization')->name('user_by_specialization');
         Route::post('/{manager}/increment_favorite', 'UserCrudController@incrementFavorite')->name('increment_favorite');
+
+        Route::get('/caused_activity/{user}', 'UserCrudController@causedActivity')->name('caused_activity');
+        Route::get('/get_caused_activity_for_dt/{user}', 'UserCrudController@getCausedActivityForDt')->name('get_caused_activity_for_dt');
     });
 })->middleware('access.routeNeedsPermission:manage_user');

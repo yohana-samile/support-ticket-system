@@ -39,13 +39,6 @@ if (!function_exists('negative_value')) {
 }
 
 if (! function_exists('nextbyte_theme_config')) {
-    /**
-     * Returns a config value from the current theme's config file.
-     * It assumes the theme's config namespace is the same as the view namespace.
-     *
-     * @param string
-     * @return string
-     */
     function nextbyte_theme_config($key)
     {
         $namespacedKey = config('nextbyte.ui.show_developer_link');
@@ -66,15 +59,7 @@ if (! function_exists('nextbyte_theme_config')) {
     }
 }
 
-
-
 if (!function_exists('toHtmlString')) {
-
-    /**
-     * Return the public url of the application
-     *
-     * @return type string
-     */
     function toHtmlString($html) {
         return new \Illuminate\Support\HtmlString($html);
     }
@@ -82,12 +67,6 @@ if (!function_exists('toHtmlString')) {
 }
 
 if (!function_exists('html_attributes_implode')) {
-
-    /**
-     * Return the public url of the application
-     *
-     * @return type string
-     */
     function html_attributes_implode($attributes) {
 
         if(count($attributes)) {
@@ -102,16 +81,6 @@ if (!function_exists('html_attributes_implode')) {
 }
 
 if (! function_exists('link_to_route')) {
-    /**
-     * Generate a HTML link to a named route.
-     *
-     * @param string $name
-     * @param string $title
-     * @param array  $parameters
-     * @param array  $attributes
-     *
-     * @return \Illuminate\Support\HtmlString
-     */
     function link_to_route($name, $title = null, $parameters = [], $attributes = [])
     {
         // Generate the URL using the named route and parameters
@@ -134,12 +103,6 @@ if (! function_exists('link_to_route')) {
 }
 
 if (! function_exists('includeRouteFiles')) {
-    /**
-     * Loops through a folder and requires all PHP files
-     * Searches sub-directories as well.
-     *
-     * @param $folder
-     */
     function includeRouteFiles($folder)
     {
         try {

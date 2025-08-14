@@ -175,7 +175,7 @@
                         {{__('label.staff')}}
                     </a>
                     <h6 class="collapse-header">Authorization:</h6>
-                    <a class="collapse-item {{ request()->routeIs('backend.role.*') || request()->routeIs('backend.permission.*') ? 'active' : '' }}" href="javascript:void(0)">
+                    <a class="collapse-item {{ request()->routeIs('backend.role.*') || request()->routeIs('backend.permission.*') ? 'active' : '' }}" href="{{ route('backend.role.index') }}">
                         {{__('Roles & Permissions')}}
                     </a>
                 </div>

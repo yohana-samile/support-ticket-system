@@ -15,8 +15,9 @@ Route::group([
         Route::put('/update/{role}', 'RoleController@update')->name('update');
         Route::get('/profile/{role}', 'RoleController@profile')->name('profile');
         Route::delete('/delete/{role}', 'RoleController@delete')->name('delete');
-        Route::get('/roles/users/{role}', 'RoleController@users')->name('users');
         Route::get('/get_all_for_dt', 'RoleController@getAllForDt')->name('get_all_for_dt');
+        Route::get('/users/{role}', 'RoleController@roleUser')->name('role_user');
+        Route::get('/users_preview/{role}', 'RoleController@roleUsersPreview')->name('users_preview');
 
     });
 })->middleware('access.routeNeedsPermission:all_functions');

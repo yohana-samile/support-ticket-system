@@ -156,6 +156,14 @@ return [
     'notification_channel_sms' => 'SMS',
     'notification_channel_both' => 'Both Email and SMS',
     'notification_channel_none' => 'No Notifications',
+    'assigned_users' => 'Assigned Users',
+    'sn' => 'Sn',
+    'is_admin' => 'Is Admin?',
+    'is_active' => 'Is Active?',
+    'permission' => 'Permissions',
+    'caused_activity' => 'Caused Activity',
+    'changes' => 'Changes',
+    'date' => 'Date'
 
 
 

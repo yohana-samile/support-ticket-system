@@ -1,8 +1,5 @@
 <?php
-
 namespace App\Repositories\Access;
-
-
 
 use App\Models\Access\Role;
 use App\Repositories\BaseRepository;
@@ -19,7 +16,6 @@ class RoleRepository extends BaseRepository
     }
 
     public function  getActiveRoles(){
-
         return $this->query()->where('isactive', true)->get();
     }
 
@@ -39,19 +35,17 @@ class RoleRepository extends BaseRepository
         return $this->query()->select(['id', 'name'])->where("isadmin", 1)->orderBy("id", "asc")->get()->pluck("name", "id");;
     }
 
-
     public function getAllForDt()
     {
         return $this->query()->withCount('users')->get();
     }
 
-
     public function store(array $input)
     {
         return DB::transaction(function () use ($input) {
             $role = $this->query()->create([
-                'id' => $this->getNextId(),
                 'name' => $input['name'],
+                'display_name' => $input['display_name'],
                 'description' => $input['description'],
                 'isadmin' => isset($input['isadmin']) && $input['isadmin'] === 'on' ? 1 : 0,
                 'isactive' => isset($input['isactive']) && $input['isactive'] === 'on' ? 1 : 0,
@@ -72,11 +66,11 @@ class RoleRepository extends BaseRepository
     }
 
     /*Update role info to Role table*/
-    public function updateRole(array $input, Model $role)
+    protected function updateRole(array $input, Model $role)
     {
         return  DB :: transaction(function() use ($input, $role){
             $role->update([
-                'name' => $input['name'],
+                'display_name' => $input['display_name'],
                 'description' => $input['description'],
                 'isadmin' => $input['isadmin'] ?? 0,
                 'isactive' => $input['isactive'] ?? 0,
@@ -87,7 +81,7 @@ class RoleRepository extends BaseRepository
 
 
     /*Update sync permissions with role*/
-    public function updateRolePermissions(array $input, Model $role)
+    protected function updateRolePermissions(array $input, Model $role)
     {
         return DB::transaction(function () use ($input, $role) {
             if (isset($input['permissions']) && is_array($input['permissions'])) {
@@ -106,17 +100,5 @@ class RoleRepository extends BaseRepository
         $this->renamingSoftDelete($role, 'name');
         $role->delete();
         return true;
-    }
-
-    /*Get The max id*/
-    public function getMaxId()
-    {
-        return $this->query()->max('id');
-    }
-
-    /*Get the next id to be used on the new entry*/
-    public function getNextId()
-    {
-        return $this->getMaxId() + 1;
     }
 }

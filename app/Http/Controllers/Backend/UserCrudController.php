@@ -12,8 +12,10 @@ use App\Repositories\Backend\UserRepository;
 use App\Traits\PhoneNumberValidation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\Models\Activity;
 use Yajra\DataTables\DataTables;
 
 class UserCrudController extends Controller
@@ -190,6 +192,58 @@ class UserCrudController extends Controller
             'user' => __('messages.favorite_count_incremented'),
             'data' => $user
         ]);
+    }
+
+    public function causedActivity(User $user)
+    {
+        return view('pages.backend.user.staff.activity', compact('user'));
+    }
+
+    public function getCausedActivityForDt(User $user)
+    {
+        $activities = Activity::where('causer_id', $user->id)
+            ->with(['subject'])
+            ->select('activity_log.*');
+
+        return DataTables::of($activities)
+            ->addColumn('description', function ($activity) {
+                $badgeClass = [
+                    'created' => 'success',
+                    'updated' => 'info',
+                    'deleted' => 'danger'
+                ][$activity->event] ?? 'secondary';
+
+                return sprintf(
+                    '<span class="badge badge-%s">%s</span> %s',
+                    $badgeClass,
+                    ucfirst($activity->event),
+                    $activity->description
+                );
+            })
+            ->addColumn('subject', function ($activity) {
+                return $activity->subject
+                    ? class_basename($activity->subject) . ' #' . $activity->subject->id
+                    : '<span class="text-muted">N/A</span>';
+            })
+            ->addColumn('changes', function ($activity) {
+                if ($activity->properties && count($activity->properties['attributes'] ?? [])) {
+                    return sprintf(
+                        '<button class="btn btn-sm btn-outline-primary view-changes" data-properties="%s">%s</button>',
+                        htmlspecialchars(json_encode($activity->properties), ENT_QUOTES, 'UTF-8'),
+                        __('View Changes')
+                    );
+                }
+                return '<span class="text-muted">'.__('No changes').'</span>';
+            })
+            ->addColumn('date', function ($activity) {
+                return sprintf(
+                    '%s<div class="text-muted small">%s</div>',
+                    $activity->created_at->format('M d, Y h:i A'),
+                    $activity->created_at->diffForHumans()
+                );
+            })
+            ->rawColumns(['description', 'subject', 'changes', 'date'])
+            ->make(true);
     }
 
     public function getAll(): JsonResponse
