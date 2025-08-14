@@ -14,7 +14,7 @@ class UserSeeder extends Seeder
             $this->disableForeignKeys("users");
             $userRepo = new \App\Repositories\Access\UserRepository();
             $count = $userRepo->query()->count();
-            $email = 'admin@ticketing.co.tz';
+            $email = 'yohanasamile@gmail.com';
             $password = 12345678;
 
             if($count == 0) {

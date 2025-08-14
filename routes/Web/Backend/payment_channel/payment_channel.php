@@ -17,4 +17,4 @@ Route::group([
         Route::put('/{paymentChannel}', 'PaymentChannelController@update')->name('update');
         Route::delete('/{paymentChannel}', 'PaymentChannelController@destroy')->name('destroy');
     });
-})->middleware('access.routeNeedsPermission:manage_payment_channel');
+});

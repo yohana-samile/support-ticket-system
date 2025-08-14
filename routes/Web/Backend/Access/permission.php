@@ -11,4 +11,4 @@ Route::group([
         Route::get('/get_all_for_dt', 'PermissionController@getAllForDt')->name('get_all_for_dt');
 
     });
-})->middleware('access.routeNeedsPermission:all_functions');
+})->middleware('access.routeNeedsPermission:manage_roles_permissions');

@@ -18,4 +18,4 @@ Route::group([
         Route::put('/update/{tertiary}', 'TertiaryTopicController@update')->name('update');
         Route::delete('/destroy/{tertiary}', 'TertiaryTopicController@destroy')->name('destroy');
     });
-})->middleware('access.routeNeedsPermission:manage_topic');
+})->middleware('access.routeNeedsPermission:manage_tertiary_topics');

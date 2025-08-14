@@ -15,15 +15,8 @@ use App\Models\Access\Attribute\PermissionAttribute;
 class PermissionGroup extends Model
 {
     use PermissonGroupAttribute, PermissonGroupRelation;
-
-
-    /**
-     * @return mixed
-     * Relationship
-     *
-     */
     public function permissions()
     {
-        return $this->hasMany(Permission::class);
+        return $this->hasMany(Permission::class, 'permission_group_id');
     }
 }

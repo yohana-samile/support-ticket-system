@@ -29,4 +29,4 @@ Route::group([
 
         Route::get('/client_ticket_history/{clientId}', 'TicketController@getClientHistory')->name('client_ticket_history');
     });
-})->middleware('access.routeNeedsPermission:case_worker');
+})->middleware('access.routeNeedsPermission:view_tickets');

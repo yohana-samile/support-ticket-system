@@ -8,10 +8,9 @@ namespace App\Models\Access\Attribute;
  */
 trait RoleAttribute
 {
-
     public function setNameAttribute($value)
     {
-        $this->attributes['name'] = ucwords($value);
+        $this->attributes['name'] = strtolower($value);
     }
 
     /*Get Is Administrative label*/

@@ -52,138 +52,166 @@
             </a>
         </li>
 
-        <div class="sidebar-heading">
-            Tickets
-        </div>
-        <li class="nav-item {{ request()->routeIs('backend.ticket.*') ? 'active' : '' }}">
-            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseTicket" aria-expanded="true" aria-controls="collapseTicket">
-                <i class="fas fa-fw fa-ticket-alt"></i>
-                <span>Tickets management</span>
-            </a>
-            <div id="collapseTicket" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
-                <div class="bg-white py-2 collapse-inner rounded">
-                    <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('All Tickets')}}</a>
-                    <h6 class="collapse-header">Create New Ticket:</h6>
-                    @foreach($saasApps as $app)
-                        <a class="collapse-item" href="{{ route('backend.ticket.create', ['saas_app_id' => $app->id]) }}">
-                            {{ $app->abbreviation }}
-                        </a>
-                    @endforeach
-                </div>
+        @if(access()->allow('view_tickets'))
+            <div class="sidebar-heading">
+                Tickets
             </div>
-        </li>
-
-        <hr class="sidebar-divider">
-        <div class="sidebar-heading">
-            {{__('label.reports')}}
-        </div>
-        <li class="nav-item {{ request()->routeIs(['backend.report.*']) }}">
-            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseReports" aria-expanded="{{ request()->routeIs(['backend.report.*']) ? 'true' : 'false' }}">
-                <i class="fas fa-fw fa-file-alt"></i>
-                <span>{{__('label.reports_management')}}</span>
-            </a>
-            <div id="collapseReports" class="collapse {{ request()->routeIs(['backend.report.*']) ? 'show' : '' }}" aria-labelledby="headingTwo" data-parent="#sidebar">
-                <div class="bg-white py-2 collapse-inner rounded">
-                    <h6 class="collapse-header">{{__('label.tickets')}}:</h6>
-                    <a class="collapse-item {{ request()->routeIs('backend.report.*') ? 'active' : '' }}" href="{{ route('backend.report.index') }}">{{__('label.ticket')}}</a>
+            <li class="nav-item {{ request()->routeIs('backend.ticket.*') ? 'active' : '' }}">
+                <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseTicket" aria-expanded="true" aria-controls="collapseTicket">
+                    <i class="fas fa-fw fa-ticket-alt"></i>
+                    <span>Tickets management</span>
+                </a>
+                <div id="collapseTicket" class="collapse" aria-labelledby="headingTwo" data-parent="#sidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <a class="collapse-item" href="{{ route('backend.ticket.index') }}">{{__('All Tickets')}}</a>
+                        <h6 class="collapse-header">Create New Ticket:</h6>
+                        @foreach($saasApps as $app)
+                            <a class="collapse-item" href="{{ route('backend.ticket.create', ['saas_app_id' => $app->id]) }}">
+                                {{ $app->abbreviation }}
+                            </a>
+                        @endforeach
+                    </div>
                 </div>
-            </div>
-        </li>
+            </li>
+        @endif
 
-        <hr class="sidebar-divider">
-        <div class="sidebar-heading">
-            {{__('label.general')}}
-        </div>
-        <li class="nav-item {{ request()->routeIs(['backend.topic.*', 'backend.subtopic.*', 'backend.tertiary.*']) ? 'active' : '' }}">
-            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseTopic" aria-expanded="{{ request()->routeIs(['backend.topic.*', 'backend.subtopic.*', 'backend.tertiary.*']) ? 'true' : 'false' }}">
-                <i class="fas fa-fw fa-cog"></i>
-                <span>{{__('label.general_settings')}}</span>
-            </a>
-            <div id="collapseTopic" class="collapse {{ request()->routeIs(['backend.topic.*', 'backend.subtopic.*', 'backend.tertiary.*']) ? 'show' : '' }}" aria-labelledby="headingTwo" data-parent="#sidebar">
-                <div class="bg-white py-2 collapse-inner rounded">
-                    <h6 class="collapse-header">{{__('label.main')}}:</h6>
-                    <a class="collapse-item {{ request()->routeIs('backend.topic.*') ? 'active' : '' }}" href="{{ route('backend.topic.index') }}">{{__('label.topics')}}</a>
-                    <h6 class="collapse-header">{{__('label.sub')}}:</h6>
-                    <a class="collapse-item {{ request()->routeIs('backend.subtopic.*') ? 'active' : '' }}" href="{{ route('backend.subtopic.index') }}">{{__('label.sub_topics')}}</a>
-                    <h6 class="collapse-header">{{__('label.tertiary')}}:</h6>
-                    <a class="collapse-item {{ request()->routeIs('backend.tertiary.*') ? 'active' : '' }}" href="{{ route('backend.tertiary.index') }}">{{__('label.tertiary_topics')}}</a>
+        @if(access()->allow('view_reports'))
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">
+                {{__('label.reports')}}
+            </div>
+            <li class="nav-item {{ request()->routeIs(['backend.report.*']) }}">
+                <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseReports" aria-expanded="{{ request()->routeIs(['backend.report.*']) ? 'true' : 'false' }}">
+                    <i class="fas fa-fw fa-file-alt"></i>
+                    <span>{{__('label.reports_management')}}</span>
+                </a>
+                <div id="collapseReports" class="collapse {{ request()->routeIs(['backend.report.*']) ? 'show' : '' }}" aria-labelledby="headingTwo" data-parent="#sidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <h6 class="collapse-header">{{__('label.tickets')}}:</h6>
+                        <a class="collapse-item {{ request()->routeIs('backend.report.*') ? 'active' : '' }}" href="{{ route('backend.report.index') }}">{{__('label.ticket')}}</a>
+                    </div>
                 </div>
-            </div>
-        </li>
+            </li>
+        @endif
 
-        <hr class="sidebar-divider">
-        <div class="sidebar-heading">
-            {{__('label.other')}}
-        </div>
-        <li class="nav-item {{
-            request()->routeIs('backend.operator.*') ||
-            request()->routeIs('backend.saas_app.*') ||
-            request()->routeIs('backend.sender_id.*') ? 'active' : ''
-        }}">
-            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseOther" aria-expanded="true" aria-controls="collapseOther">
-                <i class="fas fa-fw fa-cog"></i>
-                <span>{{__('label.other_settings')}}</span>
-            </a>
-            <div id="collapseOther" class="collapse {{
-        request()->routeIs('backend.operator.*') ||
-        request()->routeIs('backend.saas_app.*') ||
-        request()->routeIs('backend.sender_id.*') ? 'show' : ''
-    }}" aria-labelledby="headingTwo" data-parent="#sidebar">
-                <div class="bg-white py-2 collapse-inner rounded">
-                    <h6 class="collapse-header">{{__('label.mno')}}:</h6>
-                    <a class="collapse-item {{ request()->routeIs('backend.operator.*') ? 'active' : '' }}" href="{{ route('backend.operator.index') }}">{{__('MNOs')}}</a>
-                    <h6 class="collapse-header">{{__('label.service')}}:</h6>
-                    <a class="collapse-item {{ request()->routeIs('backend.saas_app.*') ? 'active' : '' }}" href="{{ route('backend.saas_app.index') }}">{{__('label.saas_app')}}</a>
-                    <h6 class="collapse-header">{{__('label.sender')}}:</h6>
-                    <a class="collapse-item {{ request()->routeIs('backend.sender_id.*') ? 'active' : '' }}" href="{{ route('backend.sender_id.index') }}">{{__('label.senders')}}</a>
+        @if(access()->allow('manage_topics') || access()->allow('manage_subtopics') || access()->allow('manage_tertiary_topics'))
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">
+                {{__('label.general')}}
+            </div>
+            <li class="nav-item {{ request()->routeIs(['backend.topic.*', 'backend.subtopic.*', 'backend.tertiary.*']) ? 'active' : '' }}">
+                <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseTopic" aria-expanded="{{ request()->routeIs(['backend.topic.*', 'backend.subtopic.*', 'backend.tertiary.*']) ? 'true' : 'false' }}">
+                    <i class="fas fa-fw fa-cog"></i>
+                    <span>{{__('label.general_settings')}}</span>
+                </a>
+                <div id="collapseTopic" class="collapse {{ request()->routeIs(['backend.topic.*', 'backend.subtopic.*', 'backend.tertiary.*']) ? 'show' : '' }}" aria-labelledby="headingTwo" data-parent="#sidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        @if(access()->allow('manage_topics'))
+                            <h6 class="collapse-header">{{__('label.main')}}:</h6>
+                            <a class="collapse-item {{ request()->routeIs('backend.topic.*') ? 'active' : '' }}" href="{{ route('backend.topic.index') }}">{{__('label.topics')}}</a>
+                        @endif
+                        @if(access()->allow('manage_subtopics'))
+                            <h6 class="collapse-header">{{__('label.sub')}}:</h6>
+                            <a class="collapse-item {{ request()->routeIs('backend.subtopic.*') ? 'active' : '' }}" href="{{ route('backend.subtopic.index') }}">{{__('label.sub_topics')}}</a>
+                        @endif
+                        @if(access()->allow('manage_tertiary_topics'))
+                            <h6 class="collapse-header">{{__('label.tertiary')}}:</h6>
+                            <a class="collapse-item {{ request()->routeIs('backend.tertiary.*') ? 'active' : '' }}" href="{{ route('backend.tertiary.index') }}">{{__('label.tertiary_topics')}}</a>
+                        @endif
+                    </div>
                 </div>
+            </li>
+        @endif
+
+        @if(access()->allow('manage_operators') || access()->allow('manage_saas_apps') || access()->allow('manage_sender_ids'))
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">
+                {{__('label.other')}}
             </div>
-        </li>
+            <li class="nav-item {{
+                request()->routeIs('backend.operator.*') ||
+                request()->routeIs('backend.saas_app.*') ||
+                request()->routeIs('backend.sender_id.*') ? 'active' : ''
+            }}">
+                <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseOther" aria-expanded="true" aria-controls="collapseOther">
+                    <i class="fas fa-fw fa-cog"></i>
+                    <span>{{__('label.other_settings')}}</span>
+                </a>
+                <div id="collapseOther" class="collapse {{
+                    request()->routeIs('backend.operator.*') ||
+                    request()->routeIs('backend.saas_app.*') ||
+                    request()->routeIs('backend.sender_id.*') ? 'show' : ''
+                }}" aria-labelledby="headingTwo" data-parent="#sidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        @if(access()->allow('manage_operators'))
+                            <h6 class="collapse-header">{{__('label.mno')}}:</h6>
+                            <a class="collapse-item {{ request()->routeIs('backend.operator.*') ? 'active' : '' }}" href="{{ route('backend.operator.index') }}">{{__('MNOs')}}</a>
+                        @endif
+                        @if(access()->allow('manage_saas_apps'))
+                            <h6 class="collapse-header">{{__('label.service')}}:</h6>
+                            <a class="collapse-item {{ request()->routeIs('backend.saas_app.*') ? 'active' : '' }}" href="{{ route('backend.saas_app.index') }}">{{__('label.saas_app')}}</a>
+                        @endif
+                        @if(access()->allow('manage_sender_ids'))
+                            <h6 class="collapse-header">{{__('label.sender')}}:</h6>
+                            <a class="collapse-item {{ request()->routeIs('backend.sender_id.*') ? 'active' : '' }}" href="{{ route('backend.sender_id.index') }}">{{__('label.senders')}}</a>
+                        @endif
+                    </div>
+                </div>
+            </li>
+        @endif
 
-        <hr class="sidebar-divider">
-        <div class="sidebar-heading">
-            Administration
-        </div>
+        @if(access()->allow('view_staff') || access()->allow('view_clients') || access()->allow('manage_roles_permissions'))
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">
+                Administration
+            </div>
 
-        <li class="nav-item {{
-            request()->routeIs('backend.user.*') ||
-            request()->routeIs('backend.client.*') ||
-            request()->routeIs('backend.role.*') ||
-            request()->routeIs('backend.permission.*') ? 'active' : ''
-        }}">
-            <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseAdministration" aria-expanded="{{
+            <li class="nav-item {{
                 request()->routeIs('backend.user.*') ||
                 request()->routeIs('backend.client.*') ||
                 request()->routeIs('backend.role.*') ||
-                request()->routeIs('backend.permission.*') ? 'true' : 'false'
-            }}" aria-controls="collapseAdministration">
-                <i class="fas fa-fw fa-cog"></i>
-                <span>User management</span>
-            </a>
-            <div id="collapseAdministration" class="collapse {{
+                request()->routeIs('backend.permission.*') ? 'active' : ''
+            }}">
+                <a class="nav-link collapsed" href="javascript:void(0)" data-toggle="collapse" data-target="#collapseAdministration" aria-expanded="{{
                     request()->routeIs('backend.user.*') ||
                     request()->routeIs('backend.client.*') ||
                     request()->routeIs('backend.role.*') ||
-                    request()->routeIs('backend.permission.*') ? 'show' : ''
-                }}" aria-labelledby="headingTwo" data-parent="#sidebar">
-                <div class="bg-white py-2 collapse-inner rounded">
-                    <h6 class="collapse-header">User:</h6>
-                    <a class="collapse-item {{ request()->routeIs('backend.client.*') ? 'active' : '' }}" href="{{ route('backend.client.index') }}">
-                        {{__('label.client')}}
-                    </a>
-                    <a class="collapse-item {{ request()->routeIs('backend.user.*') ? 'active' : '' }}" href="{{ route('backend.user.index') }}">
-                        {{__('label.staff')}}
-                    </a>
-                    <h6 class="collapse-header">Authorization:</h6>
-                    <a class="collapse-item {{ request()->routeIs('backend.role.*') || request()->routeIs('backend.permission.*') ? 'active' : '' }}" href="{{ route('backend.role.index') }}">
-                        {{__('role')}}
-                    </a>
-                    <a class="collapse-item {{ request()->routeIs('backend.permission.*') || request()->routeIs('backend.permission.*') ? 'active' : '' }}" href="{{ route('backend.permission.index') }}">
-                        {{__('permission')}}
-                    </a>
+                    request()->routeIs('backend.permission.*') ? 'true' : 'false'
+                }}" aria-controls="collapseAdministration">
+                    <i class="fas fa-fw fa-cog"></i>
+                    <span>User management</span>
+                </a>
+                <div id="collapseAdministration" class="collapse {{
+                        request()->routeIs('backend.user.*') ||
+                        request()->routeIs('backend.client.*') ||
+                        request()->routeIs('backend.role.*') ||
+                        request()->routeIs('backend.permission.*') ? 'show' : ''
+                    }}" aria-labelledby="headingTwo" data-parent="#sidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <h6 class="collapse-header">User:</h6>
+                        @if(access()->allow('view_clients'))
+                            <a class="collapse-item {{ request()->routeIs('backend.client.*') ? 'active' : '' }}" href="{{ route('backend.client.index') }}">
+                                {{__('label.client')}}
+                            </a>
+                        @endif
+                        @if(access()->allow('view_staff'))
+                            <a class="collapse-item {{ request()->routeIs('backend.user.*') ? 'active' : '' }}" href="{{ route('backend.user.index') }}">
+                                {{__('label.staff')}}
+                            </a>
+                        @endif
+                        @if(access()->allow('manage_roles_permissions'))
+                            <h6 class="collapse-header">Authorization:</h6>
+                            <a class="collapse-item {{ request()->routeIs('backend.role.*') || request()->routeIs('backend.permission.*') ? 'active' : '' }}" href="{{ route('backend.role.index') }}">
+                                {{__('role')}}
+                            </a>
+                            <a class="collapse-item {{ request()->routeIs('backend.permission.*') || request()->routeIs('backend.permission.*') ? 'active' : '' }}" href="{{ route('backend.permission.index') }}">
+                                {{__('permission')}}
+                            </a>
+                        @endif
+                    </div>
                 </div>
-            </div>
-        </li>
+            </li>
+        @endif
 
         <div class="text-center d-none d-md-inline">
             <button class="rounded-circle border-0" id="sidebarToggle"></button>

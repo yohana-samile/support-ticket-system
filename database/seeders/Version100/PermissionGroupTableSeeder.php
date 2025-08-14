@@ -10,11 +10,6 @@ class PermissionGroupTableSeeder extends Seeder
 {
 
     use DisableForeignKeys, TruncateTable;
-    /**
-     * Auto generated seed file
-     *
-     * @return void
-     */
     public function run()
     {
 
@@ -22,14 +17,18 @@ class PermissionGroupTableSeeder extends Seeder
         $this->delete('permission_groups');
 
         $permissionGroups = [
-            ['id' => 1, 'name' => 'Administration', 'description' => 'admin only permissions'],
-            ['id' => 3, 'name' => 'Client', 'description' => 'Can report any issue'],
-            ['id' => 3, 'name' => 'Customer Supporter', 'description' => 'Customer Supporter'],
+            ['name' => 'Administration', 'description' => 'System administration permissions'],
+            ['name' => 'Client Management', 'description' => 'Permissions for managing client accounts'],
+            ['name' => 'Staff Management', 'description' => 'Permissions for managing staff accounts'],
+            ['name' => 'Report Management', 'description' => 'Permissions for generating and viewing reports'],
+            ['name' => 'General Setting Management', 'description' => 'Permissions for system general settings'],
+            ['name' => 'Other Setting Management', 'description' => 'Permissions for other system settings'],
+            ['name' => 'Ticket Management', 'description' => 'Permissions for ticket operations']
         ];
 
         foreach ($permissionGroups as $group) {
             PermissionGroup::updateOrCreate(
-                ['id' => $group['id']],
+                ['name' => $group['name']],
                 array_merge($group, [
                     'uid' => Str::uuid(),
                     'created_at' => now(),

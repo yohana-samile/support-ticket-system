@@ -29,4 +29,4 @@ Route::group([
         Route::get('/caused_activity/{user}', 'UserCrudController@causedActivity')->name('caused_activity');
         Route::get('/get_caused_activity_for_dt/{user}', 'UserCrudController@getCausedActivityForDt')->name('get_caused_activity_for_dt');
     });
-})->middleware('access.routeNeedsPermission:manage_user');
+})->middleware('access.routeNeedsPermission:view_staff');

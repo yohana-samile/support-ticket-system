@@ -3,11 +3,13 @@
 @section('content')
     <div class="container-fluid">
         <div id="content">
-            <div class="d-sm-flex align-items-center justify-content-end mb-4">
-                <a href="{{ route('backend.topic.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                    <i class="fas fa-plus fa-sm text-white-50"></i> {{__('label.create')}}
-                </a>
-            </div>
+            @if(access()->allow('manage_topics'))
+                <div class="d-sm-flex align-items-center justify-content-end mb-4">
+                    <a href="{{ route('backend.topic.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                        <i class="fas fa-plus fa-sm text-white-50"></i> {{__('label.create')}}
+                    </a>
+                </div>
+            @endif
 
             <div class="card shadow mb-4">
                 <div class="card-body">

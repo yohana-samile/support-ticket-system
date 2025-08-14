@@ -22,4 +22,4 @@ Route::group([
         Route::put('/update/{subtopic}', 'SubtopicController@update')->name('update');
         Route::delete('/destroy/{subtopic}', 'SubtopicController@destroy')->name('destroy');
     });
-})->middleware('access.routeNeedsPermission:manage_topic');
+})->middleware('access.routeNeedsPermission:manage_subtopics');

@@ -12,12 +12,9 @@ use App\Models\Access\User;
  */
 trait PermissionRelationship
 {
-    /**
-     * @return mixed
-     */
     public function roles()
     {
-        return $this->belongsToMany(Role::class)->withTimestamps();
+        return $this->belongsToMany(Role::class, 'permission_role', 'role_id', 'permission_id')->withTimestamps();
     }
 
     public function permissionGroup()
@@ -25,9 +22,6 @@ trait PermissionRelationship
         return $this->belongsTo(PermissionGroup::class, 'permission_group_id');
     }
 
-    /**
-     * @return mixed
-     */
     public function users() {
         return $this->belongsToMany(User::class)->withTimestamps();
     }

@@ -25,7 +25,7 @@ class PermissionRepository extends BaseRepository
         return $this->query()->whereNull('deleted_at')->where('isadmin', 0)->orderBy('display_name')->get();
     }
 
-    public function getPermissionsByRole(Role $role) {
+    public function getPermissionsByRole($role) {
         return $role->permissions()->with('permissionGroup')->orderBy('display_name')->get()->groupBy('permission_group_id');
     }
 

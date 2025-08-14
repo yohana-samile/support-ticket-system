@@ -3,52 +3,53 @@
 @section('content')
     <div class="container-fluid">
         <div id="content">
+            @if(access()->allow('create_tickets'))
                 <div class="d-sm-flex align-items-center justify-content-end mb-4">
                     <a href="{{ route('backend.ticket.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
                         <i class="fas fa-plus fa-sm text-white-50"></i> {{__('label.create')}}
                     </a>
                 </div>
+            @endif
 
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                        <h6 class="m-0 font-weight-bold text-primary">
-                            All Tickets
-                        </h6>
-                        <div class="dropdown no-arrow">
-                            <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                                 aria-labelledby="dropdownMenuLink">
-                                <div class="dropdown-header">Filter Options:</div>
-                                <a class="dropdown-item" href="{{ request()->fullUrlWithQuery(['status' => 'open']) }}">Open Tickets</a>
-                                <a class="dropdown-item" href="{{ request()->fullUrlWithQuery(['status' => 'resolved']) }}">Resolved Tickets</a>
-                                <a class="dropdown-item" href="{{ route('backend.ticket.index') }}">All Tickets</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered" id="ticketTable" width="100%" cellspacing="0">
-                                <thead>
-                                    <tr>
-                                        <th>Ticket ID</th>
-                                        <th>Title</th>
-                                        <th>Topic</th>
-                                        <th>Status</th>
-                                        <th>Priority</th>
-                                        <th>Reported</th>
-                                        <th>Requester</th>
-                                        <th>Assigned_to</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                            </table>
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        All Tickets
+                    </h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                             aria-labelledby="dropdownMenuLink">
+                            <div class="dropdown-header">Filter Options:</div>
+                            <a class="dropdown-item" href="{{ request()->fullUrlWithQuery(['status' => 'open']) }}">Open Tickets</a>
+                            <a class="dropdown-item" href="{{ request()->fullUrlWithQuery(['status' => 'resolved']) }}">Resolved Tickets</a>
+                            <a class="dropdown-item" href="{{ route('backend.ticket.index') }}">All Tickets</a>
                         </div>
                     </div>
                 </div>
-
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="ticketTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Ticket ID</th>
+                                    <th>Title</th>
+                                    <th>Topic</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Reported</th>
+                                    <th>Requester</th>
+                                    <th>Assigned_to</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 @endsection

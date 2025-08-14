@@ -7,4 +7,4 @@ Route::group([
     Route::group(['prefix' => 'report', 'as' => 'report.'], function () {
         Route::get('/reports', 'ReportController@reports')->name('reports');
     });
-})->middleware('access.routeNeedsPermission:case_worker');
+})->middleware('access.routeNeedsPermission:view_reports');

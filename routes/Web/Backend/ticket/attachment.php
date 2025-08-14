@@ -9,4 +9,4 @@ Route::group([
         Route::get('/attachment/{attachment}', 'AttachmentController@download')->name('download');
         Route::delete('/attachment/{attachment}', 'AttachmentController@destroy')->name('destroy');
     });
-})->middleware('access.routeNeedsPermission:attachment');
+});

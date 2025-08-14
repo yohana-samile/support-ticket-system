@@ -9,4 +9,4 @@ Route::group([
         Route::get('/get_all_operator', 'OperatorController@getAll')->name('get_all_operator');
         Route::get('/get_operator_for_dt', 'OperatorController@getAllForDt')->name('get_operator_for_dt');
     });
-})->middleware('access.routeNeedsPermission:manage_operator');
+})->middleware('access.routeNeedsPermission:manage_operators');

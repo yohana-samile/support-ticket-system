@@ -20,4 +20,4 @@ Route::group([
         Route::put('/update/{sender}', 'SenderIdController@update')->name('update');
         Route::delete('/destroy/{sender}', 'SenderIdController@destroy')->name('destroy');
     });
-})->middleware('access.routeNeedsPermission:manager_sender_ids');
+})->middleware('access.routeNeedsPermission:manage_sender_ids');

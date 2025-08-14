@@ -14,9 +14,11 @@ use Yajra\DataTables\Facades\DataTables;
 class RoleController extends  Controller
 {
     protected $role_repo;
+    protected $permission_repo;
 
     public function __construct() {
         $this->role_repo = new RoleRepository();
+        $this->permission_repo = new PermissionRepository();
         //$this->middlewareRole();
     }
 
@@ -45,7 +47,7 @@ class RoleController extends  Controller
 
     public function edit(Role $role)
     {
-        $permissions = app(PermissionRepository::class)->getAll();
+        $permissions = $this->permission_repo->getAll();
         $rolePermissions = $role->permissions->pluck('id')->toArray();
 
         return view('pages.backend.access.role.edit')
@@ -70,8 +72,8 @@ class RoleController extends  Controller
     }
 
     public function profile(Role $role) {
-        $permissions = app(PermissionRepository::class)->getPermissionsByRole($role);
-        return view('pages.backend.access.role.profile.profile')->with('permissions', $permissions)->with('role', $role);
+        $permissions = $this->permission_repo->getPermissionsByRole($role);
+        return view('pages.backend.access.role.profile.profile', compact('role', 'permissions'));
     }
 
     public function show(Role $role)
@@ -126,7 +128,7 @@ class RoleController extends  Controller
 
 //    protected function middlewareRole()
 //    {
-//        $this->middleware('access.routeNeedsPermission:manage_roles_permissions,all_functions', [
+//        $this->middleware('access.routeNeedsPermission:manage_roles_permissions,manage_roles_permissions', [
 //            'only' => ['index', 'create', 'store', 'edit', 'update', 'delete', 'roleUser', 'roleUsersPreview']
 //        ]);
 //    }

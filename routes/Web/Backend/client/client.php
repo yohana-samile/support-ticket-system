@@ -24,4 +24,4 @@ Route::group([
 
         Route::get('/client_by_services/{serviceId}', 'ClientController@getByService')->name('client_by_services');
     });
-})->middleware('access.routeNeedsPermission:manage_client');
+})->middleware('access.routeNeedsPermission:view_clients');

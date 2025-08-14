@@ -21,4 +21,4 @@ Route::group([
         Route::delete('/destroy/{topic}', 'TopicController@destroy')->name('destroy');
         Route::get('/topic_by_services/{topic}', 'TopicController@getByService')->name('topic_by_services');
     });
-})->middleware('access.routeNeedsPermission:manage_topic');
+})->middleware('access.routeNeedsPermission:manage_topics');

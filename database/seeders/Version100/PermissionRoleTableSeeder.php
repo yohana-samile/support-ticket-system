@@ -10,19 +10,29 @@ use Illuminate\Support\Facades\DB;
 class PermissionRoleTableSeeder extends Seeder
 {
     use DisableForeignKeys, TruncateTable;
-    /**
-     * Auto generated seed file
-     *
-     * @return void
-     */
+
     public function run()
     {
         $this->disableForeignKeys("permission_role");
         $this->delete('permission_role');
 
         $this->assignPermissionsToRole('administration', Permission::query()->pluck('id')->toArray());
-        $this->assignPermissionsToRole('client', ['client']);
-        $this->assignPermissionsToRole('customer_supporter', ['customer_supporter']);
+        $this->assignPermissionsToRole('support_agent', [
+            'view_tickets',
+            'create_tickets',
+            'edit_tickets',
+            'assign_tickets',
+            'resolve_tickets',
+            'view_reports'
+        ]);
+        $this->assignPermissionsToRole('report_viewer', [
+            'view_reports'
+        ]);
+        $this->assignPermissionsToRole('client', [
+            'view_tickets',
+            'create_tickets'
+        ]);
+
         $this->enableForeignKeys('permission_role');
     }
 

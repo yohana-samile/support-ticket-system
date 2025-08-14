@@ -15,4 +15,4 @@ Route::group([
             Route::post('/export_summary', 'ReportController@exportSummary')->name('export_summary');
         });
     });
-})->middleware('access.routeNeedsPermission:manage_report');
+})->middleware('access.routeNeedsPermission:view_reports');

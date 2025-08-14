@@ -18,4 +18,4 @@ Route::group([
         Route::put('/update/{saasApp}', 'SaasAppController@update')->name('update');
         Route::delete('/destroy/{saasApp}', 'SaasAppController@destroy')->name('destroy');
     });
-})->middleware('access.routeNeedsPermission:manage_saas_app');
+})->middleware('access.routeNeedsPermission:manage_saas_apps');

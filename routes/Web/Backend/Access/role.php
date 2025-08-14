@@ -20,4 +20,4 @@ Route::group([
         Route::get('/users_preview/{role}', 'RoleController@roleUsersPreview')->name('users_preview');
 
     });
-})->middleware('access.routeNeedsPermission:all_functions');
+})->middleware('access.routeNeedsPermission:manage_roles_permissions');
