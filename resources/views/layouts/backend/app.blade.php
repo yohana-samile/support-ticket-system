@@ -176,7 +176,10 @@
                     </a>
                     <h6 class="collapse-header">Authorization:</h6>
                     <a class="collapse-item {{ request()->routeIs('backend.role.*') || request()->routeIs('backend.permission.*') ? 'active' : '' }}" href="{{ route('backend.role.index') }}">
-                        {{__('Roles & Permissions')}}
+                        {{__('role')}}
+                    </a>
+                    <a class="collapse-item {{ request()->routeIs('backend.permission.*') || request()->routeIs('backend.permission.*') ? 'active' : '' }}" href="{{ route('backend.permission.index') }}">
+                        {{__('permission')}}
                     </a>
                 </div>
             </div>

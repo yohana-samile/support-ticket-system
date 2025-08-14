@@ -8,14 +8,14 @@ use Yajra\DataTables\Facades\DataTables;
 class PermissionController extends  Controller
 {
     public function __construct() {
-        $this->middleware('access.routeNeedsPermission:manage_roles_permissions', [
-            'only' => ['index', 'getAllForDt']
-        ]);
+//        $this->middleware('access.routeNeedsPermission:manage_roles_permissions', [
+//            'only' => ['index', 'getAllForDt']
+//        ]);
     }
 
     public function index()
     {
-        return view('backend.access.permission.index');
+        return view('pages.backend.access.permission.index');
     }
 
     public function getAllForDt()
@@ -31,10 +31,10 @@ class PermissionController extends  Controller
                 return $result_list->description;
             })
             ->editColumn('isadmin', function ($result_list) {
-                return boolean_badge($result_list->isadmin);
+                return getManagerBadge($result_list->isadmin);
             })
             ->editColumn('isactive', function ($result_list) {
-                return boolean_badge($result_list->isactive);
+                return getStatusBadge($result_list->isactive);
             })
             ->rawColumns(['isactive', 'isadmin'])
             ->make(true);
